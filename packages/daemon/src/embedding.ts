@@ -18,12 +18,20 @@ export class VoyageEmbedder {
   private apiKey: string;
   private model: string = "voyage-3";
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, baseUrl?: string) {
     this.apiKey = apiKey;
+    
+    // Use custom base URL (e.g., MongoDB AI endpoint) or default to Voyage API
+    const url = baseUrl || "https://api.voyageai.com/v1";
+    
+    // MongoDB AI keys start with "al-" and use different auth format
+    const isMongoDB = apiKey.startsWith("al-");
+    const authHeader = isMongoDB ? apiKey : `Bearer ${apiKey}`;
+    
     this.client = axios.create({
-      baseURL: "https://api.voyageai.com/v1",
+      baseURL: url,
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
       timeout: 30000,
@@ -48,8 +56,10 @@ export class VoyageEmbedder {
       return embeddings;
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const data = JSON.stringify(error.response?.data);
         throw new Error(
-          `Voyage API error: ${error.response?.status} ${error.response?.data}`
+          `Voyage API error: ${status} ${data}`
         );
       }
       throw error;

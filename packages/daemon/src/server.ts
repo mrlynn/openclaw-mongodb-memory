@@ -8,12 +8,14 @@ import { statusRoute } from "./routes/status";
 import { connectDatabase } from "./db";
 
 // Load .env from root of monorepo
-dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+// __dirname = packages/daemon/src, so go up 3 levels to root
+dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const PORT = process.env.MEMORY_DAEMON_PORT || 7654;
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
+const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL; // Optional: MongoDB AI or custom endpoint
 
 const app: Express = express();
 
@@ -47,6 +49,7 @@ const startServer = async () => {
     // Store in app locals for route access
     app.locals.mongoClient = db.client;
     app.locals.voyageApiKey = VOYAGE_API_KEY;
+    app.locals.voyageBaseUrl = VOYAGE_BASE_URL;
 
     // Start listening
     app.listen(PORT, () => {

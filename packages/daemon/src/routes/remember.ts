@@ -18,8 +18,9 @@ export const rememberRoute = async (req: Request, res: Response) => {
 
     const mongoClient: MongoClient = req.app.locals.mongoClient;
     const voyageApiKey: string = req.app.locals.voyageApiKey;
+    const voyageBaseUrl: string | undefined = req.app.locals.voyageBaseUrl;
 
-    const embedder = new VoyageEmbedder(voyageApiKey);
+    const embedder = new VoyageEmbedder(voyageApiKey, voyageBaseUrl);
 
     // Embed the text
     const embedding = await embedder.embedOne(data.text);
