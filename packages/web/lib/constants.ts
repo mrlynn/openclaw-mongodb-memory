@@ -6,7 +6,7 @@ export const STORAGE_KEYS = {
 
 export const DEFAULT_DAEMON_URL = "http://localhost:7654";
 export const STATUS_POLL_INTERVAL = 5000;
-export const SIDEBAR_WIDTH = 280;
+export const SIDEBAR_WIDTH = 260;
 
 export const NAV_ITEMS = [
   { label: "Dashboard", path: "/dashboard", icon: "Dashboard" as const },

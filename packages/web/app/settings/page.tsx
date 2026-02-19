@@ -7,7 +7,7 @@ import { DangerZone } from "@/components/settings/DangerZone";
 import { keyframes } from "@emotion/react";
 
 const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -16,12 +16,13 @@ export default function SettingsPage() {
     <Fade in timeout={400}>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Settings sx={{ color: "primary.main", fontSize: 28 }} />
+          <Settings sx={{ color: "primary.main", fontSize: 24, opacity: 0.8 }} />
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
-              animation: `${fadeInUp} 0.5s ease-out`,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              animation: `${fadeInUp} 0.4s ease-out`,
             }}
           >
             Settings
@@ -35,11 +36,11 @@ export default function SettingsPage() {
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 720 }}>
-          <Box sx={{ animation: `${fadeInUp} 0.5s ease-out 0.1s both` }}>
+          <Box sx={{ animation: `${fadeInUp} 0.4s ease-out 0.05s both` }}>
             <DaemonUrlConfig />
           </Box>
 
-          <Box sx={{ animation: `${fadeInUp} 0.5s ease-out 0.2s both` }}>
+          <Box sx={{ animation: `${fadeInUp} 0.4s ease-out 0.1s both` }}>
             <DangerZone />
           </Box>
         </Box>

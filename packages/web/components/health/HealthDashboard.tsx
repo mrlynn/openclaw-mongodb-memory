@@ -3,10 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Box,
-  Card,
   CardContent,
-  CardHeader,
-  Grid,
   LinearProgress,
   Typography,
   Chip,
@@ -18,21 +15,42 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   CircularProgress,
+  useTheme,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   WarningAmber as WarningIcon,
   Info as InfoIcon,
 } from "@mui/icons-material";
+import { GlassCard } from "@/components/cards/GlassCard";
 import {
   HealthStatus,
   OpenClawIntegrationStatus,
   fetchHealth,
   fetchOpenClawIntegrationStatus,
 } from "@/lib/health-api";
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <Typography
+      variant="caption"
+      sx={{
+        color: "text.disabled",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        fontWeight: 500,
+        fontSize: "0.68rem",
+        display: "block",
+        mb: 0.5,
+      }}
+    >
+      {children}
+    </Typography>
+  );
+}
 
 export function HealthDashboard() {
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -41,6 +59,8 @@ export function HealthDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
   const loadData = async () => {
     try {
@@ -62,20 +82,20 @@ export function HealthDashboard() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 5000); // Refresh every 5 seconds
+    const interval = setInterval(loadData, 5000);
     return () => clearInterval(interval);
   }, []);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "healthy":
-        return <CheckCircleIcon sx={{ color: "success.main" }} />;
+        return <CheckCircleIcon sx={{ color: "success.main", fontSize: 20 }} />;
       case "degraded":
-        return <WarningIcon sx={{ color: "warning.main" }} />;
+        return <WarningIcon sx={{ color: "warning.main", fontSize: 20 }} />;
       case "unhealthy":
-        return <ErrorIcon sx={{ color: "error.main" }} />;
+        return <ErrorIcon sx={{ color: "error.main", fontSize: 20 }} />;
       default:
-        return <InfoIcon />;
+        return <InfoIcon sx={{ fontSize: 20 }} />;
     }
   };
 
@@ -97,7 +117,7 @@ export function HealthDashboard() {
   if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-        <CircularProgress />
+        <CircularProgress size={32} sx={{ color: "primary.main" }} />
       </Box>
     );
   }
@@ -107,80 +127,77 @@ export function HealthDashboard() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        🧠 Memory System Health
-      </Typography>
-
+    <Box>
       {lastUpdate && (
-        <Typography variant="caption" color="textSecondary" sx={{ mb: 2 }}>
+        <Typography variant="caption" sx={{ color: "text.disabled", mb: 3, display: "block", fontSize: "0.7rem" }}>
           Last updated: {lastUpdate.toLocaleTimeString()}
         </Typography>
       )}
 
       <Grid container spacing={3}>
         {/* Overall Status */}
-        <Grid item xs={12}>
-          <Card>
-            <CardHeader
-              title="Overall Status"
-              avatar={getStatusIcon(health?.status || "unhealthy")}
-            />
-            <CardContent>
+        <Grid size={12}>
+          <GlassCard>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+                {getStatusIcon(health?.status || "unhealthy")}
+                <Typography variant="h6" sx={{ fontWeight: 500 }}>
+                  Overall Status
+                </Typography>
+              </Box>
               <Stack direction="row" spacing={2} alignItems="center">
                 <Chip
                   label={health?.status.toUpperCase() || "UNKNOWN"}
                   color={getStatusColor(health?.status || "unhealthy")}
                   variant="outlined"
+                  size="small"
                 />
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   {health?.checks
-                    ? `MongoDB: ${health.checks.mongodb ? "✓" : "✗"} | Voyage: ${health.checks.voyage ? "✓" : "✗"} | Memory: ${health.checks.memory ? "✓" : "✗"}`
+                    ? `MongoDB: ${health.checks.mongodb ? "Ok" : "Fail"} | Voyage: ${health.checks.voyage ? "Ok" : "Fail"} | Memory: ${health.checks.memory ? "Ok" : "Fail"}`
                     : "No data"}
                 </Typography>
               </Stack>
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
 
         {/* Daemon Uptime & Performance */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader title="Daemon Status" />
-            <CardContent>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <GlassCard>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+                Daemon Status
+              </Typography>
               <Stack spacing={2}>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Uptime
-                  </Typography>
-                  <Typography variant="h6">
+                  <SectionLabel>Uptime</SectionLabel>
+                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
                     {health ? `${Math.floor(health.uptime)}s` : "N/A"}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Response Time
-                  </Typography>
-                  <Typography variant="h6">
+                  <SectionLabel>Response Time</SectionLabel>
+                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
                     {health ? `${health.responseTime}ms` : "N/A"}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Node Version
-                  </Typography>
+                  <SectionLabel>Node Version</SectionLabel>
                   <Typography variant="body2">{health?.system.nodeVersion}</Typography>
                 </Box>
               </Stack>
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
 
         {/* Memory Usage */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader title="Heap Memory Usage" />
-            <CardContent>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <GlassCard>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2 }}>
+                Heap Memory Usage
+              </Typography>
               <Stack spacing={2}>
                 <Box>
                   <Box
@@ -190,8 +207,8 @@ export function HealthDashboard() {
                       mb: 1,
                     }}
                   >
-                    <Typography variant="caption">Heap Used</Typography>
-                    <Typography variant="caption">
+                    <SectionLabel>Heap Used</SectionLabel>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
                       {health?.memory.heapUsed}MB / {health?.memory.heapTotal}MB
                     </Typography>
                   </Box>
@@ -208,46 +225,43 @@ export function HealthDashboard() {
                         ? "error"
                         : "primary"
                     }
+                    sx={{ borderRadius: 4, height: 6 }}
                   />
                 </Box>
-                <Typography variant="caption" color="textSecondary">
+                <Typography variant="caption" sx={{ color: "text.disabled" }}>
                   External: {health?.memory.external}MB
                 </Typography>
               </Stack>
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
 
         {/* Database Status */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader
-              title="MongoDB Connection"
-              avatar={getStatusIcon(health?.database.connected ? "healthy" : "unhealthy")}
-            />
-            <CardContent>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <GlassCard>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                {getStatusIcon(health?.database.connected ? "healthy" : "unhealthy")}
+                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                  MongoDB Connection
+                </Typography>
+              </Box>
               <Stack spacing={2}>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Status
-                  </Typography>
-                  <Typography variant="h6">
-                    {health?.database.connected ? "Connected ✓" : "Disconnected ✗"}
+                  <SectionLabel>Status</SectionLabel>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {health?.database.connected ? "Connected" : "Disconnected"}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Response Time
-                  </Typography>
+                  <SectionLabel>Response Time</SectionLabel>
                   <Typography variant="body2">
                     {health?.database.responseTime}ms
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Total Memories
-                  </Typography>
-                  <Typography variant="h6">
+                  <SectionLabel>Total Memories</SectionLabel>
+                  <Typography variant="h6" sx={{ fontWeight: 500 }}>
                     {health?.database.memoriesCount || 0}
                   </Typography>
                 </Box>
@@ -258,66 +272,66 @@ export function HealthDashboard() {
                 )}
               </Stack>
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
 
         {/* Voyage Configuration */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardHeader
-              title="Voyage Embeddings"
-              avatar={getStatusIcon(health?.voyage.configured ? "healthy" : "unhealthy")}
-            />
-            <CardContent>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <GlassCard>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                {getStatusIcon(health?.voyage.configured ? "healthy" : "unhealthy")}
+                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                  Voyage Embeddings
+                </Typography>
+              </Box>
               <Stack spacing={2}>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Mode
-                  </Typography>
+                  <SectionLabel>Mode</SectionLabel>
                   <Chip
                     label={health?.voyage.mode === "mock" ? "Mock (Testing)" : "Real (Production)"}
                     color={health?.voyage.mode === "mock" ? "warning" : "success"}
                     size="small"
+                    variant="outlined"
                   />
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Endpoint
-                  </Typography>
-                  <Typography variant="body2" sx={{ wordBreak: "break-all" }}>
+                  <SectionLabel>Endpoint</SectionLabel>
+                  <Typography variant="body2" sx={{ wordBreak: "break-all", color: "text.secondary" }}>
                     {health?.voyage.endpoint}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Configured
-                  </Typography>
+                  <SectionLabel>Configured</SectionLabel>
                   <Typography variant="body2">
-                    {health?.voyage.configured ? "Yes ✓" : "No ✗"}
+                    {health?.voyage.configured ? "Yes" : "No"}
                   </Typography>
                 </Box>
               </Stack>
             </CardContent>
-          </Card>
+          </GlassCard>
         </Grid>
 
         {/* OpenClaw Integration Status */}
         {integrationStatus && (
-          <Grid item xs={12}>
-            <Card>
-              <CardHeader
-                title="OpenClaw Integration Status"
-                avatar={getStatusIcon(integrationStatus.status)}
-              />
-              <CardContent>
+          <Grid size={12}>
+            <GlassCard>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                  {getStatusIcon(integrationStatus.status)}
+                  <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                    OpenClaw Integration Status
+                  </Typography>
+                </Box>
                 <Stack spacing={2}>
-                  <Box>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Chip
                       label={integrationStatus.status.toUpperCase()}
                       color={getStatusColor(integrationStatus.status)}
                       variant="outlined"
+                      size="small"
                     />
-                    <Typography variant="caption" color="textSecondary" sx={{ ml: 2 }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       {integrationStatus.status === "integrated"
                         ? "Memory system fully integrated"
                         : integrationStatus.status === "partial"
@@ -326,31 +340,49 @@ export function HealthDashboard() {
                     </Typography>
                   </Box>
 
-                  <TableContainer component={Paper} variant="outlined">
+                  <TableContainer
+                    sx={{
+                      borderRadius: 2.5,
+                      border: `1px solid ${theme.palette.divider}`,
+                      bgcolor: isDark ? "rgba(139,156,247,0.02)" : "rgba(0,0,0,0.01)",
+                    }}
+                  >
                     <Table size="small">
                       <TableHead>
-                        <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-                          <TableCell>Check</TableCell>
-                          <TableCell align="right">Status</TableCell>
-                          <TableCell align="right">Details</TableCell>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 500, fontSize: "0.78rem" }}>Check</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 500, fontSize: "0.78rem" }}>Status</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 500, fontSize: "0.78rem" }}>Details</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
                           <TableCell>Daemon Accessible</TableCell>
                           <TableCell align="right">
-                            {integrationStatus.details.daemonAccessible ? "✓" : "✗"}
+                            <Chip
+                              label={integrationStatus.details.daemonAccessible ? "Ok" : "Fail"}
+                              color={integrationStatus.details.daemonAccessible ? "success" : "error"}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 22, fontSize: "0.68rem" }}
+                            />
                           </TableCell>
-                          <TableCell align="right">
+                          <TableCell align="right" sx={{ color: "text.secondary" }}>
                             {integrationStatus.details.daemonResponseTime}ms
                           </TableCell>
                         </TableRow>
                         <TableRow>
                           <TableCell>Memory Storage</TableCell>
                           <TableCell align="right">
-                            {integrationStatus.details.memoryStorageWorking ? "✓" : "✗"}
+                            <Chip
+                              label={integrationStatus.details.memoryStorageWorking ? "Ok" : "Fail"}
+                              color={integrationStatus.details.memoryStorageWorking ? "success" : "error"}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 22, fontSize: "0.68rem" }}
+                            />
                           </TableCell>
-                          <TableCell align="right">
+                          <TableCell align="right" sx={{ color: "text.secondary" }}>
                             {integrationStatus.details.memoryStorageWorking
                               ? "Working"
                               : "Failed"}
@@ -359,9 +391,15 @@ export function HealthDashboard() {
                         <TableRow>
                           <TableCell>In OpenClaw Config</TableCell>
                           <TableCell align="right">
-                            {integrationStatus.details.daemonInOpenClawConfig ? "✓" : "✗"}
+                            <Chip
+                              label={integrationStatus.details.daemonInOpenClawConfig ? "Ok" : "Missing"}
+                              color={integrationStatus.details.daemonInOpenClawConfig ? "success" : "warning"}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 22, fontSize: "0.68rem" }}
+                            />
                           </TableCell>
-                          <TableCell align="right">
+                          <TableCell align="right" sx={{ color: "text.secondary" }}>
                             {integrationStatus.details.daemonInOpenClawConfig
                               ? "Configured"
                               : "Not configured"}
@@ -370,9 +408,15 @@ export function HealthDashboard() {
                         <TableRow>
                           <TableCell>Agent Context</TableCell>
                           <TableCell align="right">
-                            {integrationStatus.details.agentContextInitialized ? "✓" : "✗"}
+                            <Chip
+                              label={integrationStatus.details.agentContextInitialized ? "Ok" : "Pending"}
+                              color={integrationStatus.details.agentContextInitialized ? "success" : "warning"}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 22, fontSize: "0.68rem" }}
+                            />
                           </TableCell>
-                          <TableCell align="right">
+                          <TableCell align="right" sx={{ color: "text.secondary" }}>
                             {integrationStatus.details.agentContextInitialized
                               ? "Ready"
                               : "Not initialized"}
@@ -383,7 +427,7 @@ export function HealthDashboard() {
                   </TableContainer>
                 </Stack>
               </CardContent>
-            </Card>
+            </GlassCard>
           </Grid>
         )}
       </Grid>

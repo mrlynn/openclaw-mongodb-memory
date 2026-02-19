@@ -63,11 +63,11 @@ export function DaemonUrlConfig() {
         <Typography
           variant="subtitle2"
           sx={{
-            color: "text.secondary",
+            color: "text.disabled",
             textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontWeight: 600,
-            fontSize: "0.7rem",
+            letterSpacing: "0.06em",
+            fontWeight: 500,
+            fontSize: "0.68rem",
             mb: 2,
           }}
         >

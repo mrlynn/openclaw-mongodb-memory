@@ -22,18 +22,18 @@ export function StatCard({ icon, label, value, subtitle, color }: StatCardProps)
         <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
           <Box
             sx={{
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               borderRadius: 3,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               background: isDark
-                ? `radial-gradient(circle, ${accentColor}22 0%, transparent 70%)`
-                : `${accentColor}14`,
+                ? `${accentColor}12`
+                : `${accentColor}0c`,
               color: accentColor,
               flexShrink: 0,
-              "& svg": { fontSize: 24 },
+              "& svg": { fontSize: 22 },
             }}
           >
             {icon}
@@ -42,11 +42,11 @@ export function StatCard({ icon, label, value, subtitle, color }: StatCardProps)
             <Typography
               variant="caption"
               sx={{
-                color: "text.secondary",
+                color: "text.disabled",
                 textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontWeight: 600,
-                fontSize: "0.7rem",
+                letterSpacing: "0.06em",
+                fontWeight: 500,
+                fontSize: "0.68rem",
               }}
             >
               {label}
@@ -54,9 +54,10 @@ export function StatCard({ icon, label, value, subtitle, color }: StatCardProps)
             <Typography
               variant="h5"
               sx={{
-                fontWeight: 700,
+                fontWeight: 600,
                 lineHeight: 1.2,
                 mt: 0.25,
+                letterSpacing: "-0.02em",
               }}
             >
               {value}

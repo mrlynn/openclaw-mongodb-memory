@@ -30,7 +30,7 @@ import { useTheme } from "@mui/material";
 import { keyframes } from "@emotion/react";
 
 const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -75,17 +75,17 @@ function ServiceStatusPanel({ status }: { status: DaemonStatus }) {
         <Typography
           variant="subtitle2"
           sx={{
-            color: "text.secondary",
+            color: "text.disabled",
             textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontWeight: 600,
-            fontSize: "0.7rem",
+            letterSpacing: "0.06em",
+            fontWeight: 500,
+            fontSize: "0.68rem",
             mb: 2.5,
           }}
         >
           Service Health
         </Typography>
-        <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+        <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
           {services.map((svc) => (
             <Box
               key={svc.name}
@@ -95,20 +95,20 @@ function ServiceStatusPanel({ status }: { status: DaemonStatus }) {
                 gap: 1.5,
                 px: 2,
                 py: 1,
-                borderRadius: 2,
+                borderRadius: 2.5,
                 background: isDark
-                  ? "rgba(255,255,255,0.03)"
-                  : "rgba(0,0,0,0.02)",
+                  ? "rgba(139,156,247,0.03)"
+                  : "rgba(91,106,191,0.03)",
               }}
             >
               <StatusIndicator status={mapStatus(svc.status)} size="medium" />
               <Box>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
                   {svc.name}
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ color: "text.disabled", textTransform: "capitalize" }}
+                  sx={{ color: "text.disabled", textTransform: "capitalize", fontSize: "0.7rem" }}
                 >
                   {svc.status}
                 </Typography>
@@ -140,25 +140,25 @@ function HeapUsageBar({ used, total }: { used: number; total: number }) {
           <Typography
             variant="subtitle2"
             sx={{
-              color: "text.secondary",
+              color: "text.disabled",
               textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              fontWeight: 600,
-              fontSize: "0.7rem",
+              letterSpacing: "0.06em",
+              fontWeight: 500,
+              fontSize: "0.68rem",
             }}
           >
             Heap Memory Usage
           </Typography>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontSize: "0.8rem" }}>
             {formatMB(used)} / {formatMB(total)}
           </Typography>
         </Box>
         <Box
           sx={{
             width: "100%",
-            height: 10,
-            borderRadius: 5,
-            bgcolor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
+            height: 8,
+            borderRadius: 4,
+            bgcolor: isDark ? "rgba(180,188,208,0.06)" : "rgba(0,0,0,0.05)",
             overflow: "hidden",
           }}
         >
@@ -166,18 +166,15 @@ function HeapUsageBar({ used, total }: { used: number; total: number }) {
             sx={{
               width: `${percent}%`,
               height: "100%",
-              borderRadius: 5,
-              background: "linear-gradient(90deg, #00e5ff, #d500f9)",
-              boxShadow: isDark
-                ? "0 0 12px rgba(0, 229, 255, 0.4)"
-                : "none",
+              borderRadius: 4,
+              background: "linear-gradient(90deg, #8b9cf7, #c4a7e7)",
               transition: "width 0.8s ease-out",
             }}
           />
         </Box>
         <Typography
           variant="caption"
-          sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+          sx={{ color: "text.disabled", mt: 0.75, display: "block", fontSize: "0.7rem" }}
         >
           {percent.toFixed(1)}% utilized
         </Typography>
@@ -192,25 +189,24 @@ function DisconnectedState({ daemonUrl, onRetry }: { daemonUrl: string; onRetry:
 
   return (
     <GlassCard
-      glowColor="#ff4466"
+      glowColor="#e87878"
       sx={{
         border: isDark
-          ? "1px solid rgba(255, 68, 102, 0.15)"
-          : "1px solid rgba(255, 68, 102, 0.25)",
+          ? "1px solid rgba(232, 120, 120, 0.12)"
+          : "1px solid rgba(196, 88, 88, 0.15)",
         animation: `${fadeInUp} 0.5s ease-out`,
       }}
     >
       <CardContent sx={{ p: 4, textAlign: "center" }}>
         <LinkOff
           sx={{
-            fontSize: 56,
+            fontSize: 48,
             color: "error.main",
             mb: 2,
-            opacity: 0.8,
-            filter: isDark ? "drop-shadow(0 0 12px rgba(255,68,102,0.3))" : "none",
+            opacity: 0.7,
           }}
         />
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
           Daemon Unreachable
         </Typography>
         <Typography
@@ -228,8 +224,9 @@ function DisconnectedState({ daemonUrl, onRetry }: { daemonUrl: string; onRetry:
             px: 2,
             py: 0.5,
             display: "inline-block",
-            borderRadius: 1,
-            bgcolor: isDark ? "rgba(0,229,255,0.06)" : "rgba(0,151,167,0.06)",
+            borderRadius: 1.5,
+            bgcolor: isDark ? "rgba(139,156,247,0.06)" : "rgba(91,106,191,0.06)",
+            fontSize: "0.82rem",
           }}
         >
           {daemonUrl}
@@ -273,9 +270,10 @@ export default function DashboardPage() {
         <Typography
           variant="h4"
           sx={{
-            fontWeight: 700,
+            fontWeight: 600,
             mb: 3,
-            animation: `${fadeInUp} 0.5s ease-out`,
+            letterSpacing: "-0.02em",
+            animation: `${fadeInUp} 0.4s ease-out`,
           }}
         >
           Dashboard
@@ -293,7 +291,7 @@ export default function DashboardPage() {
               <Skeleton
                 variant="rounded"
                 height={100}
-                sx={{ borderRadius: 4 }}
+                sx={{ borderRadius: 4.5 }}
               />
             </Grid>
             {[1, 2, 3, 4].map((i) => (
@@ -301,7 +299,7 @@ export default function DashboardPage() {
                 <Skeleton
                   variant="rounded"
                   height={110}
-                  sx={{ borderRadius: 4 }}
+                  sx={{ borderRadius: 4.5 }}
                 />
               </Grid>
             ))}
@@ -312,7 +310,7 @@ export default function DashboardPage() {
             {status && (
               <Grid
                 size={12}
-                sx={{ animation: `${fadeInUp} 0.5s ease-out 0.1s both` }}
+                sx={{ animation: `${fadeInUp} 0.4s ease-out 0.05s both` }}
               >
                 <ServiceStatusPanel status={status} />
               </Grid>
@@ -323,55 +321,55 @@ export default function DashboardPage() {
               <>
                 <Grid
                   size={{ xs: 12, sm: 6, md: 3 }}
-                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.2s both` }}
+                  sx={{ animation: `${fadeInUp} 0.4s ease-out 0.1s both` }}
                 >
                   <StatCard
                     icon={<Storage />}
                     label="Total Memories"
                     value={status.stats.totalMemories.toLocaleString()}
-                    color="#00e5ff"
+                    color="#8b9cf7"
                   />
                 </Grid>
                 <Grid
                   size={{ xs: 12, sm: 6, md: 3 }}
-                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.3s both` }}
+                  sx={{ animation: `${fadeInUp} 0.4s ease-out 0.15s both` }}
                 >
                   <StatCard
                     icon={<Timer />}
                     label="Uptime"
                     value={formatUptime(status.uptime)}
-                    color="#d500f9"
+                    color="#c4a7e7"
                   />
                 </Grid>
                 <Grid
                   size={{ xs: 12, sm: 6, md: 3 }}
-                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.4s both` }}
+                  sx={{ animation: `${fadeInUp} 0.4s ease-out 0.2s both` }}
                 >
                   <StatCard
                     icon={<DataUsage />}
                     label="Heap Used"
                     value={formatMB(status.memory.heapUsed)}
                     subtitle={`of ${formatMB(status.memory.heapTotal)}`}
-                    color="#ffab00"
+                    color="#d4a76a"
                   />
                 </Grid>
                 <Grid
                   size={{ xs: 12, sm: 6, md: 3 }}
-                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.5s both` }}
+                  sx={{ animation: `${fadeInUp} 0.4s ease-out 0.25s both` }}
                 >
                   <StatCard
                     icon={error ? <WifiOff /> : <Wifi />}
                     label="Connection"
                     value={error ? "Offline" : "Connected"}
                     subtitle={daemonUrl}
-                    color={error ? "#ff4466" : "#00ff88"}
+                    color={error ? "#e87878" : "#7ec8a4"}
                   />
                 </Grid>
 
                 {/* Heap Usage Bar */}
                 <Grid
                   size={12}
-                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.6s both` }}
+                  sx={{ animation: `${fadeInUp} 0.4s ease-out 0.3s both` }}
                 >
                   <HeapUsageBar
                     used={status.memory.heapUsed}

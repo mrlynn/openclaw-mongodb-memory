@@ -24,7 +24,7 @@ import { RecallResultCard } from "@/components/recall/RecallResultCard";
 import { keyframes } from "@emotion/react";
 
 const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -88,12 +88,13 @@ export default function RecallPage() {
     <Fade in timeout={400}>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Search sx={{ color: "primary.main", fontSize: 28 }} />
+          <Search sx={{ color: "primary.main", fontSize: 24, opacity: 0.8 }} />
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
-              animation: `${fadeInUp} 0.5s ease-out`,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              animation: `${fadeInUp} 0.4s ease-out`,
             }}
           >
             Recall
@@ -175,12 +176,12 @@ export default function RecallPage() {
             <Typography
               variant="subtitle2"
               sx={{
-                color: "text.secondary",
+                color: "text.disabled",
                 mb: 2,
                 textTransform: "uppercase",
-                letterSpacing: "0.1em",
-                fontWeight: 600,
-                fontSize: "0.7rem",
+                letterSpacing: "0.06em",
+                fontWeight: 500,
+                fontSize: "0.68rem",
               }}
             >
               {results.length} result{results.length !== 1 ? "s" : ""} found

@@ -10,7 +10,6 @@ import {
   ListItemIcon,
   ListItemText,
   Typography,
-  Divider,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -20,7 +19,6 @@ import {
   Search,
   Storage,
   Settings,
-  Hub,
   HealthAndSafety,
 } from "@mui/icons-material";
 import { SIDEBAR_WIDTH, NAV_ITEMS } from "@/lib/constants";
@@ -51,49 +49,39 @@ function SidebarContent() {
         display: "flex",
         flexDirection: "column",
         height: "100%",
-        py: 2,
+        py: 3,
       }}
     >
       {/* Logo */}
-      <Box sx={{ px: 3, mb: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Hub
-            sx={{
-              fontSize: 32,
-              color: "primary.main",
-              filter: isDark ? "drop-shadow(0 0 8px rgba(0,229,255,0.5))" : "none",
-            }}
-          />
-          <Box>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 800,
-                fontSize: "1.1rem",
-                background: isDark
-                  ? "linear-gradient(135deg, #00e5ff, #d500f9)"
-                  : "none",
-                backgroundClip: isDark ? "text" : "unset",
-                WebkitBackgroundClip: isDark ? "text" : "unset",
-                WebkitTextFillColor: isDark ? "transparent" : "unset",
-              }}
-            >
-              OpenClaw
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", display: "block", mt: -0.5 }}
-            >
-              Memory System
-            </Typography>
-          </Box>
-        </Box>
+      <Box sx={{ px: 3, mb: 4 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 600,
+            fontSize: "1.05rem",
+            letterSpacing: "-0.02em",
+            color: "text.primary",
+          }}
+        >
+          OpenClaw
+        </Typography>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.disabled",
+            display: "block",
+            mt: 0.25,
+            fontSize: "0.68rem",
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+          }}
+        >
+          Memory System
+        </Typography>
       </Box>
 
-      <Divider sx={{ mx: 2, mb: 1 }} />
-
       {/* Navigation */}
-      <List sx={{ px: 1, flex: 1 }}>
+      <List sx={{ px: 1.5, flex: 1 }}>
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.path ||
@@ -105,34 +93,36 @@ function SidebarContent() {
               href={item.path}
               selected={isActive}
               sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                mx: 1,
-                transition: "all 0.2s ease",
+                borderRadius: 2.5,
+                mb: 0.25,
+                mx: 0.5,
+                py: 1,
+                px: 1.5,
+                transition: "all 0.25s ease",
                 "&.Mui-selected": {
                   background: isDark
-                    ? "rgba(0, 229, 255, 0.1)"
-                    : "rgba(0, 151, 167, 0.1)",
-                  borderLeft: `3px solid ${theme.palette.primary.main}`,
+                    ? "rgba(139, 156, 247, 0.08)"
+                    : "rgba(91, 106, 191, 0.06)",
                   "& .MuiListItemIcon-root": {
                     color: "primary.main",
                   },
                   "& .MuiListItemText-primary": {
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: "primary.main",
                   },
                 },
                 "&:hover": {
                   background: isDark
-                    ? "rgba(0, 229, 255, 0.06)"
-                    : "rgba(0, 0, 0, 0.04)",
+                    ? "rgba(139, 156, 247, 0.05)"
+                    : "rgba(0, 0, 0, 0.03)",
                 },
               }}
             >
               <ListItemIcon
                 sx={{
-                  minWidth: 40,
-                  color: isActive ? "primary.main" : "text.secondary",
+                  minWidth: 36,
+                  color: isActive ? "primary.main" : "text.disabled",
+                  "& svg": { fontSize: 20 },
                 }}
               >
                 {ICON_MAP[item.icon]}
@@ -140,7 +130,8 @@ function SidebarContent() {
               <ListItemText
                 primary={item.label}
                 primaryTypographyProps={{
-                  fontSize: "0.9rem",
+                  fontSize: "0.85rem",
+                  letterSpacing: "-0.01em",
                 }}
               />
             </ListItemButton>
@@ -148,11 +139,23 @@ function SidebarContent() {
         })}
       </List>
 
-      <Divider sx={{ mx: 2, mb: 1 }} />
-
       {/* Footer */}
-      <Box sx={{ px: 3, pb: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography variant="caption" sx={{ color: "text.disabled" }}>
+      <Box
+        sx={{
+          px: 3,
+          pb: 1,
+          pt: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderTop: `1px solid ${theme.palette.divider}`,
+          mt: 1,
+        }}
+      >
+        <Typography
+          variant="caption"
+          sx={{ color: "text.disabled", fontSize: "0.65rem" }}
+        >
           v0.1.0
         </Typography>
         <ThemeToggle />

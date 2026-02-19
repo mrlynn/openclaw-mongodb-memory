@@ -5,18 +5,18 @@ import { keyframes } from "@emotion/react";
 
 const pulse = keyframes`
   0% { box-shadow: 0 0 0 0 var(--pulse-color); }
-  70% { box-shadow: 0 0 0 8px transparent; }
+  70% { box-shadow: 0 0 0 6px transparent; }
   100% { box-shadow: 0 0 0 0 transparent; }
 `;
 
 type StatusType = "ready" | "connected" | "error" | "unknown" | "loading";
 
 const STATUS_COLORS: Record<StatusType, string> = {
-  ready: "#00ff88",
-  connected: "#00ff88",
-  error: "#ff4466",
-  unknown: "#ffab00",
-  loading: "#888888",
+  ready: "#7ec8a4",
+  connected: "#7ec8a4",
+  error: "#e87878",
+  unknown: "#d4a76a",
+  loading: "#6b7085",
 };
 
 interface StatusIndicatorProps {
@@ -26,7 +26,7 @@ interface StatusIndicatorProps {
   showPulse?: boolean;
 }
 
-const SIZE_MAP = { small: 8, medium: 12, large: 16 };
+const SIZE_MAP = { small: 7, medium: 10, large: 14 };
 
 export function StatusIndicator({
   status,
@@ -47,12 +47,12 @@ export function StatusIndicator({
           height: dotSize,
           borderRadius: "50%",
           backgroundColor: color,
-          "--pulse-color": `${color}66`,
+          "--pulse-color": `${color}40`,
           ...(showPulse
-            ? { animation: `${pulse} 2s ease-in-out infinite` }
+            ? { animation: `${pulse} 2.5s ease-in-out infinite` }
             : {}),
           ...(isDark
-            ? { boxShadow: `0 0 ${dotSize}px ${color}66` }
+            ? { boxShadow: `0 0 ${dotSize}px ${color}30` }
             : {}),
         } as any}
       />

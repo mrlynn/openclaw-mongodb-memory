@@ -34,7 +34,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           width: { md: `calc(100% - ${SIDEBAR_WIDTH}px)` },
           minHeight: "100vh",
           position: "relative",
-          // Neural glow background in dark mode
           "&::before": isDark
             ? {
                 content: '""',
@@ -42,9 +41,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 top: 0,
                 left: { md: `${SIDEBAR_WIDTH}px` },
                 right: 0,
-                height: "40vh",
+                height: "50vh",
                 background:
-                  "radial-gradient(ellipse at 50% 0%, rgba(0,229,255,0.04) 0%, transparent 70%)",
+                  "radial-gradient(ellipse at 30% 0%, rgba(139,156,247,0.025) 0%, transparent 60%), radial-gradient(ellipse at 70% 10%, rgba(196,167,231,0.015) 0%, transparent 50%)",
                 pointerEvents: "none",
                 zIndex: 0,
               }
@@ -58,9 +57,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             elevation={0}
             sx={{
               background: isDark
-                ? "rgba(8, 12, 24, 0.9)"
-                : "rgba(255,255,255,0.9)",
-              backdropFilter: "blur(12px)",
+                ? "rgba(15, 17, 23, 0.85)"
+                : "rgba(248,249,252,0.85)",
+              backdropFilter: "blur(16px) saturate(1.2)",
               borderBottom: `1px solid ${theme.palette.divider}`,
             }}
           >
@@ -72,7 +71,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               >
                 <MenuIcon />
               </IconButton>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, letterSpacing: "-0.02em" }}
+              >
                 OpenClaw
               </Typography>
             </Toolbar>
@@ -85,6 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             p: { xs: 2, sm: 3, md: 4 },
             position: "relative",
             zIndex: 1,
+            maxWidth: 1400,
           }}
         >
           {children}

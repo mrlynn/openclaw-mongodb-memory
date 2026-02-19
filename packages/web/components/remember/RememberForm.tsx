@@ -125,9 +125,8 @@ export function RememberForm() {
             <CheckCircle
               sx={{
                 fontSize: 64,
-                color: "#00ff88",
+                color: "#7ec8a4",
                 animation: `${checkPop} 0.4s ease-out`,
-                filter: isDark ? "drop-shadow(0 0 16px rgba(0,255,136,0.5))" : "none",
               }}
             />
             <Box
@@ -135,7 +134,7 @@ export function RememberForm() {
                 position: "absolute",
                 inset: -8,
                 borderRadius: "50%",
-                border: "2px solid #00ff88",
+                border: "2px solid #7ec8a4",
                 animation: `${ringExpand} 0.6s ease-out forwards`,
               }}
             />

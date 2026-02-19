@@ -58,11 +58,11 @@ export function DangerZone() {
 
   return (
     <GlassCard
-      glowColor="#ff4466"
+      glowColor="#e87878"
       sx={{
         border: isDark
-          ? "1px solid rgba(255, 68, 102, 0.2)"
-          : "1px solid rgba(255, 68, 102, 0.3)",
+          ? "1px solid rgba(232, 120, 120, 0.12)"
+          : "1px solid rgba(196, 88, 88, 0.15)",
       }}
     >
       <CardContent sx={{ p: 3 }}>
@@ -73,9 +73,9 @@ export function DangerZone() {
             sx={{
               color: "error.main",
               textTransform: "uppercase",
-              letterSpacing: "0.1em",
-              fontWeight: 600,
-              fontSize: "0.7rem",
+              letterSpacing: "0.06em",
+              fontWeight: 500,
+              fontSize: "0.68rem",
             }}
           >
             Danger Zone

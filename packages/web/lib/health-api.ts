@@ -49,11 +49,47 @@ export interface OpenClawIntegrationStatus {
 
 export async function fetchHealth(): Promise<HealthStatus | null> {
   try {
-    const response = await fetch(`${API_BASE}/health/detailed`, {
+    const response = await fetch(`${API_BASE}/status`, {
       cache: "no-store",
     });
     if (!response.ok) return null;
-    return response.json();
+    const data = await response.json();
+    
+    // Transform /status response into HealthStatus format
+    if (data.success) {
+      return {
+        status: data.daemon === "ready" && data.mongodb === "connected" ? "healthy" : "degraded",
+        timestamp: new Date().toISOString(),
+        uptime: data.uptime,
+        responseTime: 0,
+        memory: {
+          heapUsed: data.memory?.heapUsed || 0,
+          heapTotal: data.memory?.heapTotal || 0,
+          external: 0,
+        },
+        database: {
+          connected: data.mongodb === "connected",
+          responseTime: 0,
+          memoriesCount: data.stats?.totalMemories || 0,
+        },
+        voyage: {
+          configured: data.voyage === "ready",
+          mode: process.env.NEXT_PUBLIC_VOYAGE_MOCK === "true" ? "mock" : "real",
+          endpoint: process.env.NEXT_PUBLIC_VOYAGE_BASE_URL || "https://api.voyageai.com/v1",
+        },
+        system: {
+          nodeVersion: "Node.js",
+          platform: "localhost",
+          arch: "x64",
+        },
+        checks: {
+          mongodb: data.mongodb === "connected",
+          voyage: data.voyage === "ready",
+          memory: true,
+        },
+      };
+    }
+    return null;
   } catch (error) {
     console.error("Failed to fetch health:", error);
     return null;

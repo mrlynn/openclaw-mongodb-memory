@@ -30,7 +30,7 @@ import { keyframes } from "@emotion/react";
 import { CardContent } from "@mui/material";
 
 const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -113,12 +113,13 @@ export default function BrowserPage() {
     <Fade in timeout={400}>
       <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Storage sx={{ color: "primary.main", fontSize: 28 }} />
+          <Storage sx={{ color: "primary.main", fontSize: 24, opacity: 0.8 }} />
           <Typography
             variant="h4"
             sx={{
-              fontWeight: 700,
-              animation: `${fadeInUp} 0.5s ease-out`,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              animation: `${fadeInUp} 0.4s ease-out`,
             }}
           >
             Memory Browser
@@ -180,11 +181,11 @@ export default function BrowserPage() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700, width: "50%" }}>
+                          <TableCell sx={{ fontWeight: 500, width: "50%" }}>
                             Text
                           </TableCell>
-                          <TableCell sx={{ fontWeight: 700 }}>Tags</TableCell>
-                          <TableCell sx={{ fontWeight: 700 }}>Created</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>Tags</TableCell>
+                          <TableCell sx={{ fontWeight: 500 }}>Created</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -196,7 +197,7 @@ export default function BrowserPage() {
                               cursor: "pointer",
                               "&:hover": {
                                 bgcolor: isDark
-                                  ? "rgba(0, 229, 255, 0.04)"
+                                  ? "rgba(139, 156, 247, 0.03)"
                                   : "rgba(0,0,0,0.02)",
                               },
                             }}

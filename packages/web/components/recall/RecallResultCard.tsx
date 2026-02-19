@@ -6,7 +6,6 @@ import {
   Typography,
   Chip,
   IconButton,
-  Collapse,
   Tooltip,
   useTheme,
 } from "@mui/material";
@@ -70,12 +69,12 @@ export function RecallResultCard({
       sx={{
         borderLeft: `3px solid ${
           score > 0.7
-            ? "#00ff88"
+            ? "#7ec8a4"
             : score > 0.5
-              ? "#ffab00"
+              ? "#d4a76a"
               : isDark
-                ? "rgba(255,255,255,0.1)"
-                : "rgba(0,0,0,0.1)"
+                ? "rgba(180,188,208,0.1)"
+                : "rgba(0,0,0,0.08)"
         }`,
       }}
     >
@@ -88,7 +87,7 @@ export function RecallResultCard({
           variant="body2"
           sx={{
             mb: 1.5,
-            lineHeight: 1.6,
+            lineHeight: 1.65,
             whiteSpace: "pre-wrap",
           }}
         >
@@ -104,10 +103,10 @@ export function RecallResultCard({
               cursor: "pointer",
               color: "primary.main",
               mb: 1,
-              "&:hover": { textDecoration: "underline" },
+              "&:hover": { opacity: 0.8 },
             }}
           >
-            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ fontWeight: 500 }}>
               {expanded ? "Show less" : "Show more"}
             </Typography>
             {expanded ? (
@@ -135,7 +134,7 @@ export function RecallResultCard({
                 size="small"
                 variant="outlined"
                 color="primary"
-                sx={{ height: 24, fontSize: "0.7rem" }}
+                sx={{ height: 24, fontSize: "0.68rem" }}
               />
             ))}
             <Typography variant="caption" sx={{ color: "text.disabled" }}>
@@ -153,7 +152,7 @@ export function RecallResultCard({
                 "&:hover": { color: "error.main" },
               }}
             >
-              <Delete sx={{ fontSize: 18 }} />
+              <Delete sx={{ fontSize: 17 }} />
             </IconButton>
           </Tooltip>
         </Box>

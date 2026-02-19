@@ -57,7 +57,7 @@ export function MemoryDetailDrawer({
             mb: 3,
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>
             Memory Detail
           </Typography>
           <IconButton onClick={onClose}>
@@ -71,11 +71,11 @@ export function MemoryDetailDrawer({
         <Typography
           variant="subtitle2"
           sx={{
-            color: "text.secondary",
+            color: "text.disabled",
             textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            fontSize: "0.7rem",
-            fontWeight: 600,
+            letterSpacing: "0.06em",
+            fontSize: "0.68rem",
+            fontWeight: 500,
             mb: 1,
           }}
         >
@@ -94,7 +94,7 @@ export function MemoryDetailDrawer({
             <Typography
               variant="subtitle2"
               sx={{
-                color: "text.secondary",
+                color: "text.disabled",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 fontSize: "0.7rem",
@@ -118,7 +118,7 @@ export function MemoryDetailDrawer({
             <Typography
               variant="subtitle2"
               sx={{
-                color: "text.secondary",
+                color: "text.disabled",
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
                 fontSize: "0.7rem",
@@ -149,7 +149,7 @@ export function MemoryDetailDrawer({
           <Typography
             variant="subtitle2"
             sx={{
-              color: "text.secondary",
+              color: "text.disabled",
               textTransform: "uppercase",
               letterSpacing: "0.1em",
               fontSize: "0.7rem",
@@ -172,7 +172,7 @@ export function MemoryDetailDrawer({
           <Typography
             variant="subtitle2"
             sx={{
-              color: "text.secondary",
+              color: "text.disabled",
               textTransform: "uppercase",
               letterSpacing: "0.1em",
               fontSize: "0.7rem",
