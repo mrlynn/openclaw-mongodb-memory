@@ -71,7 +71,7 @@ export const healthRoute = async (req: Request, res: Response) => {
     const voyageEndpoint = voyageBaseUrl || "https://api.voyageai.com/v1";
 
     // 3. Get memory stats
-    const memUsage = process.process?.memoryUsage?.() || process.memoryUsage();
+    const memUsage = process.memoryUsage();
 
     // 4. Determine overall status
     const allChecksPass = mongoHealthy && voyageConfigured;
