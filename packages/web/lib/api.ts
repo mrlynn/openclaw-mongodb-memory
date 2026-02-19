@@ -1,19 +1,28 @@
 "use client";
 
-const API_BASE = process.env.NEXT_PUBLIC_DAEMON_URL || "http://localhost:7654";
+export async function fetchHealth(baseUrl: string) {
+  const response = await fetch(`${baseUrl}/health`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Health check failed: ${response.status}`);
+  return response.json();
+}
 
-export async function fetchStatus() {
-  const response = await fetch(`${API_BASE}/status`, { cache: "no-store" });
+export async function fetchStatus(baseUrl: string) {
+  const response = await fetch(`${baseUrl}/status`, { cache: "no-store" });
   if (!response.ok) throw new Error(`Status failed: ${response.status}`);
   return response.json();
 }
 
 export async function rememberMemory(
+  baseUrl: string,
   agentId: string,
   text: string,
-  options?: { tags?: string[]; metadata?: Record<string, unknown>; ttl?: number }
+  options?: {
+    tags?: string[];
+    metadata?: Record<string, unknown>;
+    ttl?: number;
+  }
 ) {
-  const response = await fetch(`${API_BASE}/remember`, {
+  const response = await fetch(`${baseUrl}/remember`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -29,6 +38,7 @@ export async function rememberMemory(
 }
 
 export async function recallMemory(
+  baseUrl: string,
   agentId: string,
   query: string,
   options?: { limit?: number; tags?: string[] }
@@ -42,7 +52,7 @@ export async function recallMemory(
     params.set("tags", options.tags.join(","));
   }
 
-  const response = await fetch(`${API_BASE}/recall?${params.toString()}`, {
+  const response = await fetch(`${baseUrl}/recall?${params.toString()}`, {
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`Recall failed: ${response.status}`);
@@ -50,10 +60,42 @@ export async function recallMemory(
   return data.results;
 }
 
-export async function forgetMemory(id: string) {
-  const response = await fetch(`${API_BASE}/forget/${id}`, {
+export async function forgetMemory(baseUrl: string, id: string) {
+  const response = await fetch(`${baseUrl}/forget/${id}`, {
     method: "DELETE",
   });
   if (!response.ok) throw new Error(`Forget failed: ${response.status}`);
+  return response.json();
+}
+
+export async function exportMemories(baseUrl: string, agentId: string) {
+  const params = new URLSearchParams({ agentId });
+  const response = await fetch(`${baseUrl}/export?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+  return response.json();
+}
+
+export async function purgeMemories(
+  baseUrl: string,
+  agentId: string,
+  olderThan?: string
+) {
+  const response = await fetch(`${baseUrl}/purge`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ agentId, olderThan }),
+  });
+  if (!response.ok) throw new Error(`Purge failed: ${response.status}`);
+  return response.json();
+}
+
+export async function clearMemories(baseUrl: string, agentId: string) {
+  const params = new URLSearchParams({ agentId });
+  const response = await fetch(`${baseUrl}/clear?${params.toString()}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error(`Clear failed: ${response.status}`);
   return response.json();
 }

@@ -9,7 +9,6 @@ export interface Memory {
   createdAt: Date;
   updatedAt: Date;
   expiresAt?: Date;
-  ttl?: number; // seconds
 }
 
 export interface RememberRequest {
@@ -18,7 +17,7 @@ export interface RememberRequest {
   text: string;
   tags?: string[];
   metadata?: Record<string, unknown>;
-  ttl?: number; // seconds
+  ttl?: number;
 }
 
 export interface RecallRequest {
@@ -34,12 +33,6 @@ export interface RecallResult {
   text: string;
   score: number;
   tags: string[];
+  metadata: Record<string, unknown>;
   createdAt: Date;
-}
-
-export interface MemoryStats {
-  totalMemories: number;
-  agentCount: number;
-  storageSize: number;
-  averageEmbeddingDim: number;
 }

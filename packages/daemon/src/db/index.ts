@@ -1,45 +1,49 @@
 import { MongoClient, Db } from "mongodb";
 import { initializeSchema } from "./schema";
+import { DB_NAME } from "../constants";
 
 export interface DatabaseConfig {
   mongoUri: string;
 }
 
-let cachedDb: Db | null = null;
+export interface DatabaseConnection {
+  client: MongoClient;
+  db: Db;
+}
 
-export async function connectDatabase(config: DatabaseConfig): Promise<Db> {
-  if (cachedDb) {
-    return cachedDb;
+let cached: DatabaseConnection | null = null;
+
+export async function connectDatabase(config: DatabaseConfig): Promise<DatabaseConnection> {
+  if (cached) {
+    return cached;
   }
 
   const client = new MongoClient(config.mongoUri);
 
   try {
     await client.connect();
-    const db = client.db("openclaw_memory");
+    const db = client.db(DB_NAME);
 
-    // Initialize schema
     await initializeSchema(db);
 
-    cachedDb = db;
-    return db;
+    cached = { client, db };
+    return cached;
   } catch (error) {
     await client.close();
     throw error;
   }
 }
 
-export async function getDatabase(): Promise<Db> {
-  if (!cachedDb) {
+export function getDatabase(): Db {
+  if (!cached) {
     throw new Error("Database not initialized. Call connectDatabase first.");
   }
-  return cachedDb;
+  return cached.db;
 }
 
 export async function closeDatabase(): Promise<void> {
-  if (cachedDb) {
-    const client = cachedDb.client;
-    await client.close();
-    cachedDb = null;
+  if (cached) {
+    await cached.client.close();
+    cached = null;
   }
 }

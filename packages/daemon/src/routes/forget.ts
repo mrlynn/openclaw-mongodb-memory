@@ -1,36 +1,25 @@
 import { Request, Response } from "express";
-import { MongoClient, ObjectId } from "mongodb";
+import { Db, ObjectId } from "mongodb";
+import { asyncHandler } from "../middleware/asyncHandler";
+import { COLLECTION_MEMORIES } from "../constants";
 
-export const forgetRoute = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
+export const forgetRoute = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
 
-    // Validate ObjectId
-    if (!ObjectId.isValid(id)) {
-      res.status(400).json({ error: "Invalid memory ID" });
-      return;
-    }
-
-    const mongoClient: MongoClient = req.app.locals.mongoClient;
-    const db = mongoClient.db("openclaw_memory");
-    const collection = db.collection("memories");
-
-    const result = await collection.deleteOne({
-      _id: new ObjectId(id),
-    });
-
-    if (result.deletedCount === 0) {
-      res.status(404).json({ error: "Memory not found" });
-      return;
-    }
-
-    res.json({
-      success: true,
-      id,
-      message: "Memory deleted",
-    });
-  } catch (error) {
-    console.error("Forget error:", error);
-    res.status(500).json({ error: String(error) });
+  if (!ObjectId.isValid(id)) {
+    res.status(400).json({ success: false, error: "Invalid memory ID" });
+    return;
   }
-};
+
+  const db: Db = req.app.locals.db;
+  const collection = db.collection(COLLECTION_MEMORIES);
+
+  const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+  if (result.deletedCount === 0) {
+    res.status(404).json({ success: false, error: "Memory not found" });
+    return;
+  }
+
+  res.json({ success: true, id, message: "Memory deleted" });
+});

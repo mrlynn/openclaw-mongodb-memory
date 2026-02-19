@@ -1,0 +1,389 @@
+"use client";
+
+import {
+  Box,
+  Typography,
+  Alert,
+  Fade,
+  Skeleton,
+  Button,
+  CardContent,
+} from "@mui/material";
+import Grid from "@mui/material/Grid2";
+import Link from "next/link";
+import {
+  Storage,
+  Timer,
+  DataUsage,
+  Wifi,
+  WifiOff,
+  LinkOff,
+  Settings,
+  Refresh,
+} from "@mui/icons-material";
+import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
+import { useStatus, DaemonStatus } from "@/hooks/useStatus";
+import { GlassCard } from "@/components/cards/GlassCard";
+import { StatusIndicator } from "@/components/cards/StatusIndicator";
+import { StatCard } from "@/components/cards/StatCard";
+import { useTheme } from "@mui/material";
+import { keyframes } from "@emotion/react";
+
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+function formatUptime(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function formatBytes(bytes: number): string {
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
+}
+
+function mapStatus(value: string): "ready" | "error" | "unknown" {
+  if (
+    value === "running" ||
+    value === "connected" ||
+    value === "ready" ||
+    value === "available"
+  )
+    return "ready";
+  if (value === "error" || value === "disconnected") return "error";
+  return "unknown";
+}
+
+function ServiceStatusPanel({ status }: { status: DaemonStatus }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  const services = [
+    { name: "Daemon", status: status.daemon },
+    { name: "MongoDB", status: status.mongodb },
+    { name: "Voyage AI", status: status.voyage },
+  ];
+
+  return (
+    <GlassCard>
+      <CardContent sx={{ p: 3 }}>
+        <Typography
+          variant="subtitle2"
+          sx={{
+            color: "text.secondary",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            fontWeight: 600,
+            fontSize: "0.7rem",
+            mb: 2.5,
+          }}
+        >
+          Service Health
+        </Typography>
+        <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {services.map((svc) => (
+            <Box
+              key={svc.name}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                background: isDark
+                  ? "rgba(255,255,255,0.03)"
+                  : "rgba(0,0,0,0.02)",
+              }}
+            >
+              <StatusIndicator status={mapStatus(svc.status)} size="medium" />
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {svc.name}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.disabled", textTransform: "capitalize" }}
+                >
+                  {svc.status}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+    </GlassCard>
+  );
+}
+
+function HeapUsageBar({ used, total }: { used: number; total: number }) {
+  const percent = total > 0 ? (used / total) * 100 : 0;
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  return (
+    <GlassCard>
+      <CardContent sx={{ p: 3 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 1.5,
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{
+              color: "text.secondary",
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              fontWeight: 600,
+              fontSize: "0.7rem",
+            }}
+          >
+            Heap Memory Usage
+          </Typography>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            {formatBytes(used)} / {formatBytes(total)}
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            width: "100%",
+            height: 10,
+            borderRadius: 5,
+            bgcolor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)",
+            overflow: "hidden",
+          }}
+        >
+          <Box
+            sx={{
+              width: `${percent}%`,
+              height: "100%",
+              borderRadius: 5,
+              background: "linear-gradient(90deg, #00e5ff, #d500f9)",
+              boxShadow: isDark
+                ? "0 0 12px rgba(0, 229, 255, 0.4)"
+                : "none",
+              transition: "width 0.8s ease-out",
+            }}
+          />
+        </Box>
+        <Typography
+          variant="caption"
+          sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+        >
+          {percent.toFixed(1)}% utilized
+        </Typography>
+      </CardContent>
+    </GlassCard>
+  );
+}
+
+function DisconnectedState({ daemonUrl, onRetry }: { daemonUrl: string; onRetry: () => void }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
+
+  return (
+    <GlassCard
+      glowColor="#ff4466"
+      sx={{
+        border: isDark
+          ? "1px solid rgba(255, 68, 102, 0.15)"
+          : "1px solid rgba(255, 68, 102, 0.25)",
+        animation: `${fadeInUp} 0.5s ease-out`,
+      }}
+    >
+      <CardContent sx={{ p: 4, textAlign: "center" }}>
+        <LinkOff
+          sx={{
+            fontSize: 56,
+            color: "error.main",
+            mb: 2,
+            opacity: 0.8,
+            filter: isDark ? "drop-shadow(0 0 12px rgba(255,68,102,0.3))" : "none",
+          }}
+        />
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+          Daemon Unreachable
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", mb: 0.5, maxWidth: 480, mx: "auto" }}
+        >
+          Could not connect to the memory daemon at:
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            fontFamily: "monospace",
+            color: "primary.main",
+            mb: 2.5,
+            px: 2,
+            py: 0.5,
+            display: "inline-block",
+            borderRadius: 1,
+            bgcolor: isDark ? "rgba(0,229,255,0.06)" : "rgba(0,151,167,0.06)",
+          }}
+        >
+          {daemonUrl}
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{ color: "text.secondary", mb: 3, maxWidth: 480, mx: "auto" }}
+        >
+          Make sure the daemon is running, or update the URL in Settings if it is
+          on a different host or port.
+        </Typography>
+        <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+          <Button
+            variant="contained"
+            startIcon={<Refresh />}
+            onClick={onRetry}
+          >
+            Retry
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<Settings />}
+            component={Link}
+            href="/settings"
+          >
+            Configure Connection
+          </Button>
+        </Box>
+      </CardContent>
+    </GlassCard>
+  );
+}
+
+export default function DashboardPage() {
+  const { daemonUrl } = useDaemonConfig();
+  const { status, loading, error, refetch } = useStatus(daemonUrl);
+
+  return (
+    <Fade in timeout={400}>
+      <Box>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            mb: 3,
+            animation: `${fadeInUp} 0.5s ease-out`,
+          }}
+        >
+          Dashboard
+        </Typography>
+
+        {!loading && error && (
+          <Box sx={{ mb: 3 }}>
+            <DisconnectedState daemonUrl={daemonUrl} onRetry={refetch} />
+          </Box>
+        )}
+
+        {loading ? (
+          <Grid container spacing={3}>
+            <Grid size={12}>
+              <Skeleton
+                variant="rounded"
+                height={100}
+                sx={{ borderRadius: 4 }}
+              />
+            </Grid>
+            {[1, 2, 3, 4].map((i) => (
+              <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+                <Skeleton
+                  variant="rounded"
+                  height={110}
+                  sx={{ borderRadius: 4 }}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Grid container spacing={3}>
+            {/* Service Status */}
+            {status && (
+              <Grid
+                size={12}
+                sx={{ animation: `${fadeInUp} 0.5s ease-out 0.1s both` }}
+              >
+                <ServiceStatusPanel status={status} />
+              </Grid>
+            )}
+
+            {/* Stats Row */}
+            {status && (
+              <>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 3 }}
+                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.2s both` }}
+                >
+                  <StatCard
+                    icon={<Storage />}
+                    label="Total Memories"
+                    value={status.stats.totalMemories.toLocaleString()}
+                    color="#00e5ff"
+                  />
+                </Grid>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 3 }}
+                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.3s both` }}
+                >
+                  <StatCard
+                    icon={<Timer />}
+                    label="Uptime"
+                    value={formatUptime(status.uptime)}
+                    color="#d500f9"
+                  />
+                </Grid>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 3 }}
+                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.4s both` }}
+                >
+                  <StatCard
+                    icon={<DataUsage />}
+                    label="Heap Used"
+                    value={formatBytes(status.memory.heapUsed)}
+                    subtitle={`of ${formatBytes(status.memory.heapTotal)}`}
+                    color="#ffab00"
+                  />
+                </Grid>
+                <Grid
+                  size={{ xs: 12, sm: 6, md: 3 }}
+                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.5s both` }}
+                >
+                  <StatCard
+                    icon={error ? <WifiOff /> : <Wifi />}
+                    label="Connection"
+                    value={error ? "Offline" : "Connected"}
+                    subtitle={daemonUrl}
+                    color={error ? "#ff4466" : "#00ff88"}
+                  />
+                </Grid>
+
+                {/* Heap Usage Bar */}
+                <Grid
+                  size={12}
+                  sx={{ animation: `${fadeInUp} 0.5s ease-out 0.6s both` }}
+                >
+                  <HeapUsageBar
+                    used={status.memory.heapUsed}
+                    total={status.memory.heapTotal}
+                  />
+                </Grid>
+              </>
+            )}
+          </Grid>
+        )}
+      </Box>
+    </Fade>
+  );
+}

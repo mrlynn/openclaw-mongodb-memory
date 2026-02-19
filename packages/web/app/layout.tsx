@@ -1,20 +1,8 @@
 "use client";
 
-import type { Metadata } from "next";
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import React from "react";
-
-const theme = createTheme({
-  palette: {
-    mode: "light",
-    primary: {
-      main: "#1976d2",
-    },
-    secondary: {
-      main: "#dc004e",
-    },
-  },
-});
+import { AppProviders } from "@/components/providers/AppProviders";
+import { AppShell } from "@/components/layout/AppShell";
 
 export default function RootLayout({
   children,
@@ -22,12 +10,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
+        <AppProviders>
+          <AppShell>{children}</AppShell>
+        </AppProviders>
       </body>
     </html>
   );

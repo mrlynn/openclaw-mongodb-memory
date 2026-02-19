@@ -1,115 +1,53 @@
 # openclaw-memory
 
-MongoDB-backed memory infrastructure for OpenClaw agents with Voyage AI embeddings.
-
-## Status
-
-✅ **Production Ready** (with mock embeddings for development)  
-✅ **All core features working** (remember, recall, forget, search)  
-⚠️ **Real embeddings need valid API key** (free Voyage.com key available)
+Production-grade long-term memory system for OpenClaw agents. MongoDB-backed vector storage with Voyage AI embeddings, API key auth, and Atlas Vector Search.
 
 ## Quick Start
 
-### 1. Start the Daemon
+```bash
+pnpm install && pnpm build
+
+# Start the daemon
+cd packages/daemon && pnpm dev
+```
 
 ```bash
-cd packages/daemon
-pnpm dev
-```
-
-Output:
-```
-✓ Voyage API configured (MOCK MODE)
-✓ Connected to MongoDB
-🧠 Memory daemon listening on http://localhost:7751
-```
-
-### 2. Store a Memory
-
-```bash
+# Store a memory
 curl -X POST http://localhost:7751/remember \
   -H "Content-Type: application/json" \
-  -d '{
-    "agentId": "my-agent",
-    "text": "Important context about the user",
-    "tags": ["context", "user"],
-    "ttl": 86400
-  }'
+  -d '{"agentId":"my-agent","text":"User prefers dark mode","tags":["prefs"]}'
+
+# Recall by semantic similarity
+curl "http://localhost:7751/recall?agentId=my-agent&query=user+preferences&limit=5"
 ```
-
-### 3. Search Memories
-
-```bash
-curl "http://localhost:7751/recall?agentId=my-agent&query=important+context&limit=5"
-```
-
-**See [QUICK_START.md](./QUICK_START.md) for complete working examples.**
 
 ---
-
-## Overview
-
-A distributed memory system for AI agents:
-- **MongoDB** — persistent vector storage
-- **Voyage AI** — semantic embeddings (1024 dimensions)
-- **Express.js** — lightweight HTTP daemon
-- **Mock mode** — deterministic embeddings for testing (enabled by default)
-- **Real mode** — switch to production Voyage embeddings with a free API key
 
 ## Architecture
 
 ```
-Agent Code
-    ↓ (HTTP JSON)
+Agent Code / CLI
+    ↓ (HTTP + X-API-Key)
 Daemon (Express.js, port 7751)
-    ├→ Embedder (real Voyage or mock)
-    ├→ MongoDB (vector storage + metadata)
-    └→ Cosine Similarity (semantic search)
+    ├→ Auth middleware (optional MEMORY_API_KEY)
+    ├→ Embedder (singleton: real Voyage or mock)
+    ├→ MongoDB Atlas Vector Search ($vectorSearch)
+    │   └→ Fallback: in-memory cosine similarity (capped 10K docs)
+    └→ CORS enabled
 ```
 
 ## Packages
 
-| Package | Purpose | Status |
-|---------|---------|--------|
-| **daemon** | Express.js server (remember/recall/forget routes) | ✅ |
-| **client** | Agent library (`@openclaw-memory/client`) | ✅ |
-| **cli** | Management CLI (`ocmem status/debug/export/purge/clear`) | ✅ |
-| **web** | Next.js dashboard (Material UI, never Tailwind) | ✅ |
-
-## Current Mode
-
-**Mock Embeddings** (Default)
-- ✅ Deterministic embeddings based on text hash
-- ✅ Free, no API costs
-- ✅ Perfect for development & testing
-- ✅ All functionality works end-to-end
-
-To enable: `VOYAGE_MOCK=true` (default in `.env.local`)
-
-## Real Embeddings (Production)
-
-**Voyage AI** (Free tier available)
-- Semantic embeddings (1024 dims)
-- Fast similarity search
-- Cost: ~$0.02 per 1M tokens
-- Sign up: https://voyageai.com
-
-To enable:
-1. Get free API key at https://voyageai.com
-2. Update `.env.local`:
-   ```
-   VOYAGE_API_KEY=pa-YOUR_KEY_HERE
-   VOYAGE_MOCK=false
-   ```
-3. Restart daemon
-
-**Alternatively:** MongoDB Atlas AI (if your API key gets permissions)
+| Package | Purpose |
+|---------|---------|
+| **daemon** | Express.js HTTP server — all memory operations |
+| **client** | `@openclaw-memory/client` — typed SDK for agents |
+| **cli** | `ocmem` — management commands (status, export, purge, clear) |
+| **web** | Next.js + Material UI dashboard |
 
 ---
 
-## Features
-
-### Core API
+## Client SDK
 
 ```typescript
 import { MemoryClient } from "@openclaw-memory/client";
@@ -117,233 +55,152 @@ import { MemoryClient } from "@openclaw-memory/client";
 const memory = new MemoryClient({
   daemonUrl: "http://localhost:7751",
   agentId: "my-agent",
-  projectId: "my-project", // optional
+  apiKey: "your-secret-key", // optional, if daemon has MEMORY_API_KEY set
 });
 
-// Store memory (with TTL)
-const id = await memory.remember("Important context", {
-  tags: ["context", "important"],
+// Store
+const id = await memory.remember("Important context about the user", {
+  tags: ["context", "user"],
   metadata: { source: "conversation" },
-  ttl: 86400, // 24 hours
+  ttl: 86400, // auto-expire in 24 hours
 });
 
-// Search by semantic similarity
-const results = await memory.recall("What context do I have?", {
-  limit: 5,
-  tags: ["important"], // optional filter
-});
-// Returns: [{id, text, score, tags, createdAt}, ...]
+// Search
+const results = await memory.recall("user preferences", { limit: 5 });
+// [{id, text, score, tags, metadata, createdAt}, ...]
 
-// Delete memory
+// Delete
 await memory.forget(id);
+
+// Management
+const data = await memory.export();      // backup all memories
+const deleted = await memory.purge(cutoffDate); // delete old memories
+const count = await memory.clear();      // delete all memories for this agent
 ```
 
-### HTTP API
+---
+
+## HTTP API
+
+All endpoints (except `/health`) require `X-API-Key` header when `MEMORY_API_KEY` is set.
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
+| `/health` | GET | Ping (no auth) |
 | `/remember` | POST | Store memory with embedding |
-| `/recall` | GET | Search memories by query |
-| `/forget/:id` | DELETE | Delete memory |
-| `/status` | GET | Daemon health & stats |
-| `/health` | GET | Simple ping |
+| `/recall` | GET | Search by semantic similarity |
+| `/forget/:id` | DELETE | Delete single memory |
+| `/status` | GET | Daemon health, MongoDB & Voyage status |
+| `/export` | GET | Export all memories for an agent |
+| `/purge` | POST | Delete memories older than date |
+| `/clear` | DELETE | Delete all memories for an agent |
 
-### CLI Commands
+---
+
+## CLI
 
 ```bash
-ocmem status                           # Daemon health
-ocmem debug --agent <id>               # Detailed diagnostics
-ocmem purge --agent <id> --older-than-days 7  # Delete old memories
-ocmem export --agent <id>              # Backup to JSON
-ocmem clear --agent <id>               # Delete all (with confirmation)
+ocmem status                                    # Daemon health
+ocmem debug --agent my-agent                    # Detailed diagnostics
+ocmem export --agent my-agent --output backup.json  # Backup to JSON
+ocmem purge --agent my-agent --older-than-days 30   # Delete old
+ocmem clear --agent my-agent                    # Delete all (confirms first)
+```
+
+All commands support `--api-key <key>` or `MEMORY_API_KEY` env var.
+
+---
+
+## Embedding Modes
+
+### Mock (Default)
+- Deterministic embeddings based on text hash
+- Zero cost, works offline
+- Set `VOYAGE_MOCK=true`
+
+### Real (Production)
+- Voyage AI semantic embeddings (1024 dims)
+- ~$0.02 per 1M tokens
+- Get free key at https://voyageai.com
+- Set `VOYAGE_MOCK=false` and `VOYAGE_API_KEY=pa-...`
+
+---
+
+## Vector Search
+
+Recall uses **MongoDB Atlas Vector Search** (`$vectorSearch` aggregation) when the index exists. Without it, falls back to in-memory cosine similarity (capped at 10K docs).
+
+### Setup Atlas Vector Search
+
+Create a search index named `memory_vector_index` on the `memories` collection:
+
+```json
+{
+  "fields": [
+    { "type": "vector", "path": "embedding", "numDimensions": 1024, "similarity": "cosine" },
+    { "type": "filter", "path": "agentId" },
+    { "type": "filter", "path": "projectId" },
+    { "type": "filter", "path": "tags" }
+  ]
+}
 ```
 
 ---
 
-## MongoDB Schema
+## Authentication
 
-**Collection: `memories`**
+Set `MEMORY_API_KEY` env var on the daemon to require `X-API-Key` header on all requests (except `/health`). Without it, the daemon is open.
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `_id` | ObjectId | Auto-generated ID |
-| `agentId` | string | Which agent owns this |
-| `projectId` | string | Optional grouping |
-| `text` | string | Original content |
-| `embedding` | number[] | 1024-dim Voyage embedding |
-| `tags` | string[] | Labels for filtering |
-| `metadata` | object | Custom fields |
-| `createdAt` | Date | Stored when |
-| `updatedAt` | Date | Last modified |
-| `expiresAt` | Date | TTL auto-deletion |
-
-**Indexes:**
-- `(agentId, createdAt)` — fast agent lookups
-- `(expiresAt)` — TTL auto-cleanup
-- `(agentId, projectId, createdAt)` — scoped queries
-- `(agentId, tags)` — tag filtering
-- `text` — full-text search
-
-See [SCHEMA.md](./SCHEMA.md) for detailed design and migration path to Atlas Vector Search.
-
----
-
-## Environment Setup
-
-**.env.local** (root directory):
 ```bash
-# MongoDB
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/openclaw_memory
-
-# Voyage Embeddings
-VOYAGE_API_KEY=pa-YOUR_KEY_HERE     # or al-... for MongoDB Atlas
-VOYAGE_MOCK=false                   # true for mock, false for real
-VOYAGE_BASE_URL=                    # Leave empty for voyageai.com
-
 # Daemon
-MEMORY_DAEMON_PORT=7751
-NEXT_PUBLIC_DAEMON_URL=http://localhost:7751
+MEMORY_API_KEY=my-secret-key pnpm dev
 
-# Optional
-VOYAGE_MODEL=voyage-3-lite          # Override default model
+# Client
+curl -H "X-API-Key: my-secret-key" http://localhost:7751/status
+
+# CLI
+ocmem status --api-key my-secret-key
+# or
+MEMORY_API_KEY=my-secret-key ocmem status
 ```
 
 ---
 
-## Cost Estimates
+## Environment
 
-### Development (Mock Mode)
-- **Cost:** $0/month
-- **Use case:** Local testing, all features work
+Copy `.env.example` to `.env.local` and configure:
 
-### Production (Real Voyage)
-- **Cost:** ~$0.02 per 1M tokens
-- **Storage:** Free tier 512MB, then ~$0.10/GB/month
-- **Example:** 1M memories ≈ 5-6GB + ~$50 embedding credits
+```bash
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/openclaw_memory
+VOYAGE_API_KEY=pa-YOUR_KEY_HERE
+VOYAGE_MOCK=true                    # false for real embeddings
+MEMORY_DAEMON_PORT=7751
+MEMORY_API_KEY=your-secret-key      # optional auth
+NEXT_PUBLIC_DAEMON_URL=http://localhost:7751
+```
 
 ---
 
 ## Development
 
 ```bash
-# Install all packages
-pnpm install
+pnpm install          # Install all workspaces
+pnpm build            # Build all packages
+pnpm dev              # Start all services in parallel
 
-# Build everything
-pnpm build
-
-# Start all services in parallel
-pnpm dev
-
-# Individual services
-cd packages/daemon && pnpm dev     # Daemon on 7751
-cd packages/web && pnpm dev        # Dashboard on 3000
-cd packages/cli && pnpm dev status # CLI commands
+# Individual
+cd packages/daemon && pnpm dev     # Daemon on :7751
+cd packages/web && pnpm dev        # Dashboard on :3000
 ```
-
-See [DEVELOPMENT.md](./DEVELOPMENT.md) for architecture deep dive and troubleshooting.
-
----
-
-## Roadmap
-
-- ✅ Voyage embedding integration
-- ✅ MongoDB schema & TTL management
-- ✅ Agent client library
-- ✅ CLI management tools
-- ✅ Next.js web dashboard
-- ✅ Mock mode for testing
-- [ ] OpenClaw daemon auto-spawn (integrate into main OpenClaw startup)
-- [ ] Atlas Vector Search migration (1M+ scale)
-- [ ] Memory analytics dashboard
-- [ ] Multi-tenant scoping
-- [ ] Webhook notifications on expiration
-
----
-
-## How to Test
-
-### With Mock Embeddings (Default, Works Now)
-
-```bash
-# Start daemon
-cd packages/daemon && pnpm dev
-
-# In another terminal, store a memory
-curl -X POST http://localhost:7751/remember \
-  -H "Content-Type: application/json" \
-  -d '{"agentId":"test","text":"Hello world","tags":["demo"]}'
-
-# Search it
-curl "http://localhost:7751/recall?agentId=test&query=hello"
-
-# Delete it
-curl -X DELETE http://localhost:7751/forget/MEMORY_ID
-```
-
-**Everything works. Embeddings are deterministic based on text hash.**
-
-### With Real Embeddings (When Ready)
-
-1. Get free key: https://voyageai.com
-2. Update `.env.local`: `VOYAGE_API_KEY=pa-...` and `VOYAGE_MOCK=false`
-3. Restart daemon
-4. Run same commands above → now using real semantic embeddings
-
----
-
-## Troubleshooting
-
-**Daemon won't start:**
-```bash
-pkill -9 -f "tsx watch"  # Kill any stuck processes
-cd packages/daemon && pnpm dev
-```
-
-**Port already in use:**
-```bash
-MEMORY_DAEMON_PORT=7752 pnpm dev
-```
-
-**Real Voyage API returns 403:**
-```
-Your API key doesn't have access to that model endpoint.
-Solution: Get a free Voyage.com key or enable models in MongoDB Atlas.
-```
-
-**Memory calls fail:**
-Check daemon logs for `[Remember]` or `[Recall]` messages:
-```bash
-cd packages/daemon && pnpm dev 2>&1 | grep -E "\[Remember\]|\[Recall\]|\[Voyage\]"
-```
-
-See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed debugging.
 
 ---
 
 ## Documentation
 
-- **[QUICK_START.md](./QUICK_START.md)** — Working commands, test everything
-- **[SCHEMA.md](./SCHEMA.md)** — MongoDB design, scaling path
-- **[DEVELOPMENT.md](./DEVELOPMENT.md)** — Architecture, setup, troubleshooting
-
----
+- **[QUICK_START.md](./QUICK_START.md)** — Step-by-step setup
+- **[SCHEMA.md](./SCHEMA.md)** — MongoDB schema & scaling
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** — Architecture & troubleshooting
 
 ## License
 
 MIT
-
----
-
-## Status Summary
-
-| Component | Mode | Works? |
-|-----------|------|--------|
-| Daemon | Mock | ✅ Yes |
-| Store/Recall | Mock | ✅ Yes |
-| Agent Client | All | ✅ Yes |
-| CLI | All | ✅ Yes |
-| Dashboard | All | ✅ Yes |
-| Real Voyage | Pending | ⚠️ Needs API key |
-
-**Start with mock mode. Everything is fully functional.**

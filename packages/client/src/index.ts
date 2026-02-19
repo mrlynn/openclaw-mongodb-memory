@@ -1,2 +1,9 @@
 export { MemoryClient } from "./MemoryClient";
-export type { MemoryClientConfig, RememberOptions, RecallOptions, RecallResult } from "./types";
+export type {
+  MemoryClientConfig,
+  RememberOptions,
+  RecallOptions,
+  RecallResult,
+  ExportResult,
+  StatusResult,
+} from "./types";

@@ -1,5 +1,12 @@
 import axios, { AxiosInstance } from "axios";
-import type { MemoryClientConfig, RememberOptions, RecallOptions, RecallResult } from "./types";
+import type {
+  MemoryClientConfig,
+  RememberOptions,
+  RecallOptions,
+  RecallResult,
+  ExportResult,
+  StatusResult,
+} from "./types";
 
 export class MemoryClient {
   private client: AxiosInstance;
@@ -7,9 +14,15 @@ export class MemoryClient {
   private projectId?: string;
 
   constructor(config: MemoryClientConfig) {
+    const headers: Record<string, string> = {};
+    if (config.apiKey) {
+      headers["X-API-Key"] = config.apiKey;
+    }
+
     this.client = axios.create({
       baseURL: config.daemonUrl,
       timeout: 10000,
+      headers,
     });
     this.agentId = config.agentId;
     this.projectId = config.projectId;
@@ -42,6 +55,35 @@ export class MemoryClient {
 
   async forget(id: string): Promise<void> {
     await this.client.delete(`/forget/${id}`);
+  }
+
+  async status(): Promise<StatusResult> {
+    const response = await this.client.get("/status");
+    return response.data;
+  }
+
+  async export(): Promise<ExportResult> {
+    const params = {
+      agentId: this.agentId,
+      projectId: this.projectId,
+    };
+    const response = await this.client.get("/export", { params });
+    return response.data;
+  }
+
+  async purge(olderThan: Date): Promise<number> {
+    const response = await this.client.post("/purge", {
+      agentId: this.agentId,
+      olderThan: olderThan.toISOString(),
+    });
+    return response.data.deleted;
+  }
+
+  async clear(): Promise<number> {
+    const response = await this.client.delete("/clear", {
+      params: { agentId: this.agentId },
+    });
+    return response.data.deleted;
   }
 
   async health(): Promise<boolean> {

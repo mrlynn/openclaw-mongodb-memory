@@ -1,9 +1,10 @@
 import axios from "axios";
 import chalk from "chalk";
 import * as fs from "fs";
+import { getHeaders } from "../utils";
 
 export async function exportCommand(
-  options: { url: string; agent: string; output?: string }
+  options: { url: string; apiKey?: string; agent: string; output?: string }
 ) {
   try {
     if (!options.agent) {
@@ -13,19 +14,18 @@ export async function exportCommand(
 
     console.log(chalk.yellow(`⏳ Exporting memories for agent "${options.agent}"...`));
 
-    // Note: This would require an /export endpoint on the daemon
-    // For now, showing the command structure
     const response = await axios.get(`${options.url}/export`, {
       params: { agentId: options.agent },
+      headers: getHeaders(options.apiKey),
     });
 
     const outputPath = options.output || `export-${options.agent}-${Date.now()}.json`;
     fs.writeFileSync(outputPath, JSON.stringify(response.data, null, 2));
 
-    console.log(chalk.green(`✓ Exported to ${outputPath}`));
+    console.log(chalk.green(`✓ Exported ${response.data.count} memories to ${outputPath}`));
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
-      console.error(chalk.red("✗ Export endpoint not yet implemented on daemon"));
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      console.error(chalk.red("✗ Unauthorized — provide --api-key or set MEMORY_API_KEY"));
     } else {
       console.error(chalk.red("✗ Failed to export memories"));
       console.error(chalk.red(`  ${String(error)}`));

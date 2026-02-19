@@ -12,74 +12,95 @@ Core collection storing agent memories with vector embeddings.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `_id` | ObjectId | ✓ | Auto-generated document ID |
-| `agentId` | string | ✓ | Agent identifier (groups memories by agent) |
+| `_id` | ObjectId | yes | Auto-generated document ID |
+| `agentId` | string | yes | Agent identifier (groups memories by agent) |
 | `projectId` | string\|null | | Project/context grouping (optional) |
-| `text` | string | ✓ | Original memory text |
-| `embedding` | number[] | ✓ | Voyage embedding (1024 dimensions) |
-| `tags` | string[] | ✓ | Categorical labels (default: []) |
-| `metadata` | object | ✓ | Custom fields (default: {}) |
-| `createdAt` | Date | ✓ | Creation timestamp |
-| `updatedAt` | Date | ✓ | Last update timestamp |
+| `text` | string | yes | Original memory text (max 50KB) |
+| `embedding` | number[] | yes | Voyage embedding (1024 dimensions) |
+| `tags` | string[] | yes | Categorical labels (default: [], max 50) |
+| `metadata` | object | yes | Custom fields (default: {}) |
+| `createdAt` | Date | yes | Creation timestamp |
+| `updatedAt` | Date | yes | Last update timestamp |
 | `expiresAt` | Date | | TTL deletion time (optional) |
 
-**Example document:**
+**Standard Indexes:**
+
+1. `{ agentId: 1, createdAt: -1 }` — fast agent lookups
+2. `{ expiresAt: 1 }` with `expireAfterSeconds: 0` — TTL auto-deletion
+3. `{ agentId: 1, projectId: 1, createdAt: -1 }` — scoped queries
+4. `{ agentId: 1, tags: 1 }` — tag filtering
+5. `{ text: "text", tags: "text" }` — full-text search
+
+These are created automatically on daemon startup.
+
+---
+
+## Atlas Vector Search Index
+
+The daemon uses `$vectorSearch` for recall when available. Create a search index named **`memory_vector_index`** on the `memories` collection in Atlas:
 
 ```json
 {
-  "_id": ObjectId("..."),
-  "agentId": "claude-session-123",
-  "projectId": "vai-dashboard",
-  "text": "User prefers Material UI over Tailwind for design",
-  "embedding": [0.123, -0.456, 0.789, ...],
-  "tags": ["user-preference", "design", "material-ui"],
-  "metadata": {
-    "source": "conversation",
-    "confidence": 0.95
-  },
-  "createdAt": ISODate("2026-02-19T08:36:00Z"),
-  "updatedAt": ISODate("2026-02-19T08:36:00Z"),
-  "expiresAt": ISODate("2026-02-20T08:36:00Z")
+  "fields": [
+    {
+      "type": "vector",
+      "path": "embedding",
+      "numDimensions": 1024,
+      "similarity": "cosine"
+    },
+    {
+      "type": "filter",
+      "path": "agentId"
+    },
+    {
+      "type": "filter",
+      "path": "projectId"
+    },
+    {
+      "type": "filter",
+      "path": "tags"
+    }
+  ]
 }
 ```
 
-**Indexes:**
+### Creating the index
 
-1. **Composite (agentId, createdAt)** — Fast agent lookups + sorting
-   ```javascript
-   { agentId: 1, createdAt: -1 }
-   ```
+**Via Atlas UI:**
+1. Go to your cluster > Search > Create Search Index
+2. Choose "JSON Editor" for the index definition
+3. Select database `openclaw_memory`, collection `memories`
+4. Name: `memory_vector_index`
+5. Paste the JSON above
 
-2. **TTL (expiresAt)** — Automatic deletion of expired memories
-   ```javascript
-   { expiresAt: 1 }, { expireAfterSeconds: 0 }
-   ```
+**Via `mongosh`:**
+```javascript
+db.memories.createSearchIndex({
+  name: "memory_vector_index",
+  type: "vectorSearch",
+  definition: {
+    fields: [
+      { type: "vector", path: "embedding", numDimensions: 1024, similarity: "cosine" },
+      { type: "filter", path: "agentId" },
+      { type: "filter", path: "projectId" },
+      { type: "filter", path: "tags" }
+    ]
+  }
+});
+```
 
-3. **Composite (agentId, projectId, createdAt)** — Scoped project queries
-   ```javascript
-   { agentId: 1, projectId: 1, createdAt: -1 }
-   ```
+Without this index, the daemon falls back to **in-memory cosine similarity** (capped at 10,000 docs per recall).
 
-4. **Composite (agentId, tags)** — Tag-based filtering
-   ```javascript
-   { agentId: 1, tags: 1 }
-   ```
+---
 
-5. **Text Index** — Full-text search (optional)
-   ```javascript
-   { text: "text", tags: "text" }
-   ```
-
-#### `sessions` (Reserved for future use)
-
-Stores agent session contexts and state.
+## `sessions` (Reserved)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `_id` | ObjectId | ✓ | Auto-generated |
-| `agentId` | string | ✓ | Agent identifier |
-| `sessionId` | string | ✓ | Unique session ID |
-| `startedAt` | Date | ✓ | Session start time |
+| `_id` | ObjectId | yes | Auto-generated |
+| `agentId` | string | yes | Agent identifier |
+| `sessionId` | string | yes | Unique session ID |
+| `startedAt` | Date | yes | Session start time |
 | `expiresAt` | Date | | TTL deletion time |
 | `context` | object | | Current session context |
 
@@ -87,93 +108,29 @@ Stores agent session contexts and state.
 
 ## Size Estimates
 
-**Per-document overhead:**
-- `_id`: 12 bytes
-- Metadata fields: ~200 bytes
-- Embedding (1024 floats @ 4 bytes): ~4KB
-- Text (average): ~500B-2KB
-- Total: **~5-6KB per document**
+| Scale | Storage |
+|-------|---------|
+| 1,000 memories | ~5-6 MB |
+| 10,000 memories | ~50-60 MB |
+| 100,000 memories | ~500-600 MB |
+| 1,000,000 memories | ~5-6 GB |
 
-**At scale:**
-- 1,000 memories: ~5-6MB
-- 10,000 memories: ~50-60MB
-- 100,000 memories: ~500-600MB
-- 1,000,000 memories: ~5-6GB
+Per document: ~5-6 KB (4KB embedding + text + metadata).
 
 ---
 
-## Retrieval Strategy
+## TTL
 
-### Current: In-Memory Cosine Similarity
+Memories with `expiresAt` are automatically deleted by MongoDB:
 
-For up to ~100K memories per agent:
-
-1. Fetch all documents matching filter (agentId, projectId, tags)
-2. Compute cosine similarity in-memory
-3. Sort by score, return top-k
-
-**Pros:**
-- Simple, cost-effective
-- No additional indexes needed
-- Works with free tier MongoDB
-
-**Cons:**
-- O(n) for each recall operation
-- Slow for >100K memories per query
-
-### Future: Atlas Vector Search
-
-For production with 1M+ memories:
-
-1. Use MongoDB Atlas Vector Search (paid feature)
-2. Create vector index on `embedding` field
-3. Perform semantic search in MongoDB query
-
-```javascript
-// Example Vector Search pipeline (future)
-[
-  {
-    $search: {
-      cosmosSearch: {
-        vector: queryEmbedding,
-        k: 10
-      },
-      returnStoredSource: true
-    }
-  }
-]
-```
-
----
-
-## TTL (Time-To-Live)
-
-Memories with an `expiresAt` field are automatically deleted by MongoDB.
-
-**Example:**
 ```typescript
-// Remember with 24-hour TTL
-await memory.remember(text, { ttl: 86400 });
-// Sets expiresAt = now + 24 hours
-// MongoDB deletes after that time
+await memory.remember("temporary context", { ttl: 86400 }); // 24 hours
 ```
 
 ---
 
-## Scalability Notes
+## Scaling Path
 
-1. **Shard key** (if needed): `agentId` — distributes by agent across nodes
-2. **Connection pooling**: Recommended for high concurrency
-3. **Batch operations**: Group multiple `/remember` calls in a single request
-4. **Archive strategy**: Move old memories to a separate `memories_archive` collection
-
----
-
-## Migration Path
-
-As the system grows:
-
-1. **Phase 1** (current): Single collection, in-memory similarity
-2. **Phase 2**: Atlas Vector Search indexes for 100K+ scale
-3. **Phase 3**: Collection sharding by agent
-4. **Phase 4**: Archival & time-series optimization
+1. **Phase 1** (current): Single collection, Atlas Vector Search with in-memory fallback
+2. **Phase 2**: Collection sharding by `agentId`
+3. **Phase 3**: Archival policy — move old memories to `memories_archive`

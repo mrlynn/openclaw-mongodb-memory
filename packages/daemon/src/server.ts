@@ -1,95 +1,125 @@
-import express, { Express, Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 import { rememberRoute } from "./routes/remember";
 import { recallRoute } from "./routes/recall";
 import { forgetRoute } from "./routes/forget";
 import { statusRoute } from "./routes/status";
+import { exportRoute } from "./routes/export";
+import { purgeRoute } from "./routes/purge";
+import { clearRoute } from "./routes/clear";
 import { connectDatabase } from "./db";
+import { VoyageEmbedder } from "./embedding";
+import { DEFAULT_PORT, DEFAULT_MONGO_URI, MAX_REQUEST_BODY } from "./constants";
 
 // Load .env from root of monorepo
-// __dirname = packages/daemon/src, so go up 3 levels to root
 dotenv.config({ path: path.resolve(__dirname, "../../../.env.local") });
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
-const PORT = process.env.MEMORY_DAEMON_PORT || 7654;
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
+const PORT = process.env.MEMORY_DAEMON_PORT || DEFAULT_PORT;
+const MONGO_URI = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
-const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL; // Optional: MongoDB AI or custom endpoint
-const VOYAGE_MODEL = process.env.VOYAGE_MODEL; // Optional: override default model
+const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL;
+const VOYAGE_MODEL = process.env.VOYAGE_MODEL;
+const MEMORY_API_KEY = process.env.MEMORY_API_KEY;
 
-const app: Express = express();
+const app = express();
 
-// Middleware
-app.use(express.json());
+// --- Middleware ---
 
-// Health check
-app.get("/health", (req: Request, res: Response) => {
+app.use(cors());
+app.use(express.json({ limit: MAX_REQUEST_BODY }));
+
+// API key auth (if MEMORY_API_KEY is set, all routes except /health require it)
+if (MEMORY_API_KEY) {
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.path === "/health") return next();
+
+    const provided = req.headers["x-api-key"] as string | undefined;
+    if (!provided || provided !== MEMORY_API_KEY) {
+      res.status(401).json({ success: false, error: "Unauthorized: invalid or missing X-API-Key header" });
+      return;
+    }
+    next();
+  });
+}
+
+// --- Routes ---
+
+app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Routes
 app.post("/remember", rememberRoute);
 app.get("/recall", recallRoute);
 app.delete("/forget/:id", forgetRoute);
 app.get("/status", statusRoute);
+app.get("/export", exportRoute);
+app.post("/purge", purgeRoute);
+app.delete("/clear", clearRoute);
 
-// Error handler
-app.use((err: any, req: any, res: any, next: any) => {
+// --- Global async-safe error handler ---
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error("Unhandled error:", err);
   res.status(500).json({
     success: false,
-    error: err.message || "Internal server error"
+    error: err.message || "Internal server error",
   });
 });
 
-// Start server
+// --- Startup ---
+
 const startServer = async () => {
   try {
-    // Verify Voyage API key
     if (!VOYAGE_API_KEY) {
       throw new Error("VOYAGE_API_KEY environment variable not set");
     }
-    
-    // Show which Voyage endpoint we're using
+
+    const isMock = process.env.VOYAGE_MOCK === "true";
     const voyageEndpoint = VOYAGE_BASE_URL || "https://api.voyageai.com/v1";
     const isMongoDB = VOYAGE_API_KEY.startsWith("al-");
     const endpointType = isMongoDB ? "MongoDB Atlas AI" : "Voyage.com";
-    const isMock = process.env.VOYAGE_MOCK === "true";
-    
+
     if (isMock) {
-      console.log(`✓ Voyage API configured (MOCK MODE - for testing)`);
-      console.log(`  Embeddings: Deterministic mocks based on text hash`);
-      console.log(`  Note: Set VOYAGE_MOCK=false and provide valid API key to use real embeddings`);
+      console.log("✓ Voyage API configured (MOCK MODE - for testing)");
+      console.log("  Embeddings: Deterministic mocks based on text hash");
     } else {
-      console.log(`✓ Voyage API configured (Bearer token)`);
+      console.log("✓ Voyage API configured (Bearer token)");
       console.log(`  Provider: ${endpointType}`);
       console.log(`  Endpoint: ${voyageEndpoint}`);
     }
 
-    // Connect to MongoDB and initialize schema
-    const db = await connectDatabase({ mongoUri: MONGO_URI });
-    console.log("✓ Connected to MongoDB at", MONGO_URI);
+    // Create singleton embedder — shared across all requests
+    const embedder = new VoyageEmbedder(VOYAGE_API_KEY, VOYAGE_BASE_URL, VOYAGE_MODEL);
 
-    // Store in app locals for route access
-    app.locals.mongoClient = db.client;
-    app.locals.voyageApiKey = VOYAGE_API_KEY;
-    app.locals.voyageBaseUrl = VOYAGE_BASE_URL;
-    app.locals.voyageModel = VOYAGE_MODEL;
+    // Connect to MongoDB
+    const { client, db } = await connectDatabase({ mongoUri: MONGO_URI });
+    console.log("✓ Connected to MongoDB");
 
-    // Start listening
+    // Store shared resources for route access
+    app.locals.db = db;
+    app.locals.mongoClient = client;
+    app.locals.embedder = embedder;
+
+    if (MEMORY_API_KEY) {
+      console.log("✓ API key auth enabled");
+    } else {
+      console.log("⚠ No MEMORY_API_KEY set — daemon is unauthenticated");
+    }
+
     app.listen(PORT, () => {
-      console.log(
-        `🧠 Memory daemon listening on http://localhost:${PORT}`
-      );
+      console.log(`🧠 Memory daemon listening on http://localhost:${PORT}`);
     });
 
-    // Graceful shutdown
-    process.on("SIGINT", async () => {
+    const shutdown = async () => {
       console.log("\nShutting down...");
-      await db.client.close();
+      await client.close();
       process.exit(0);
-    });
+    };
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
   } catch (error) {
     console.error("Failed to start daemon:", error);
     process.exit(1);

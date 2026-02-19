@@ -1,33 +1,42 @@
 import { Request, Response } from "express";
-import { MongoClient } from "mongodb";
+import { Db } from "mongodb";
+import { VoyageEmbedder } from "../embedding";
+import { asyncHandler } from "../middleware/asyncHandler";
+import { COLLECTION_MEMORIES } from "../constants";
 
-export const statusRoute = async (req: Request, res: Response) => {
+export const statusRoute = asyncHandler(async (req: Request, res: Response) => {
+  const db: Db = req.app.locals.db;
+  const embedder: VoyageEmbedder = req.app.locals.embedder;
+  const collection = db.collection(COLLECTION_MEMORIES);
+
+  let mongoStatus = "connected";
+  let totalMemories = 0;
   try {
-    const mongoClient: MongoClient = req.app.locals.mongoClient;
-
-    // Check MongoDB connection
-    const db = mongoClient.db("openclaw_memory");
-    const collection = db.collection("memories");
-    const count = await collection.countDocuments();
-
-    res.json({
-      success: true,
-      daemon: "ready",
-      mongodb: "connected",
-      voyage: "ready",
-      uptime: process.uptime(),
-      memory: {
-        heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-      },
-      stats: {
-        totalMemories: count,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: String(error),
-    });
+    totalMemories = await collection.countDocuments();
+  } catch {
+    mongoStatus = "error";
   }
-};
+
+  let voyageStatus = "unknown";
+  try {
+    await embedder.embedOne("health check");
+    voyageStatus = "ready";
+  } catch {
+    voyageStatus = "error";
+  }
+
+  res.json({
+    success: true,
+    daemon: "ready",
+    mongodb: mongoStatus,
+    voyage: voyageStatus,
+    uptime: process.uptime(),
+    memory: {
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+    },
+    stats: {
+      totalMemories,
+    },
+  });
+});

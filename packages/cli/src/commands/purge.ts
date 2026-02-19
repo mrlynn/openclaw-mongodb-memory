@@ -1,8 +1,9 @@
 import axios from "axios";
 import chalk from "chalk";
+import { getHeaders } from "../utils";
 
 export async function purgeCommand(
-  options: { url: string; agent?: string; olderThanDays?: number }
+  options: { url: string; apiKey?: string; agent?: string; olderThanDays?: number }
 ) {
   try {
     if (!options.agent) {
@@ -16,17 +17,17 @@ export async function purgeCommand(
 
     console.log(chalk.yellow(`⏳ Purging memories for agent "${options.agent}" older than ${days} days...`));
 
-    // Note: This would require a /purge endpoint on the daemon
-    // For now, showing the command structure
     const response = await axios.post(`${options.url}/purge`, {
       agentId: options.agent,
       olderThan: cutoffDate.toISOString(),
+    }, {
+      headers: getHeaders(options.apiKey),
     });
 
     console.log(chalk.green(`✓ Purged ${response.data.deleted} memories`));
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
-      console.error(chalk.red("✗ Purge endpoint not yet implemented on daemon"));
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      console.error(chalk.red("✗ Unauthorized — provide --api-key or set MEMORY_API_KEY"));
     } else {
       console.error(chalk.red("✗ Failed to purge memories"));
       console.error(chalk.red(`  ${String(error)}`));
