@@ -1,12 +1,15 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
+import path from "path";
 import { rememberRoute } from "./routes/remember";
 import { recallRoute } from "./routes/recall";
 import { forgetRoute } from "./routes/forget";
 import { statusRoute } from "./routes/status";
 import { connectDatabase } from "./db";
 
-dotenv.config();
+// Load .env from root of monorepo
+dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 const PORT = process.env.MEMORY_DAEMON_PORT || 7654;
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
