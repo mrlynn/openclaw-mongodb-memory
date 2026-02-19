@@ -1,0 +1,19 @@
+{
+  "name": "openclaw-memory",
+  "version": "0.1.0",
+  "description": "MongoDB-backed memory infrastructure for OpenClaw agents",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5.3"
+  }
+}
