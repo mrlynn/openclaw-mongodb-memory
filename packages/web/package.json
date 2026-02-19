@@ -1,0 +1,30 @@
+{
+  "name": "@openclaw-memory/web",
+  "version": "0.1.0",
+  "description": "Next.js + Material UI dashboard for openclaw-memory",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next export"
+  },
+  "dependencies": {
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@mui/material": "^6.0.0",
+    "@mui/icons-material": "^6.0.0",
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "axios": "^1.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5.3",
+    "eslint": "^8.54.0",
+    "eslint-config-next": "^15.0.0"
+  }
+}

@@ -22,7 +22,7 @@ Agents → MemoryClient → HTTP → Daemon → MongoDB
 - **daemon** — Long-running HTTP server managing memory storage & retrieval
 - **client** — NPM package agents use (`@openclaw-memory/client`)
 - **cli** — Management CLI (`ocmem` command)
-- **web** — Future: Next.js + Material UI dashboard
+- **web** — Next.js + Material UI dashboard (development)
 
 ## Quick Start
 
