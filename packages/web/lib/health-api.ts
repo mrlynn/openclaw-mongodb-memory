@@ -160,21 +160,21 @@ export async function fetchOpenClawIntegrationStatus(): Promise<OpenClawIntegrat
       }
     }
 
-    // Check 3: Check if daemon is in OpenClaw config (would come from query param or header)
+    // Check 3: Check if daemon is in OpenClaw config
     const configFromEnv = process.env.NEXT_PUBLIC_MEMORY_IN_OPENCLAW_CONFIG === "true";
     details.daemonInOpenClawConfig = configFromEnv;
 
-    // Check 4: Check if agent context has memory (would be true if we can access it here)
-    // In a real integration, this would check if memory client is available in agent context
-    details.agentContextInitialized = false; // Would be true if integrated
+    // Check 4: Check if agent context has memory
+    const agentContextFromEnv = process.env.NEXT_PUBLIC_MEMORY_AGENT_CONTEXT_READY === "true";
+    details.agentContextInitialized = agentContextFromEnv;
 
     const status: OpenClawIntegrationStatus = {
       status:
-        details.daemonAccessible && details.memoryStorageWorking
-          ? details.daemonInOpenClawConfig && details.agentContextInitialized
-            ? "integrated"
-            : "partial"
-          : "not-integrated",
+        details.daemonAccessible && details.memoryStorageWorking && details.daemonInOpenClawConfig && details.agentContextInitialized
+          ? "integrated"
+          : details.daemonAccessible && details.memoryStorageWorking
+            ? "partial"
+            : "not-integrated",
       timestamp: new Date().toISOString(),
       details,
     };
