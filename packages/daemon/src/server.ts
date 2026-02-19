@@ -1,10 +1,10 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
-import { MongoClient } from "mongodb";
 import { rememberRoute } from "./routes/remember";
 import { recallRoute } from "./routes/recall";
 import { forgetRoute } from "./routes/forget";
 import { statusRoute } from "./routes/status";
+import { connectDatabase } from "./db";
 
 dotenv.config();
 
@@ -22,7 +22,7 @@ app.get("/health", (req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Routes (will implement these)
+// Routes
 app.post("/remember", rememberRoute);
 app.get("/recall", recallRoute);
 app.delete("/forget/:id", forgetRoute);
@@ -31,19 +31,18 @@ app.get("/status", statusRoute);
 // Start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    console.log("✓ Connected to MongoDB");
-
     // Verify Voyage API key
     if (!VOYAGE_API_KEY) {
       throw new Error("VOYAGE_API_KEY environment variable not set");
     }
     console.log("✓ Voyage API key configured");
 
-    // Store client in app locals for route access
-    app.locals.mongoClient = client;
+    // Connect to MongoDB and initialize schema
+    const db = await connectDatabase({ mongoUri: MONGO_URI });
+    console.log("✓ Connected to MongoDB at", MONGO_URI);
+
+    // Store in app locals for route access
+    app.locals.mongoClient = db.client;
     app.locals.voyageApiKey = VOYAGE_API_KEY;
 
     // Start listening
@@ -56,7 +55,7 @@ const startServer = async () => {
     // Graceful shutdown
     process.on("SIGINT", async () => {
       console.log("\nShutting down...");
-      await client.close();
+      await db.client.close();
       process.exit(0);
     });
   } catch (error) {
