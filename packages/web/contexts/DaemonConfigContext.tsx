@@ -15,13 +15,20 @@ const DaemonConfigContext = createContext<DaemonConfigContextValue>({
   isDefault: true,
 });
 
+function resolveDefaultUrl(): string {
+  // NEXT_PUBLIC_DAEMON_URL is baked in at build time by Next.js
+  const envUrl = process.env.NEXT_PUBLIC_DAEMON_URL;
+  if (envUrl) return envUrl.replace(/\/+$/, "");
+  return DEFAULT_DAEMON_URL;
+}
+
 export function DaemonConfigProvider({ children }: { children: ReactNode }) {
   const [daemonUrl, setDaemonUrlState] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(STORAGE_KEYS.DAEMON_URL);
       if (stored) return stored;
     }
-    return DEFAULT_DAEMON_URL;
+    return resolveDefaultUrl();
   });
 
   const setDaemonUrl = (url: string) => {

@@ -9,6 +9,7 @@ import { statusRoute } from "./routes/status";
 import { exportRoute } from "./routes/export";
 import { purgeRoute } from "./routes/purge";
 import { clearRoute } from "./routes/clear";
+import { healthRoute } from "./routes/health";
 import { connectDatabase } from "./db";
 import { VoyageEmbedder } from "./embedding";
 import { DEFAULT_PORT, DEFAULT_MONGO_URI, MAX_REQUEST_BODY } from "./constants";
@@ -50,6 +51,8 @@ if (MEMORY_API_KEY) {
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+app.get("/health/detailed", healthRoute);
 
 app.post("/remember", rememberRoute);
 app.get("/recall", recallRoute);

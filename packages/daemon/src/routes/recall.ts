@@ -35,20 +35,27 @@ export const recallRoute = asyncHandler(async (req: Request, res: Response) => {
     filter.tags = { $in: tagArray };
   }
 
-  // Try Atlas Vector Search first
-  try {
-    const results = await vectorSearchRecall(collection, queryEmbedding, filter, data.limit);
-    res.json({
-      success: true,
-      query: data.query,
-      results,
-      count: results.length,
-      method: "vector_search",
-    });
-    return;
-  } catch {
-    // Vector search index doesn't exist — fall back to in-memory
-    console.log("[Recall] Atlas Vector Search unavailable, using in-memory fallback");
+  // Try Atlas Vector Search first (skip in mock mode — mock embeddings
+  // don't produce meaningful results through ANN indexes)
+  const isMock = process.env.VOYAGE_MOCK === "true";
+  if (!isMock) {
+    try {
+      const results = await vectorSearchRecall(collection, queryEmbedding, filter, data.limit);
+      if (results.length > 0) {
+        res.json({
+          success: true,
+          query: data.query,
+          results,
+          count: results.length,
+          method: "vector_search",
+        });
+        return;
+      }
+      // 0 results from vector search — fall through to in-memory
+    } catch {
+      // Vector search index doesn't exist — fall back to in-memory
+      console.log("[Recall] Atlas Vector Search unavailable, using in-memory fallback");
+    }
   }
 
   // Fallback: in-memory cosine similarity with streaming cursor + hard cap

@@ -43,9 +43,8 @@ function formatUptime(seconds: number): string {
   return `${s}s`;
 }
 
-function formatBytes(bytes: number): string {
-  const mb = bytes / (1024 * 1024);
-  return `${mb.toFixed(1)} MB`;
+function formatMB(mb: number): string {
+  return `${mb} MB`;
 }
 
 function mapStatus(value: string): "ready" | "error" | "unknown" {
@@ -151,7 +150,7 @@ function HeapUsageBar({ used, total }: { used: number; total: number }) {
             Heap Memory Usage
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {formatBytes(used)} / {formatBytes(total)}
+            {formatMB(used)} / {formatMB(total)}
           </Typography>
         </Box>
         <Box
@@ -351,8 +350,8 @@ export default function DashboardPage() {
                   <StatCard
                     icon={<DataUsage />}
                     label="Heap Used"
-                    value={formatBytes(status.memory.heapUsed)}
-                    subtitle={`of ${formatBytes(status.memory.heapTotal)}`}
+                    value={formatMB(status.memory.heapUsed)}
+                    subtitle={`of ${formatMB(status.memory.heapTotal)}`}
                     color="#ffab00"
                   />
                 </Grid>
