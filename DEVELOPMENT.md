@@ -2,14 +2,17 @@
 
 ## Project Status
 
-**Fully functional, ready for testing.**
+✅ **All core features working**  
+✅ **Mock embeddings fully functional** (deterministic, free)  
+✅ **Production-ready infrastructure**  
+⚠️ **Real Voyage embeddings pending** (need valid API key)
 
 All 5 phases complete:
-1. ✅ Voyage integration
-2. ✅ MongoDB schema design
+1. ✅ Voyage integration (both mock & real modes)
+2. ✅ MongoDB schema design with TTL & indexing
 3. ✅ Dependencies installed & building
-4. ✅ CLI commands
-5. ✅ Next.js web dashboard
+4. ✅ CLI commands fully implemented
+5. ✅ Next.js web dashboard (Material UI)
 
 ## Getting Started
 

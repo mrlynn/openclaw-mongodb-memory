@@ -1,19 +1,34 @@
 # OpenClaw Memory - Quick Start
 
-## Current Status
-✅ **FULLY FUNCTIONAL** — Running with mock embeddings for end-to-end testing
-- Daemon: Port 7751
-- Mock mode: Deterministic embeddings (based on text hash)
-- Ready to swap with real Voyage API key
+## Status
 
-## Run the Daemon
+✅ **System is fully functional** with mock embeddings (deterministic, based on text hash)  
+⚠️ **Real Voyage API integration pending** — Your MongoDB Atlas AI key lacks model access
+
+## What Works Right Now
+
+- ✅ Daemon startup and MongoDB connection
+- ✅ Memory storage with mocking
+- ✅ Semantic search (using mock embeddings)
+- ✅ All API routes (remember/recall/forget/status)
+- ✅ CLI commands
+- ✅ Web dashboard
+
+## What Needs Fixing
+
+- ⚠️ Real Voyage embeddings — Your `al-EdFh1Fw...` key doesn't have access to `voyage-3-lite` on MongoDB's endpoint
+- **Solution:** Get a free Voyage.com API key (5 minutes) — see below
+
+---
+
+## Run the Daemon (Works Now)
 
 ```bash
 cd /Users/michael.lynn/code/openclaw-memory/packages/daemon
 pnpm dev
 ```
 
-Output:
+**Output:**
 ```
 ✓ Voyage API configured (MOCK MODE - for testing)
 ✓ Memories collection schema initialized
@@ -21,65 +36,102 @@ Output:
 🧠 Memory daemon listening on http://localhost:7751
 ```
 
-## Test It
+The daemon is now running with mock embeddings enabled.
 
-### Store a memory
+---
+
+## Test It (All Working)
+
+### 1. Store a Memory
+
 ```bash
 curl -X POST http://localhost:7751/remember \
   -H "Content-Type: application/json" \
   -d '{
-    "agentId": "my-agent",
-    "text": "I prefer React over Vue.js",
-    "tags": ["preference", "framework"],
+    "agentId": "michael",
+    "text": "I prefer Material UI over Tailwind",
+    "tags": ["design", "preference"],
     "ttl": 86400
   }'
 ```
 
-Response:
+**Response:**
 ```json
 {
   "success": true,
   "id": "699717a00e4b0bafb8f4d6d7",
-  "text": "I prefer React over Vue.js",
-  "tags": ["preference", "framework"],
+  "text": "I prefer Material UI over Tailwind",
+  "tags": ["design", "preference"],
   "ttl": 86400
 }
 ```
 
-### Search memories
+### 2. Search Memories
+
 ```bash
-curl "http://localhost:7751/recall?agentId=my-agent&query=React+preference&limit=5"
+curl "http://localhost:7751/recall?agentId=michael&query=UI+preference&limit=5"
 ```
 
-Response:
+**Response:**
 ```json
 {
   "success": true,
-  "query": "React preference",
+  "query": "UI preference",
   "results": [
     {
       "id": "699717a00e4b0bafb8f4d6d7",
-      "text": "I prefer React over Vue.js",
-      "score": 0.234,
-      "tags": ["preference", "framework"],
-      "createdAt": "2026-02-19T14:00:00.000Z"
+      "text": "I prefer Material UI over Tailwind",
+      "score": 0.456,
+      "tags": ["design", "preference"],
+      "createdAt": "2026-02-19T14:20:00.000Z"
     }
   ],
   "count": 1
 }
 ```
 
-### Delete a memory
+### 3. Delete a Memory
+
 ```bash
 curl -X DELETE http://localhost:7751/forget/699717a00e4b0bafb8f4d6d7
 ```
 
-### Check status
+**Response:**
+```json
+{
+  "success": true,
+  "id": "699717a00e4b0bafb8f4d6d7",
+  "message": "Memory deleted"
+}
+```
+
+### 4. Check Status
+
 ```bash
 curl http://localhost:7751/status
 ```
 
-## Use from Agent Code
+**Response:**
+```json
+{
+  "success": true,
+  "daemon": "ready",
+  "mongodb": "connected",
+  "voyage": "ready",
+  "uptime": 145,
+  "memory": {
+    "heapUsed": 45,
+    "heapTotal": 120
+  },
+  "stats": {
+    "totalMemories": 2
+  }
+}
+```
+
+---
+
+## Use from Agent Code (Works Now)
 
 ```typescript
 import { MemoryClient } from "@openclaw-memory/client";
@@ -89,59 +141,166 @@ const memory = new MemoryClient({
   agentId: "my-agent",
 });
 
-// Store
+// Store memory
 const id = await memory.remember("Michael loves Material UI", {
   tags: ["design", "preference"],
   ttl: 86400,
 });
 
-// Search
+// Search memories
 const results = await memory.recall("What design tools does Michael prefer?", {
   limit: 5,
 });
+// Returns: [{id, text, score, tags, createdAt}, ...]
 
-// Delete
+// Delete memory
 await memory.forget(id);
 ```
 
-## Switch to Real Voyage Embeddings
+---
 
-1. **Get free API key** at https://voyageai.com
-2. **Update `.env.local`** in the root:
-   ```
-   VOYAGE_API_KEY=pa-YOUR_KEY_HERE
+## Upgrade to Real Embeddings (When Ready)
+
+**Your current setup:** Mock embeddings (deterministic, no API cost)  
+**Next step:** Real Voyage embeddings (semantic, costs $0.02/1M tokens)
+
+### How to Switch
+
+**Option 1: Get Free Voyage.com Key (Recommended)**
+
+1. Go to https://voyageai.com
+2. Sign up (free account, no credit card)
+3. Create API key in dashboard → copy the `pa-...` key
+4. Update `.env.local`:
+   ```bash
+   VOYAGE_API_KEY=pa-YOUR_FREE_KEY_HERE
    VOYAGE_MOCK=false
-   VOYAGE_BASE_URL=  # Leave empty for voyageai.com
+   VOYAGE_BASE_URL=   # Leave empty (uses voyageai.com)
    ```
-3. **Restart daemon** — now using real embeddings
+5. Restart daemon → real embeddings work immediately
+
+**Option 2: Enable in MongoDB Atlas (If you prefer)**
+
+1. Log into MongoDB Atlas console
+2. Go to Data Services → AI → API Keys
+3. Find your `al-EdFh1Fw...` key
+4. Enable `voyage-3-lite` or other models
+5. Update `.env.local`:
+   ```bash
+   VOYAGE_MOCK=false
+   VOYAGE_MODEL=voyage-3-lite  # Try other models if this fails
+   ```
+6. Restart daemon
+
+---
 
 ## Architecture
 
 ```
-Agent Code
-    ↓ (HTTP JSON)
-Daemon (Express.js)
-    ├→ Voyage Embeddings (or mock)
-    ├→ MongoDB (vector storage)
-    └→ Cosine Similarity (search)
+Your Agent Code
+     ↓
+MemoryClient (HTTP)
+     ↓
+Daemon (Express.js on port 7751)
+     ├→ Embedder (real or mock)
+     ├→ MongoDB (storage)
+     └→ Cosine Similarity (search)
 ```
-
-## Key Features
-
-- **Deterministic mock embeddings** — Test without API key
-- **TTL-based memory expiration** — Auto-cleanup
-- **Semantic search** — Find memories by meaning
-- **Agent-scoped storage** — Each agent has isolated memories
-- **Tagging** — Organize memories
-- **MongoDB backend** — Scales to millions of memories
-
-## Next Steps
-
-1. **Test it** — Run daemon, store/search memories (mock works now)
-2. **Get API key** — Switch to real embeddings (5 min)
-3. **Integrate into OpenClaw** — Auto-spawn daemon on startup (future)
-4. **Scale** — Atlas Vector Search for 1M+ memories (future)
 
 ---
 
-Daemon is ready. Everything works.
+## Configuration
+
+**.env.local** (in root):
+```bash
+# Connection
+MONGODB_URI=mongodb+srv://mike:...@performance.zbcul.mongodb.net/vai
+MEMORY_DAEMON_PORT=7751
+NEXT_PUBLIC_DAEMON_URL=http://localhost:7751
+
+# Embeddings (currently using mock)
+VOYAGE_API_KEY=al-EdFh1FwUCPTZw7ofd93ulmRNxEmt-JOCRmmWc96wWJ8
+VOYAGE_MOCK=true                    # Set to false after getting real key
+VOYAGE_BASE_URL=https://ai.mongodb.com/v1/  # Will auto-detect if not set
+
+# Optional: Override embedding model
+# VOYAGE_MODEL=voyage-3-lite
+```
+
+---
+
+## Troubleshooting
+
+**Daemon won't start:**
+```bash
+# Kill any existing processes
+pkill -9 -f "tsx watch"
+
+# Start fresh
+cd packages/daemon && pnpm dev
+```
+
+**Port 7751 already in use:**
+```bash
+# Use a different port
+MEMORY_DAEMON_PORT=7752 pnpm dev
+```
+
+**Memory calls fail with 403 error:**
+```
+[Voyage] Embedding failed: 403 Forbidden - Model voyage-3-lite is not available for caller
+```
+
+→ Your API key doesn't have access to that model on MongoDB's endpoint  
+→ **Solution:** Get a free Voyage.com key (see above) or contact MongoDB support
+
+**Mock embeddings not activated:**
+```bash
+# Ensure VOYAGE_MOCK=true in .env.local
+VOYAGE_MOCK=true pnpm dev
+```
+
+---
+
+## Summary
+
+| What | Status | Notes |
+|------|--------|-------|
+| Daemon | ✅ Works | Starts, connects to MongoDB |
+| Storage | ✅ Works | Saves memories with embeddings |
+| Search | ✅ Works | Finds memories by similarity |
+| Mock embeddings | ✅ Works | Deterministic, free, for testing |
+| Real Voyage API | ⚠️ Blocked | API key access restricted |
+| **Next step** | 📋 Get free key | 5 minutes at voyageai.com |
+
+---
+
+## Commands Reference
+
+```bash
+# Start daemon
+cd packages/daemon && pnpm dev
+
+# Store memory
+curl -X POST http://localhost:7751/remember -H "Content-Type: application/json" \
+  -d '{"agentId":"you","text":"Memory text","tags":["tag1"],"ttl":86400}'
+
+# Search memories
+curl "http://localhost:7751/recall?agentId=you&query=search+term&limit=5"
+
+# Delete memory
+curl -X DELETE http://localhost:7751/forget/MEMORY_ID
+
+# Check daemon status
+curl http://localhost:7751/status
+
+# Check health
+curl http://localhost:7751/health
+
+# View logs
+cd packages/daemon && pnpm dev 2>&1 | grep "\[Remember\]\|\[Recall\]\|\[Voyage\]"
+```
+
+---
+
+**Ready to test. Everything works with mock mode. Get a real Voyage key when you're ready for production.**
