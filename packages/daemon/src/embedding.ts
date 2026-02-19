@@ -19,11 +19,21 @@ export class VoyageEmbedder {
   private model: string;
   private useMock: boolean;
 
-  // Default models by endpoint
+  // Default models by endpoint, with fallback list
   private static readonly DEFAULT_MODELS = {
     "api.voyageai.com": "voyage-3",
     "ai.mongodb.com": "voyage-3-lite",
   };
+
+  // Fallback model list (try these in order if primary fails)
+  private static readonly FALLBACK_MODELS = [
+    "voyage-3",
+    "voyage-3-lite",
+    "voyage-3-5-lite",
+    "voyage-2",
+    "voyage-lite-02-instruct",
+    "voyage-code-3-5",
+  ];
 
   constructor(apiKey: string, baseUrl?: string, model?: string) {
     this.apiKey = apiKey;
@@ -98,6 +108,7 @@ export class VoyageEmbedder {
       }
 
       // Real Voyage API call
+      console.log(`[Voyage] Using model: ${this.model}`);
       const response = await this.client.post<VoyageEmbedResponse>(
         "/embeddings",
         {
@@ -116,9 +127,10 @@ export class VoyageEmbedder {
       return embeddings;
     } catch (error) {
       let errorMsg = "Unknown error";
+      let status = 0;
       
       if (axios.isAxiosError(error)) {
-        const status = error.response?.status;
+        status = error.response?.status || 0;
         const statusText = error.response?.statusText;
         const data = error.response?.data;
         errorMsg = `${status} ${statusText}`;
@@ -126,6 +138,13 @@ export class VoyageEmbedder {
           errorMsg += ` - ${(data as any).detail}`;
         } else if (typeof data === 'string') {
           errorMsg += ` - ${data}`;
+        }
+
+        // If 403 (forbidden), suggest fallback models
+        if (status === 403) {
+          console.error(`[Voyage] Model "${this.model}" not available for your API key`);
+          console.error(`[Voyage] Try one of these models: ${VoyageEmbedder.FALLBACK_MODELS.join(", ")}`);
+          console.error(`[Voyage] Set VOYAGE_MODEL env var to override (e.g., VOYAGE_MODEL=voyage-3-lite)`);
         }
       } else if (error instanceof Error) {
         errorMsg = error.message;

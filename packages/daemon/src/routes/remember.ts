@@ -19,8 +19,9 @@ export const rememberRoute = async (req: Request, res: Response) => {
     const mongoClient: MongoClient = req.app.locals.mongoClient;
     const voyageApiKey: string = req.app.locals.voyageApiKey;
     const voyageBaseUrl: string | undefined = req.app.locals.voyageBaseUrl;
+    const voyageModel: string | undefined = req.app.locals.voyageModel;
 
-    const embedder = new VoyageEmbedder(voyageApiKey, voyageBaseUrl);
+    const embedder = new VoyageEmbedder(voyageApiKey, voyageBaseUrl, voyageModel);
 
     // Embed the text
     console.log(`[Remember] Storing memory for agent: ${data.agentId}`);

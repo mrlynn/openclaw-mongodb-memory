@@ -16,6 +16,7 @@ const PORT = process.env.MEMORY_DAEMON_PORT || 7654;
 const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY;
 const VOYAGE_BASE_URL = process.env.VOYAGE_BASE_URL; // Optional: MongoDB AI or custom endpoint
+const VOYAGE_MODEL = process.env.VOYAGE_MODEL; // Optional: override default model
 
 const app: Express = express();
 
@@ -74,6 +75,7 @@ const startServer = async () => {
     app.locals.mongoClient = db.client;
     app.locals.voyageApiKey = VOYAGE_API_KEY;
     app.locals.voyageBaseUrl = VOYAGE_BASE_URL;
+    app.locals.voyageModel = VOYAGE_MODEL;
 
     // Start listening
     app.listen(PORT, () => {
