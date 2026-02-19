@@ -21,6 +21,7 @@ import {
   Storage,
   Settings,
   Hub,
+  HealthAndSafety,
 } from "@mui/icons-material";
 import { SIDEBAR_WIDTH, NAV_ITEMS } from "@/lib/constants";
 import { ThemeToggle } from "./ThemeToggle";
@@ -30,6 +31,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   SaveAlt: <SaveAlt />,
   Search: <Search />,
   Storage: <Storage />,
+  HealthCheck: <HealthAndSafety />,
   Settings: <Settings />,
 };
 

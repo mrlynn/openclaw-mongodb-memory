@@ -13,5 +13,6 @@ export const NAV_ITEMS = [
   { label: "Remember", path: "/remember", icon: "SaveAlt" as const },
   { label: "Recall", path: "/recall", icon: "Search" as const },
   { label: "Memory Browser", path: "/browser", icon: "Storage" as const },
+  { label: "Health & Integration", path: "/health", icon: "HealthCheck" as const },
   { label: "Settings", path: "/settings", icon: "Settings" as const },
 ] as const;

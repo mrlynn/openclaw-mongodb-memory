@@ -24,7 +24,7 @@ import {
 import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
-  Warning as WarningIcon,
+  WarningAmber as WarningIcon,
   Info as InfoIcon,
 } from "@mui/icons-material";
 import {
