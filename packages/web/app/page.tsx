@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import {
   Container,
-  Paper,
   Grid,
   Card,
   CardContent,
@@ -18,7 +17,7 @@ import {
   CircularProgress,
   Alert,
 } from "@mui/material";
-import { daemonApi } from "@/lib/api";
+import { fetchStatus, rememberMemory, recallMemory, forgetMemory } from "@/lib/api";
 
 interface DaemonStatus {
   daemon: string;
@@ -50,9 +49,9 @@ export default function Dashboard() {
 
   // Fetch status on mount
   useEffect(() => {
-    const fetchStatus = async () => {
+    const getStatus = async () => {
       try {
-        const data = await daemonApi.status();
+        const data = await fetchStatus();
         setStatus(data);
         setError(null);
       } catch (err) {
@@ -62,15 +61,15 @@ export default function Dashboard() {
       }
     };
 
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Refresh every 5s
+    getStatus();
+    const interval = setInterval(getStatus, 5000); // Refresh every 5s
     return () => clearInterval(interval);
   }, []);
 
   const handleRemember = async () => {
     if (!rememberText.trim()) return;
     try {
-      await daemonApi.remember(agentId, rememberText, {
+      await rememberMemory(agentId, rememberText, {
         tags: ["dashboard-test"],
       });
       setRememberText("");
@@ -84,7 +83,7 @@ export default function Dashboard() {
     if (!recallQuery.trim()) return;
     setRecalling(true);
     try {
-      const results = await daemonApi.recall(agentId, recallQuery);
+      const results = await recallMemory(agentId, recallQuery);
       setRecallResults(results);
     } catch (err) {
       alert(`Error: ${String(err)}`);
