@@ -23,7 +23,9 @@ export const rememberRoute = async (req: Request, res: Response) => {
     const embedder = new VoyageEmbedder(voyageApiKey, voyageBaseUrl);
 
     // Embed the text
+    console.log(`[Remember] Storing memory for agent: ${data.agentId}`);
     const embedding = await embedder.embedOne(data.text);
+    console.log(`[Remember] Embedding complete`);
 
     // Get database and collection
     const db = mongoClient.db("openclaw_memory");

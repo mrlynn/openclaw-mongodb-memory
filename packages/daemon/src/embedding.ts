@@ -24,14 +24,11 @@ export class VoyageEmbedder {
     // Use custom base URL (e.g., MongoDB AI endpoint) or default to Voyage API
     const url = baseUrl || "https://api.voyageai.com/v1";
     
-    // MongoDB AI keys start with "al-" and use different auth format
-    const isMongoDB = apiKey.startsWith("al-");
-    const authHeader = isMongoDB ? apiKey : `Bearer ${apiKey}`;
-    
+    // Both MongoDB Atlas AI (al-*) and Voyage.com public API use Bearer tokens
     this.client = axios.create({
       baseURL: url,
       headers: {
-        Authorization: authHeader,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       timeout: 30000,
@@ -40,6 +37,7 @@ export class VoyageEmbedder {
 
   async embed(texts: string[]): Promise<number[][]> {
     try {
+      console.log(`[Voyage] Embedding ${texts.length} text(s)...`);
       const response = await this.client.post<VoyageEmbedResponse>(
         "/embeddings",
         {
@@ -48,6 +46,8 @@ export class VoyageEmbedder {
         }
       );
 
+      console.log(`[Voyage] Got ${response.data.data.length} embedding(s)`);
+
       // Sort by index to ensure correct order
       const embeddings = response.data.data
         .sort((a, b) => a.index - b.index)
@@ -55,14 +55,24 @@ export class VoyageEmbedder {
 
       return embeddings;
     } catch (error) {
+      let errorMsg = "Unknown error";
+      
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
-        const data = JSON.stringify(error.response?.data);
-        throw new Error(
-          `Voyage API error: ${status} ${data}`
-        );
+        const statusText = error.response?.statusText;
+        const data = error.response?.data;
+        errorMsg = `${status} ${statusText}`;
+        if (typeof data === 'object' && data !== null && 'detail' in data) {
+          errorMsg += ` - ${(data as any).detail}`;
+        } else if (typeof data === 'string') {
+          errorMsg += ` - ${data}`;
+        }
+      } else if (error instanceof Error) {
+        errorMsg = error.message;
       }
-      throw error;
+      
+      console.error(`[Voyage] Embedding failed: ${errorMsg}`);
+      throw new Error(`Voyage API error: ${errorMsg}`);
     }
   }
 

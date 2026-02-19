@@ -33,6 +33,15 @@ app.get("/recall", recallRoute);
 app.delete("/forget/:id", forgetRoute);
 app.get("/status", statusRoute);
 
+// Error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({
+    success: false,
+    error: err.message || "Internal server error"
+  });
+});
+
 // Start server
 const startServer = async () => {
   try {
@@ -40,7 +49,14 @@ const startServer = async () => {
     if (!VOYAGE_API_KEY) {
       throw new Error("VOYAGE_API_KEY environment variable not set");
     }
-    console.log("✓ Voyage API key configured");
+    
+    // Show which Voyage endpoint we're using
+    const voyageEndpoint = VOYAGE_BASE_URL || "https://api.voyageai.com/v1";
+    const isMongoDB = VOYAGE_API_KEY.startsWith("al-");
+    const endpointType = isMongoDB ? "MongoDB Atlas AI" : "Voyage.com";
+    console.log(`✓ Voyage API configured (Bearer token)`);
+    console.log(`  Provider: ${endpointType}`);
+    console.log(`  Endpoint: ${voyageEndpoint}`);
 
     // Connect to MongoDB and initialize schema
     const db = await connectDatabase({ mongoUri: MONGO_URI });
