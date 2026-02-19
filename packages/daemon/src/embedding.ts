@@ -17,11 +17,12 @@ export class VoyageEmbedder {
   private client: AxiosInstance;
   private apiKey: string;
   private model: string;
+  private useMock: boolean;
 
   // Default models by endpoint
   private static readonly DEFAULT_MODELS = {
     "api.voyageai.com": "voyage-3",
-    "ai.mongodb.com": "voyage-3-lite", // MongoDB often limits to lite models
+    "ai.mongodb.com": "voyage-3-lite",
   };
 
   constructor(apiKey: string, baseUrl?: string, model?: string) {
@@ -29,6 +30,9 @@ export class VoyageEmbedder {
     
     // Use custom base URL (e.g., MongoDB AI endpoint) or default to Voyage API
     const url = baseUrl || "https://api.voyageai.com/v1";
+    
+    // Mock mode for testing (set VOYAGE_MOCK=true in env)
+    this.useMock = process.env.VOYAGE_MOCK === "true";
     
     // Pick appropriate model based on endpoint
     const hostname = url.includes("mongodb") ? "ai.mongodb.com" : "api.voyageai.com";
@@ -45,9 +49,55 @@ export class VoyageEmbedder {
     });
   }
 
+  /**
+   * Generate a mock embedding (deterministic based on text hash)
+   * Useful for testing without API credentials
+   */
+  private mockEmbed(text: string): number[] {
+    // Hash the text to get a seed
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+
+    // Use seed to generate deterministic "random" embedding
+    const embedding: number[] = [];
+    const dim = 1024; // Voyage embedding dimension
+    for (let i = 0; i < dim; i++) {
+      const seed = hash + i;
+      const x = Math.sin(seed) * 10000;
+      const value = x - Math.floor(x); // Normalize to 0-1
+      embedding.push(value * 2 - 1); // Scale to -1 to 1
+    }
+
+    // Normalize to unit vector
+    let magnitude = 0;
+    for (const v of embedding) {
+      magnitude += v * v;
+    }
+    magnitude = Math.sqrt(magnitude);
+    for (let i = 0; i < embedding.length; i++) {
+      embedding[i] /= magnitude;
+    }
+
+    return embedding;
+  }
+
   async embed(texts: string[]): Promise<number[][]> {
     try {
       console.log(`[Voyage] Embedding ${texts.length} text(s)...`);
+
+      // Use mock embeddings if enabled
+      if (this.useMock) {
+        console.log(`[Voyage] Using MOCK embeddings (VOYAGE_MOCK=true)`);
+        const embeddings = texts.map((text) => this.mockEmbed(text));
+        console.log(`[Voyage] Generated ${embeddings.length} mock embedding(s)`);
+        return embeddings;
+      }
+
+      // Real Voyage API call
       const response = await this.client.post<VoyageEmbedResponse>(
         "/embeddings",
         {

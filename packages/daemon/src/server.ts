@@ -54,9 +54,17 @@ const startServer = async () => {
     const voyageEndpoint = VOYAGE_BASE_URL || "https://api.voyageai.com/v1";
     const isMongoDB = VOYAGE_API_KEY.startsWith("al-");
     const endpointType = isMongoDB ? "MongoDB Atlas AI" : "Voyage.com";
-    console.log(`✓ Voyage API configured (Bearer token)`);
-    console.log(`  Provider: ${endpointType}`);
-    console.log(`  Endpoint: ${voyageEndpoint}`);
+    const isMock = process.env.VOYAGE_MOCK === "true";
+    
+    if (isMock) {
+      console.log(`✓ Voyage API configured (MOCK MODE - for testing)`);
+      console.log(`  Embeddings: Deterministic mocks based on text hash`);
+      console.log(`  Note: Set VOYAGE_MOCK=false and provide valid API key to use real embeddings`);
+    } else {
+      console.log(`✓ Voyage API configured (Bearer token)`);
+      console.log(`  Provider: ${endpointType}`);
+      console.log(`  Endpoint: ${voyageEndpoint}`);
+    }
 
     // Connect to MongoDB and initialize schema
     const db = await connectDatabase({ mongoUri: MONGO_URI });

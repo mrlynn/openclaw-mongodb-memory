@@ -13,7 +13,9 @@ const RecallSchema = z.object({
 
 export const recallRoute = async (req: Request, res: Response) => {
   try {
+    console.log("[Recall] Parsing query params...");
     const data = RecallSchema.parse(req.query);
+    console.log(`[Recall] Query: "${data.query}", Agent: ${data.agentId}, Limit: ${data.limit}`);
 
     const mongoClient: MongoClient = req.app.locals.mongoClient;
     const voyageApiKey: string = req.app.locals.voyageApiKey;
@@ -22,7 +24,9 @@ export const recallRoute = async (req: Request, res: Response) => {
     const embedder = new VoyageEmbedder(voyageApiKey, voyageBaseUrl);
 
     // Embed the query
+    console.log("[Recall] Embedding query...");
     const queryEmbedding = await embedder.embedOne(data.query);
+    console.log(`[Recall] Query embedding created (${queryEmbedding.length} dims)`);
 
     // Get database and collection
     const db = mongoClient.db("openclaw_memory");
@@ -43,24 +47,31 @@ export const recallRoute = async (req: Request, res: Response) => {
     }
 
     // Fetch all matching memories (we'll do in-memory similarity scoring)
+    console.log(`[Recall] Querying MongoDB with filter: ${JSON.stringify(filter)}`);
     const memories = await collection.find(filter).toArray();
+    console.log(`[Recall] Found ${memories.length} matching memories`);
 
     // Score by cosine similarity
+    console.log("[Recall] Computing similarity scores...");
     const scored = memories
-      .map((doc) => ({
-        id: doc._id.toString(),
-        text: doc.text,
-        tags: doc.tags,
-        metadata: doc.metadata,
-        createdAt: doc.createdAt,
-        score: VoyageEmbedder.cosineSimilarity(
+      .map((doc) => {
+        const score = VoyageEmbedder.cosineSimilarity(
           queryEmbedding,
           doc.embedding as number[]
-        ),
-      }))
+        );
+        return {
+          id: doc._id.toString(),
+          text: doc.text,
+          tags: doc.tags,
+          metadata: doc.metadata,
+          createdAt: doc.createdAt,
+          score,
+        };
+      })
       .sort((a, b) => b.score - a.score)
       .slice(0, data.limit);
 
+    console.log(`[Recall] Returning ${scored.length} results`);
     res.json({
       success: true,
       query: data.query,
@@ -69,9 +80,10 @@ export const recallRoute = async (req: Request, res: Response) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error("[Recall] Validation error:", error);
       res.status(400).json({ error: "Validation failed", details: error.errors });
     } else {
-      console.error("Recall error:", error);
+      console.error("[Recall] Error:", error);
       res.status(500).json({ error: String(error) });
     }
   }
