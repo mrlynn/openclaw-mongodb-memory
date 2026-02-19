@@ -16,13 +16,23 @@ export interface VoyageEmbedResponse {
 export class VoyageEmbedder {
   private client: AxiosInstance;
   private apiKey: string;
-  private model: string = "voyage-3";
+  private model: string;
 
-  constructor(apiKey: string, baseUrl?: string) {
+  // Default models by endpoint
+  private static readonly DEFAULT_MODELS = {
+    "api.voyageai.com": "voyage-3",
+    "ai.mongodb.com": "voyage-3-lite", // MongoDB often limits to lite models
+  };
+
+  constructor(apiKey: string, baseUrl?: string, model?: string) {
     this.apiKey = apiKey;
     
     // Use custom base URL (e.g., MongoDB AI endpoint) or default to Voyage API
     const url = baseUrl || "https://api.voyageai.com/v1";
+    
+    // Pick appropriate model based on endpoint
+    const hostname = url.includes("mongodb") ? "ai.mongodb.com" : "api.voyageai.com";
+    this.model = model || (VoyageEmbedder.DEFAULT_MODELS[hostname as keyof typeof VoyageEmbedder.DEFAULT_MODELS] || "voyage-3");
     
     // Both MongoDB Atlas AI (al-*) and Voyage.com public API use Bearer tokens
     this.client = axios.create({
