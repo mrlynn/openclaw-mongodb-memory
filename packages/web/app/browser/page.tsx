@@ -91,14 +91,25 @@ export default function BrowserPage() {
         const response = await fetch(`${daemonUrl}/agents`);
         if (!response.ok) throw new Error("Failed to fetch agents");
         const data = await response.json();
-        setAgents(data.agents || []);
+        const agentsList = data.agents || [];
+        setAgents(agentsList);
         
         // Auto-select first agent if none selected
-        if (!agentId && data.agents?.length > 0) {
-          const firstAgent = data.agents[0].agentId;
+        const currentAgentId = agentId || (typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEYS.AGENT_ID) : null);
+        if (!currentAgentId && agentsList.length > 0) {
+          const firstAgent = agentsList[0].agentId;
           setAgentId(firstAgent);
           if (typeof window !== "undefined") {
             localStorage.setItem(STORAGE_KEYS.AGENT_ID, firstAgent);
+          }
+        } else if (currentAgentId && !agentsList.find((a: AgentInfo) => a.agentId === currentAgentId)) {
+          // Stored agentId no longer exists, select first available
+          if (agentsList.length > 0) {
+            const firstAgent = agentsList[0].agentId;
+            setAgentId(firstAgent);
+            if (typeof window !== "undefined") {
+              localStorage.setItem(STORAGE_KEYS.AGENT_ID, firstAgent);
+            }
           }
         }
       } catch (err) {
@@ -109,7 +120,7 @@ export default function BrowserPage() {
     };
 
     fetchAgents();
-  }, [daemonUrl]);
+  }, [daemonUrl]); // Only run on mount or when daemonUrl changes
 
   const handleLoad = async () => {
     setLoading(true);
@@ -197,7 +208,7 @@ export default function BrowserPage() {
           <Button
             variant="contained"
             onClick={handleLoad}
-            disabled={loading || !agentId}
+            disabled={loading || loadingAgents || !agentId}
             startIcon={loading ? <CircularProgress size={18} /> : <Refresh />}
           >
             {loading ? "Loading..." : "Load Memories"}
