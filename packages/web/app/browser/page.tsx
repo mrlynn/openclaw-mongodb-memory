@@ -301,7 +301,7 @@ export default function BrowserPage() {
                             </TableCell>
                             <TableCell>
                               <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                {new Date(memory.createdAt).toLocaleDateString()}
+                                {new Date(memory.createdAt).toLocaleString()}
                               </Typography>
                             </TableCell>
                           </TableRow>
