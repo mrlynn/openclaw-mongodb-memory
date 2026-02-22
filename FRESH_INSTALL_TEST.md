@@ -8,6 +8,19 @@
 
 ## Phase 1: Complete Removal
 
+**💡 Quick Path:** Use the automated uninstall script:
+
+```bash
+cd ~/code/openclaw-memory
+./scripts/uninstall.sh
+```
+
+This automates steps 1.1-1.3 below. Then follow 1.2 (manual config edit) and optionally 1.4.
+
+---
+
+**📝 Manual Path (if you want to understand each step):**
+
 ### 1.1 Stop All Running Services
 
 ```bash
@@ -29,7 +42,7 @@ curl -s http://localhost:3002 || echo "✓ Web dashboard stopped"
 ### 1.2 Remove OpenClaw Plugin Integration
 
 ```bash
-# Backup current config
+# Backup current config (uninstall.sh does this automatically)
 cp ~/.openclaw/openclaw.json ~/.openclaw/openclaw.json.backup
 
 # Remove plugin entry from openclaw.json
@@ -58,6 +71,16 @@ ls -la ~/.openclaw/workspace/skills/ | grep memory
 **Expected:** No traces in extensions/ or skills/ directories.
 
 ### 1.4 Clear Test Data (Optional)
+
+**💡 Quick Path:** Use the automated cleanup script:
+
+```bash
+cd ~/code/openclaw-memory
+./scripts/cleanup.sh
+# Select option 1 (remove test agents)
+```
+
+**📝 Manual Path:**
 
 ```bash
 # Connect to MongoDB and drop test collections
@@ -178,6 +201,13 @@ curl -s http://localhost:7751/agents | jq
 ```
 
 **Expected:** All endpoints responding, daemon healthy.
+
+**💡 Quick Check:** Use the status script to verify everything at once:
+
+```bash
+cd ~/code/openclaw-memory
+./scripts/status.sh
+```
 
 ### 2.7 Test Basic Remember/Recall
 
