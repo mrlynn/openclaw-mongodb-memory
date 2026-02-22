@@ -1,0 +1,167 @@
+.page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.headerIcon {
+  opacity: 0.7;
+}
+
+body[data-theme="dark"] .headerIcon {
+  color: #00ED64;
+}
+
+body[data-theme="light"] .headerIcon {
+  color: #00684A;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 1.75rem;
+  letter-spacing: normal;
+}
+
+.description {
+  opacity: 0.7;
+  margin-bottom: 24px;
+  max-width: 600px;
+  font-size: 0.95rem;
+}
+
+/* Filters row */
+.filters {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.agentSelect {
+  min-width: 260px;
+}
+
+/* Table card */
+.tableCard {
+  animation: fadeIn 0.4s ease-out;
+  overflow: hidden;
+}
+
+.emptyState {
+  padding: 48px 24px;
+  text-align: center;
+  font-style: italic;
+  opacity: 0.5;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+body[data-theme="dark"] .table th {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="light"] .table th {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.table td {
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  vertical-align: middle;
+}
+
+body[data-theme="dark"] .table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+body[data-theme="light"] .table td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.tableRow {
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+body[data-theme="dark"] .tableRow:hover {
+  background: rgba(0, 237, 100, 0.04);
+}
+
+body[data-theme="light"] .tableRow:hover {
+  background: rgba(0, 104, 74, 0.04);
+}
+
+.cellText {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellTags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.cellDate {
+  font-size: 0.8rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 12px 16px;
+  font-size: 0.8rem;
+}
+
+body[data-theme="dark"] .pagination {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="light"] .pagination {
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.paginationInfo {
+  opacity: 0.6;
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bannerWrap {
+  margin-bottom: 24px;
+}

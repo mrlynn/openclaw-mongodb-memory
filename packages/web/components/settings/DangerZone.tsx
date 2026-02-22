@@ -1,26 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  useTheme,
-  CardContent,
-} from "@mui/material";
-import { Warning, DeleteForever } from "@mui/icons-material";
+import TextInput from "@leafygreen-ui/text-input";
+import Button from "@leafygreen-ui/button";
+import Banner from "@leafygreen-ui/banner";
+import Icon from "@leafygreen-ui/icon";
+import { Trash2 } from "lucide-react";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { DeleteConfirmDialog } from "@/components/browser/DeleteConfirmDialog";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
+import { useThemeMode } from "@/contexts/ThemeContext";
 import { clearMemories, purgeMemories } from "@/lib/api";
 import { STORAGE_KEYS } from "@/lib/constants";
 
 export function DangerZone() {
   const { daemonUrl } = useDaemonConfig();
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
 
   const [agentId, setAgentId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -28,16 +23,20 @@ export function DangerZone() {
     }
     return "demo-agent";
   });
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(
-    null
-  );
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [clearDialog, setClearDialog] = useState(false);
   const [purgeDialog, setPurgeDialog] = useState(false);
 
   const handleClear = async () => {
     try {
       await clearMemories(daemonUrl, agentId);
-      setMessage({ type: "success", text: `All memories cleared for agent "${agentId}"` });
+      setMessage({
+        type: "success",
+        text: `All memories cleared for agent "${agentId}"`,
+      });
       setClearDialog(false);
     } catch (err) {
       setMessage({ type: "error", text: String(err) });
@@ -48,7 +47,10 @@ export function DangerZone() {
   const handlePurge = async () => {
     try {
       await purgeMemories(daemonUrl, agentId);
-      setMessage({ type: "success", text: `Memories purged for agent "${agentId}"` });
+      setMessage({
+        type: "success",
+        text: `Memories purged for agent "${agentId}"`,
+      });
       setPurgeDialog(false);
     } catch (err) {
       setMessage({ type: "error", text: String(err) });
@@ -58,20 +60,26 @@ export function DangerZone() {
 
   return (
     <GlassCard
-      glowColor="#e87878"
-      sx={{
-        border: isDark
-          ? "1px solid rgba(232, 120, 120, 0.12)"
+      glowColor="#DB3030"
+      style={{
+        border: darkMode
+          ? "1px solid rgba(219, 48, 48, 0.12)"
           : "1px solid rgba(196, 88, 88, 0.15)",
       }}
     >
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-          <Warning sx={{ color: "error.main", fontSize: 20 }} />
-          <Typography
-            variant="subtitle2"
-            sx={{
-              color: "error.main",
+      <div style={{ padding: 24 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            marginBottom: 16,
+          }}
+        >
+          <Icon glyph="Warning" fill="#DB3030" />
+          <span
+            style={{
+              color: "#DB3030",
               textTransform: "uppercase",
               letterSpacing: "0.06em",
               fontWeight: 500,
@@ -79,53 +87,63 @@ export function DangerZone() {
             }}
           >
             Danger Zone
-          </Typography>
-        </Box>
+          </span>
+        </div>
 
-        <TextField
-          label="Agent ID"
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-          size="small"
-          fullWidth
-          sx={{ mb: 2.5 }}
-        />
+        <div style={{ marginBottom: 20 }}>
+          <TextInput
+            label="Agent ID"
+            value={agentId}
+            onChange={(e) => setAgentId(e.target.value)}
+            darkMode={darkMode}
+          />
+        </div>
 
         {message && (
-          <Alert
-            severity={message.type}
-            sx={{ mb: 2, borderRadius: 2 }}
-            onClose={() => setMessage(null)}
-          >
-            {message.text}
-          </Alert>
+          <div style={{ marginBottom: 16 }}>
+            <Banner
+              variant={message.type === "success" ? "success" : "danger"}
+              darkMode={darkMode}
+              onClose={() => setMessage(null)}
+            >
+              {message.text}
+            </Banner>
+          </div>
         )}
 
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteForever />}
+            variant="danger"
+            leftGlyph={<Trash2 size={16} />}
             onClick={() => setClearDialog(true)}
             disabled={!agentId.trim()}
+            darkMode={darkMode}
           >
             Clear All Memories
           </Button>
           <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteForever />}
+            variant="danger"
+            leftGlyph={<Trash2 size={16} />}
             onClick={() => setPurgeDialog(true)}
             disabled={!agentId.trim()}
+            darkMode={darkMode}
           >
             Purge Old Memories
           </Button>
-        </Box>
+        </div>
 
-        <Typography variant="caption" sx={{ color: "text.disabled", mt: 1.5, display: "block" }}>
-          These actions are irreversible. All matching memories will be permanently deleted.
-        </Typography>
-      </CardContent>
+        <span
+          style={{
+            display: "block",
+            marginTop: 12,
+            fontSize: "0.75rem",
+            opacity: 0.4,
+          }}
+        >
+          These actions are irreversible. All matching memories will be
+          permanently deleted.
+        </span>
+      </div>
 
       <DeleteConfirmDialog
         open={clearDialog}

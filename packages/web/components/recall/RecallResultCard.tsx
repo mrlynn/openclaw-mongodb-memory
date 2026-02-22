@@ -1,18 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Tooltip,
-  useTheme,
-} from "@mui/material";
-import { Delete, ExpandMore, ExpandLess } from "@mui/icons-material";
+import { Chip } from "@leafygreen-ui/chip";
+import IconButton from "@leafygreen-ui/icon-button";
+import Icon from "@leafygreen-ui/icon";
+import Tooltip from "@leafygreen-ui/tooltip";
 import { GlassCard } from "@/components/cards/GlassCard";
+import { useThemeMode } from "@/contexts/ThemeContext";
 import { SimilarityScoreBar } from "./SimilarityScoreBar";
-import { CardContent } from "@mui/material";
 
 function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
@@ -49,11 +44,19 @@ export function RecallResultCard({
 }: RecallResultCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
 
   const isLong = text.length > 200;
   const displayText = isLong && !expanded ? text.slice(0, 200) + "..." : text;
+
+  const borderColor =
+    score > 0.7
+      ? "#00A35C"
+      : score > 0.5
+        ? "#FFC010"
+        : darkMode
+          ? "rgba(255,255,255,0.1)"
+          : "rgba(0,0,0,0.08)";
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -65,98 +68,75 @@ export function RecallResultCard({
   };
 
   return (
-    <GlassCard
-      sx={{
-        borderLeft: `3px solid ${
-          score > 0.7
-            ? "#7ec8a4"
-            : score > 0.5
-              ? "#d4a76a"
-              : isDark
-                ? "rgba(180,188,208,0.1)"
-                : "rgba(0,0,0,0.08)"
-        }`,
-      }}
-    >
-      <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-        <Box sx={{ mb: 1.5 }}>
-          <SimilarityScoreBar score={score} />
-        </Box>
+    <GlassCard style={{ borderLeft: `3px solid ${borderColor}` }}>
+      <div style={{ marginBottom: 12 }}>
+        <SimilarityScoreBar score={score} />
+      </div>
 
-        <Typography
-          variant="body2"
-          sx={{
-            mb: 1.5,
-            lineHeight: 1.65,
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {displayText}
-        </Typography>
+      <p
+        style={{
+          marginBottom: 12,
+          lineHeight: 1.65,
+          whiteSpace: "pre-wrap",
+          fontSize: "0.875rem",
+        }}
+      >
+        {displayText}
+      </p>
 
-        {isLong && (
-          <Box
-            onClick={() => setExpanded(!expanded)}
-            sx={{
-              display: "inline-flex",
-              alignItems: "center",
-              cursor: "pointer",
-              color: "primary.main",
-              mb: 1,
-              "&:hover": { opacity: 0.8 },
-            }}
-          >
-            <Typography variant="caption" sx={{ fontWeight: 500 }}>
-              {expanded ? "Show less" : "Show more"}
-            </Typography>
-            {expanded ? (
-              <ExpandLess sx={{ fontSize: 16 }} />
-            ) : (
-              <ExpandMore sx={{ fontSize: 16 }} />
-            )}
-          </Box>
-        )}
-
-        <Box
-          sx={{
-            display: "flex",
+      {isLong && (
+        <span
+          onClick={() => setExpanded(!expanded)}
+          style={{
+            display: "inline-flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 1,
+            cursor: "pointer",
+            color: darkMode ? "#00ED64" : "#00684A",
+            marginBottom: 8,
+            fontWeight: 500,
+            fontSize: "0.75rem",
+            gap: 2,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-            {tags.map((tag, i) => (
-              <Chip
-                key={i}
-                label={tag}
-                size="small"
-                variant="outlined"
-                color="primary"
-                sx={{ height: 24, fontSize: "0.68rem" }}
-              />
-            ))}
-            <Typography variant="caption" sx={{ color: "text.disabled" }}>
-              {formatRelativeTime(createdAt)}
-            </Typography>
-          </Box>
+          {expanded ? "Show less" : "Show more"}
+          <Icon glyph={expanded ? "ChevronUp" : "ChevronDown"} size={14} />
+        </span>
+      )}
 
-          <Tooltip title="Delete this memory">
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          {tags.map((tag, i) => (
+            <Chip key={i} label={tag} variant="blue" darkMode={darkMode} />
+          ))}
+          <span style={{ fontSize: "0.7rem", opacity: 0.5 }}>
+            {formatRelativeTime(createdAt)}
+          </span>
+        </div>
+
+        <Tooltip
+          trigger={
             <IconButton
-              size="small"
+              aria-label="Delete this memory"
               onClick={handleDelete}
               disabled={deleting}
-              sx={{
-                color: "text.disabled",
-                "&:hover": { color: "error.main" },
-              }}
+              darkMode={darkMode}
             >
-              <Delete sx={{ fontSize: 17 }} />
+              <Icon glyph="Trash" size={16} />
             </IconButton>
-          </Tooltip>
-        </Box>
-      </CardContent>
+          }
+          darkMode={darkMode}
+        >
+          Delete this memory
+        </Tooltip>
+      </div>
     </GlassCard>
   );
 }

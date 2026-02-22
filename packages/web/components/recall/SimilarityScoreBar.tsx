@@ -1,62 +1,65 @@
 "use client";
 
-import { Box, Typography, useTheme } from "@mui/material";
+import { useThemeMode } from "@/contexts/ThemeContext";
 
 interface SimilarityScoreBarProps {
   score: number;
 }
 
 export function SimilarityScoreBar({ score }: SimilarityScoreBarProps) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
   const percent = Math.min(score * 100, 100);
 
+  const gradient =
+    score > 0.7
+      ? "linear-gradient(90deg, #016BF8, #00A35C)"
+      : score > 0.5
+        ? "linear-gradient(90deg, #016BF8, #FFC010)"
+        : darkMode
+          ? "linear-gradient(90deg, #3D4F58, #5C6C75)"
+          : "linear-gradient(90deg, #B8C4C2, #C1C7C6)";
+
+  const scoreColor =
+    score > 0.7
+      ? darkMode
+        ? "#00ED64"
+        : "#00A35C"
+      : undefined;
+
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, width: "100%" }}>
-      <Box
-        sx={{
+    <div style={{ display: "flex", alignItems: "center", gap: 12, width: "100%" }}>
+      <div
+        style={{
           flex: 1,
           height: 5,
           borderRadius: 3,
-          bgcolor: isDark ? "rgba(180,188,208,0.06)" : "rgba(0,0,0,0.06)",
+          background: darkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)",
           overflow: "hidden",
         }}
       >
-        <Box
-          sx={{
+        <div
+          style={{
             width: `${percent}%`,
             height: "100%",
             borderRadius: 3,
-            background:
-              score > 0.7
-                ? "linear-gradient(90deg, #8b9cf7, #7ec8a4)"
-                : score > 0.5
-                  ? "linear-gradient(90deg, #8b9cf7, #d4a76a)"
-                  : isDark
-                    ? "linear-gradient(90deg, #4a4f65, #5a5f75)"
-                    : "linear-gradient(90deg, #b0b5c5, #c0c5d5)",
+            background: gradient,
             transition: "width 0.6s ease-out",
           }}
         />
-      </Box>
-      <Typography
-        variant="caption"
-        sx={{
+      </div>
+      <span
+        style={{
           fontWeight: 600,
           fontFamily: "monospace",
           minWidth: 48,
           textAlign: "right",
-          color:
-            score > 0.7
-              ? isDark
-                ? "#7ec8a4"
-                : "success.main"
-              : "text.secondary",
+          color: scoreColor,
           fontSize: "0.72rem",
+          opacity: scoreColor ? 1 : 0.6,
         }}
       >
         {score.toFixed(3)}
-      </Typography>
-    </Box>
+      </span>
+    </div>
   );
 }

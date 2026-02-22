@@ -4,22 +4,23 @@ import {
   createContext,
   useContext,
   useState,
-  useMemo,
+  useEffect,
   ReactNode,
 } from "react";
-import { ThemeProvider as MuiThemeProvider, CssBaseline } from "@mui/material";
-import { getTheme } from "@/lib/theme";
+import LeafyGreenProvider from "@leafygreen-ui/leafygreen-provider";
 import { STORAGE_KEYS } from "@/lib/constants";
 
 type ThemeMode = "dark" | "light";
 
 interface ThemeContextValue {
   mode: ThemeMode;
+  darkMode: boolean;
   toggleMode: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
   mode: "dark",
+  darkMode: true,
   toggleMode: () => {},
 });
 
@@ -32,6 +33,12 @@ export function ThemeContextProvider({ children }: { children: ReactNode }) {
     return "dark";
   });
 
+  const darkMode = mode === "dark";
+
+  useEffect(() => {
+    document.body.setAttribute("data-theme", mode);
+  }, [mode]);
+
   const toggleMode = () => {
     setMode((prev) => {
       const next = prev === "dark" ? "light" : "dark";
@@ -40,14 +47,11 @@ export function ThemeContextProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const theme = useMemo(() => getTheme(mode), [mode]);
-
   return (
-    <ThemeContext.Provider value={{ mode, toggleMode }}>
-      <MuiThemeProvider theme={theme}>
-        <CssBaseline />
+    <ThemeContext.Provider value={{ mode, darkMode, toggleMode }}>
+      <LeafyGreenProvider darkMode={darkMode}>
         {children}
-      </MuiThemeProvider>
+      </LeafyGreenProvider>
     </ThemeContext.Provider>
   );
 }

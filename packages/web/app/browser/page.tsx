@@ -23,7 +23,7 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
-import { Storage, Download, Refresh } from "@mui/icons-material";
+import { Storage, Download, Refresh, Search } from "@mui/icons-material";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
 import { exportMemories, forgetMemory } from "@/lib/api";
 import { STORAGE_KEYS } from "@/lib/constants";
@@ -67,10 +67,13 @@ export default function BrowserPage() {
     }
     return "";
   });
+  const [searchQuery, setSearchQuery] = useState("");
   const [memories, setMemories] = useState<MemoryItem[]>([]);
+  const [memoryScores, setMemoryScores] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [searchMode, setSearchMode] = useState(false);
 
   // Pagination
   const [page, setPage] = useState(0);
@@ -125,12 +128,58 @@ export default function BrowserPage() {
   const handleLoad = async () => {
     setLoading(true);
     setError(null);
+    setSearchMode(false);
+    setMemoryScores({});
     try {
       const data = await exportMemories(daemonUrl, agentId);
       const items = data.memories || data || [];
       setMemories(items);
       setHasLoaded(true);
       setPage(0);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      setError("Please enter a search query");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSearchMode(true);
+    try {
+      const url = new URL('/recall', daemonUrl);
+      url.searchParams.set('agentId', agentId);
+      url.searchParams.set('query', searchQuery);
+      url.searchParams.set('limit', '50');
+
+      const response = await fetch(url.toString());
+      if (!response.ok) throw new Error('Search failed');
+      
+      const data = await response.json();
+      
+      if (data.success && data.results) {
+        setMemories(data.results);
+        
+        const scores: Record<string, number> = {};
+        data.results.forEach((result: any) => {
+          if (result._id && result.score !== undefined) {
+            scores[result._id] = result.score;
+          }
+        });
+        setMemoryScores(scores);
+        
+        setHasLoaded(true);
+        setPage(0);
+      } else {
+        setMemories([]);
+        setMemoryScores({});
+      }
     } catch (err) {
       setError(String(err));
     } finally {
@@ -178,9 +227,9 @@ export default function BrowserPage() {
         </Box>
         <Typography
           variant="body1"
-          sx={{ color: "text.secondary", mb: 3, maxWidth: 600 }}
+          sx={{ color: "text.secondary", mb: 3, maxWidth: 700 }}
         >
-          Browse, inspect, and manage all stored memories for an agent.
+          Browse, inspect, and manage all stored memories for an agent. Use semantic search (RAG) with vector embeddings to find relevant memories by meaning, not just keywords.
         </Typography>
 
         {/* Filters */}
@@ -205,13 +254,35 @@ export default function BrowserPage() {
               ))}
             </Select>
           </FormControl>
+          <TextField
+            label="Search Query (RAG)"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && searchQuery.trim() && agentId) {
+                handleSearch();
+              }
+            }}
+            size="small"
+            sx={{ minWidth: 300 }}
+            placeholder="Semantic search using embeddings..."
+            disabled={loading || loadingAgents || !agentId}
+          />
           <Button
             variant="contained"
+            onClick={handleSearch}
+            disabled={loading || loadingAgents || !agentId || !searchQuery.trim()}
+            startIcon={loading && searchMode ? <CircularProgress size={18} /> : <Search />}
+          >
+            {loading && searchMode ? "Searching..." : "Search"}
+          </Button>
+          <Button
+            variant="outlined"
             onClick={handleLoad}
             disabled={loading || loadingAgents || !agentId}
-            startIcon={loading ? <CircularProgress size={18} /> : <Refresh />}
+            startIcon={loading && !searchMode ? <CircularProgress size={18} /> : <Refresh />}
           >
-            {loading ? "Loading..." : "Load Memories"}
+            {loading && !searchMode ? "Loading..." : "Load All"}
           </Button>
         </Box>
 
@@ -237,13 +308,22 @@ export default function BrowserPage() {
         {hasLoaded && (
           <GlassCard sx={{ animation: `${fadeInUp} 0.4s ease-out` }}>
             <CardContent sx={{ p: 0 }}>
+              {searchMode && memories.length > 0 && (
+                <Alert severity="info" sx={{ m: 2, borderRadius: 2 }}>
+                  <Typography variant="body2">
+                    <strong>Search Results:</strong> Showing {memories.length} memories ranked by semantic relevance to "{searchQuery}"
+                  </Typography>
+                </Alert>
+              )}
               {memories.length === 0 ? (
                 <Box sx={{ p: 4, textAlign: "center" }}>
                   <Typography
                     variant="body2"
                     sx={{ color: "text.disabled", fontStyle: "italic" }}
                   >
-                    No memories found for this agent.
+                    {searchMode 
+                      ? `No memories found matching "${searchQuery}"`
+                      : "No memories found for this agent."}
                   </Typography>
                 </Box>
               ) : (
@@ -252,7 +332,12 @@ export default function BrowserPage() {
                     <Table>
                       <TableHead>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 500, width: "50%" }}>
+                          {searchMode && (
+                            <TableCell sx={{ fontWeight: 500, width: "10%" }}>
+                              Relevance
+                            </TableCell>
+                          )}
+                          <TableCell sx={{ fontWeight: 500, width: searchMode ? "40%" : "50%" }}>
                             Text
                           </TableCell>
                           <TableCell sx={{ fontWeight: 500 }}>Tags</TableCell>
@@ -274,6 +359,23 @@ export default function BrowserPage() {
                             }}
                             onClick={() => handleRowClick(memory)}
                           >
+                            {searchMode && (
+                              <TableCell>
+                                {memoryScores[memory._id] !== undefined && (
+                                  <Chip
+                                    label={memoryScores[memory._id].toFixed(3)}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                    sx={{ 
+                                      height: 24, 
+                                      fontSize: "0.7rem",
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                )}
+                              </TableCell>
+                            )}
                             <TableCell>
                               <Typography variant="body2" noWrap sx={{ maxWidth: 400 }}>
                                 {memory.text}

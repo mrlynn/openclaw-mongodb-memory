@@ -1,50 +1,29 @@
 "use client";
 
-import { Box, Typography, Fade } from "@mui/material";
-import { Settings } from "@mui/icons-material";
+import Icon from "@leafygreen-ui/icon";
 import { DaemonUrlConfig } from "@/components/settings/DaemonUrlConfig";
 import { DangerZone } from "@/components/settings/DangerZone";
-import { keyframes } from "@emotion/react";
-
-const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+import styles from "./page.module.css";
 
 export default function SettingsPage() {
   return (
-    <Fade in timeout={400}>
-      <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Settings sx={{ color: "primary.main", fontSize: 24, opacity: 0.8 }} />
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              animation: `${fadeInUp} 0.4s ease-out`,
-            }}
-          >
-            Settings
-          </Typography>
-        </Box>
-        <Typography
-          variant="body1"
-          sx={{ color: "text.secondary", mb: 4, maxWidth: 600 }}
-        >
-          Configure the daemon connection and manage system settings.
-        </Typography>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <Icon glyph="Settings" size={24} className={styles.headerIcon} />
+        <h2 className={styles.title}>Settings</h2>
+      </div>
+      <p className={styles.description}>
+        Configure the daemon connection and manage system settings.
+      </p>
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 720 }}>
-          <Box sx={{ animation: `${fadeInUp} 0.4s ease-out 0.05s both` }}>
-            <DaemonUrlConfig />
-          </Box>
-
-          <Box sx={{ animation: `${fadeInUp} 0.4s ease-out 0.1s both` }}>
-            <DangerZone />
-          </Box>
-        </Box>
-      </Box>
-    </Fade>
+      <div className={styles.sections}>
+        <div className={styles.section}>
+          <DaemonUrlConfig />
+        </div>
+        <div className={styles.section}>
+          <DangerZone />
+        </div>
+      </div>
+    </div>
   );
 }

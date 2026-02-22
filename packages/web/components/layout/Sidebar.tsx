@@ -2,204 +2,82 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import {
-  Box,
-  Drawer,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import {
-  Dashboard,
-  SaveAlt,
-  Search,
-  Storage,
-  Settings,
-  HealthAndSafety,
-} from "@mui/icons-material";
+import Icon from "@leafygreen-ui/icon";
+import { Body } from "@leafygreen-ui/typography";
 import { SIDEBAR_WIDTH, NAV_ITEMS } from "@/lib/constants";
+import { useThemeMode } from "@/contexts/ThemeContext";
 import { ThemeToggle } from "./ThemeToggle";
-
-const ICON_MAP: Record<string, React.ReactNode> = {
-  Dashboard: <Dashboard />,
-  SaveAlt: <SaveAlt />,
-  Search: <Search />,
-  Storage: <Storage />,
-  HealthCheck: <HealthAndSafety />,
-  Settings: <Settings />,
-};
+import styles from "./Sidebar.module.css";
 
 interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
 }
 
-function SidebarContent() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        py: 3,
-      }}
-    >
+    <div className={styles.container}>
       {/* Logo */}
-      <Box sx={{ px: 3, mb: 4 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 600,
-            fontSize: "1.05rem",
-            letterSpacing: "-0.02em",
-            color: "text.primary",
-          }}
-        >
+      <div className={styles.logo}>
+        <div className={styles.logoTitle}>
           OpenClaw
-        </Typography>
-        <Typography
-          variant="caption"
-          sx={{
-            color: "text.disabled",
-            display: "block",
-            mt: 0.25,
-            fontSize: "0.68rem",
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-          }}
-        >
-          Memory System
-        </Typography>
-      </Box>
+        </div>
+        <span className={styles.logoSubtitle}>Memory System</span>
+      </div>
 
       {/* Navigation */}
-      <List sx={{ px: 1.5, flex: 1 }}>
+      <nav className={styles.nav}>
         {NAV_ITEMS.map((item) => {
           const isActive =
             pathname === item.path ||
             (item.path === "/dashboard" && pathname === "/");
           return (
-            <ListItemButton
+            <Link
               key={item.path}
-              component={Link}
               href={item.path}
-              selected={isActive}
-              sx={{
-                borderRadius: 2.5,
-                mb: 0.25,
-                mx: 0.5,
-                py: 1,
-                px: 1.5,
-                transition: "all 0.25s ease",
-                "&.Mui-selected": {
-                  background: isDark
-                    ? "rgba(139, 156, 247, 0.08)"
-                    : "rgba(91, 106, 191, 0.06)",
-                  "& .MuiListItemIcon-root": {
-                    color: "primary.main",
-                  },
-                  "& .MuiListItemText-primary": {
-                    fontWeight: 500,
-                    color: "primary.main",
-                  },
-                },
-                "&:hover": {
-                  background: isDark
-                    ? "rgba(139, 156, 247, 0.05)"
-                    : "rgba(0, 0, 0, 0.03)",
-                },
-              }}
+              onClick={onNavigate}
+              className={`${styles.navLink} ${isActive ? styles.active : ""}`}
             >
-              <ListItemIcon
-                sx={{
-                  minWidth: 36,
-                  color: isActive ? "primary.main" : "text.disabled",
-                  "& svg": { fontSize: 20 },
-                }}
-              >
-                {ICON_MAP[item.icon]}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                primaryTypographyProps={{
-                  fontSize: "0.85rem",
-                  letterSpacing: "-0.01em",
-                }}
-              />
-            </ListItemButton>
+              <span className={styles.navIcon}>
+                <Icon glyph={item.icon as any} size={18} />
+              </span>
+              {item.label}
+            </Link>
           );
         })}
-      </List>
+      </nav>
 
       {/* Footer */}
-      <Box
-        sx={{
-          px: 3,
-          pb: 1,
-          pt: 2,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          borderTop: `1px solid ${theme.palette.divider}`,
-          mt: 1,
-        }}
-      >
-        <Typography
-          variant="caption"
-          sx={{ color: "text.disabled", fontSize: "0.65rem" }}
-        >
-          v0.1.0
-        </Typography>
+      <div className={styles.footer}>
+        <span className={styles.version}>v0.1.0</span>
         <ThemeToggle />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 
 export function Sidebar({ mobileOpen, onMobileClose }: SidebarProps) {
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-
-  if (isDesktop) {
-    return (
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: SIDEBAR_WIDTH,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: SIDEBAR_WIDTH,
-            boxSizing: "border-box",
-          },
-        }}
-      >
-        <SidebarContent />
-      </Drawer>
-    );
-  }
-
   return (
-    <Drawer
-      variant="temporary"
-      open={mobileOpen}
-      onClose={onMobileClose}
-      ModalProps={{ keepMounted: true }}
-      sx={{
-        "& .MuiDrawer-paper": {
-          width: SIDEBAR_WIDTH,
-          boxSizing: "border-box",
-        },
-      }}
-    >
-      <SidebarContent />
-    </Drawer>
+    <>
+      {/* Desktop: persistent sidebar */}
+      <div className={styles.desktopDrawer} style={{ width: SIDEBAR_WIDTH }}>
+        <SidebarContent />
+      </div>
+
+      {/* Mobile: overlay + slide-in drawer */}
+      <div
+        className={`${styles.mobileOverlay} ${mobileOpen ? styles.open : ""}`}
+        onClick={onMobileClose}
+      />
+      <div
+        className={`${styles.mobileDrawer} ${mobileOpen ? styles.open : ""}`}
+        style={{ width: SIDEBAR_WIDTH }}
+      >
+        <SidebarContent onNavigate={onMobileClose} />
+      </div>
+    </>
   );
 }

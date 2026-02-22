@@ -1,32 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Fade,
-  Alert,
-  CircularProgress,
-  useTheme,
-} from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import { Search } from "@mui/icons-material";
+import TextInput from "@leafygreen-ui/text-input";
+import Button from "@leafygreen-ui/button";
+import { Select, Option } from "@leafygreen-ui/select";
+import Banner from "@leafygreen-ui/banner";
+import Icon from "@leafygreen-ui/icon";
+import { Search } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
+import { useThemeMode } from "@/contexts/ThemeContext";
 import { recallMemory, forgetMemory } from "@/lib/api";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { RecallResultCard } from "@/components/recall/RecallResultCard";
-import { keyframes } from "@emotion/react";
-
-const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+import styles from "./page.module.css";
 
 interface RecallResult {
   id: string;
@@ -38,7 +24,7 @@ interface RecallResult {
 
 export default function RecallPage() {
   const { daemonUrl } = useDaemonConfig();
-  const theme = useTheme();
+  const { darkMode } = useThemeMode();
 
   const [agentId, setAgentId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -47,7 +33,7 @@ export default function RecallPage() {
     return "demo-agent";
   });
   const [query, setQuery] = useState("");
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState("10");
   const [results, setResults] = useState<RecallResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +44,9 @@ export default function RecallPage() {
     setSearching(true);
     setError(null);
     try {
-      const data = await recallMemory(daemonUrl, agentId, query, { limit });
+      const data = await recallMemory(daemonUrl, agentId, query, {
+        limit: parseInt(limit, 10),
+      });
       setResults(data);
       setHasSearched(true);
     } catch (err) {
@@ -85,132 +73,95 @@ export default function RecallPage() {
   };
 
   return (
-    <Fade in timeout={400}>
-      <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Search sx={{ color: "primary.main", fontSize: 24, opacity: 0.8 }} />
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              animation: `${fadeInUp} 0.4s ease-out`,
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <Search size={24} className={styles.headerIcon} />
+        <h2 className={styles.title}>Recall</h2>
+      </div>
+      <p className={styles.description}>
+        Search memories using semantic similarity. Results are ranked by how
+        closely they match your query.
+      </p>
+
+      {/* Search Form */}
+      <div className={styles.searchForm}>
+        <div className={styles.formGrid}>
+          <TextInput
+            label="Agent ID"
+            value={agentId}
+            onChange={(e) => {
+              setAgentId(e.target.value);
+              if (typeof window !== "undefined") {
+                localStorage.setItem(STORAGE_KEYS.AGENT_ID, e.target.value);
+              }
             }}
+            darkMode={darkMode}
+          />
+          <TextInput
+            label="Search query"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="What are you looking for?"
+            darkMode={darkMode}
+          />
+          <Select
+            label="Limit"
+            value={limit}
+            onChange={(val) => setLimit(val)}
+            darkMode={darkMode}
           >
-            Recall
-          </Typography>
-        </Box>
-        <Typography
-          variant="body1"
-          sx={{ color: "text.secondary", mb: 3, maxWidth: 600 }}
+            <Option value="5">5</Option>
+            <Option value="10">10</Option>
+            <Option value="25">25</Option>
+            <Option value="50">50</Option>
+          </Select>
+        </div>
+
+        <Button
+          variant="primary"
+          onClick={handleSearch}
+          disabled={!query.trim() || searching}
+          darkMode={darkMode}
+          leftGlyph={<Icon glyph="MagnifyingGlass" />}
+          className={styles.searchBtn}
         >
-          Search memories using semantic similarity. Results are ranked by how
-          closely they match your query.
-        </Typography>
+          {searching ? "Searching..." : "Search Memories"}
+        </Button>
+      </div>
 
-        {/* Search Form */}
-        <Box sx={{ maxWidth: 800, mb: 4 }}>
-          <Grid container spacing={2} alignItems="flex-end">
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                label="Agent ID"
-                value={agentId}
-                onChange={(e) => {
-                  setAgentId(e.target.value);
-                  if (typeof window !== "undefined") {
-                    localStorage.setItem(STORAGE_KEYS.AGENT_ID, e.target.value);
-                  }
-                }}
-                fullWidth
-                size="small"
-              />
-            </Grid>
-            <Grid size={{ xs: 8, sm: 5 }}>
-              <TextField
-                label="Search query"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                fullWidth
-                size="small"
-                placeholder="What are you looking for?"
-              />
-            </Grid>
-            <Grid size={{ xs: 4, sm: 3 }}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Limit</InputLabel>
-                <Select
-                  value={limit}
-                  label="Limit"
-                  onChange={(e) => setLimit(e.target.value as number)}
-                >
-                  <MenuItem value={5}>5</MenuItem>
-                  <MenuItem value={10}>10</MenuItem>
-                  <MenuItem value={25}>25</MenuItem>
-                  <MenuItem value={50}>50</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            disabled={!query.trim() || searching}
-            sx={{ mt: 2 }}
-            startIcon={searching ? <CircularProgress size={18} /> : <Search />}
-          >
-            {searching ? "Searching..." : "Search Memories"}
-          </Button>
-        </Box>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+      {error && (
+        <div className={styles.errorBanner}>
+          <Banner variant="danger" darkMode={darkMode}>
             {error}
-          </Alert>
-        )}
+          </Banner>
+        </div>
+      )}
 
-        {/* Results */}
-        {hasSearched && (
-          <Box>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                color: "text.disabled",
-                mb: 2,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                fontWeight: 500,
-                fontSize: "0.68rem",
-              }}
-            >
-              {results.length} result{results.length !== 1 ? "s" : ""} found
-            </Typography>
+      {/* Results */}
+      {hasSearched && (
+        <div>
+          <div className={styles.resultsLabel}>
+            {results.length} result{results.length !== 1 ? "s" : ""} found
+          </div>
 
-            {results.length === 0 ? (
-              <Typography
-                variant="body2"
-                sx={{ color: "text.disabled", fontStyle: "italic" }}
-              >
-                No memories matched your query.
-              </Typography>
-            ) : (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2, maxWidth: 800 }}>
-                {results.map((result, i) => (
-                  <Box
-                    key={result.id}
-                    sx={{
-                      animation: `${fadeInUp} 0.4s ease-out ${i * 0.05}s both`,
-                    }}
-                  >
-                    <RecallResultCard {...result} onDelete={handleDelete} />
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
-        )}
-      </Box>
-    </Fade>
+          {results.length === 0 ? (
+            <p className={styles.noResults}>No memories matched your query.</p>
+          ) : (
+            <div className={styles.resultsList}>
+              {results.map((result, i) => (
+                <div
+                  key={result.id}
+                  className={styles.resultItem}
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                >
+                  <RecallResultCard {...result} onDelete={handleDelete} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

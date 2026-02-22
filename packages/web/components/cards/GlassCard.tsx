@@ -1,39 +1,39 @@
 "use client";
 
-import { Card, CardProps, useTheme } from "@mui/material";
+import { ReactNode } from "react";
+import { useThemeMode } from "@/contexts/ThemeContext";
+import styles from "./GlassCard.module.css";
 
-interface GlassCardProps extends CardProps {
+interface GlassCardProps {
+  children: ReactNode;
   glowColor?: string;
-  animated?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+  onClick?: () => void;
 }
 
 export function GlassCard({
   children,
   glowColor,
-  animated = false,
-  sx,
-  ...props
+  className,
+  style,
+  onClick,
 }: GlassCardProps) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
 
   return (
-    <Card
-      {...props}
-      sx={{
-        ...(glowColor && isDark
-          ? {
-              borderColor: `${glowColor}15`,
-              "&:hover": {
-                borderColor: `${glowColor}25`,
-                boxShadow: `0 8px 32px ${glowColor}08`,
-              },
-            }
+    <div
+      className={`${styles.card} ${className || ""}`}
+      onClick={onClick}
+      style={{
+        ...(glowColor && darkMode
+          ? { borderColor: `${glowColor}15` }
           : {}),
-        ...sx,
+        ...style,
+        cursor: onClick ? "pointer" : undefined,
       }}
     >
       {children}
-    </Card>
+    </div>
   );
 }

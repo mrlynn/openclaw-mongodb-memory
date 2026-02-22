@@ -9,10 +9,10 @@ export const STATUS_POLL_INTERVAL = 5000;
 export const SIDEBAR_WIDTH = 260;
 
 export const NAV_ITEMS = [
-  { label: "Dashboard", path: "/dashboard", icon: "Dashboard" as const },
-  { label: "Remember", path: "/remember", icon: "SaveAlt" as const },
-  { label: "Recall", path: "/recall", icon: "Search" as const },
-  { label: "Memory Browser", path: "/browser", icon: "Storage" as const },
-  { label: "Health & Integration", path: "/health", icon: "HealthCheck" as const },
-  { label: "Settings", path: "/settings", icon: "Settings" as const },
+  { label: "Dashboard", path: "/dashboard", icon: "Dashboard" },
+  { label: "Remember", path: "/remember", icon: "Download" },
+  { label: "Recall", path: "/recall", icon: "MagnifyingGlass" },
+  { label: "Memory Browser", path: "/browser", icon: "Database" },
+  { label: "Health & Integration", path: "/health", icon: "Gauge" },
+  { label: "Settings", path: "/settings", icon: "Settings" },
 ] as const;

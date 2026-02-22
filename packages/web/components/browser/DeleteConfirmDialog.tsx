@@ -1,15 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Typography,
-} from "@mui/material";
+import ConfirmationModal from "@leafygreen-ui/confirmation-modal";
+import TextInput from "@leafygreen-ui/text-input";
+import { useThemeMode } from "@/contexts/ThemeContext";
 
 interface DeleteConfirmDialogProps {
   open: boolean;
@@ -28,12 +22,11 @@ export function DeleteConfirmDialog({
   onConfirm,
   onCancel,
 }: DeleteConfirmDialogProps) {
+  const { darkMode } = useThemeMode();
   const [confirmInput, setConfirmInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const canConfirm = requireConfirmText
-    ? confirmInput === "CONFIRM"
-    : true;
+  const canConfirm = requireConfirmText ? confirmInput === "CONFIRM" : true;
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -51,36 +44,27 @@ export function DeleteConfirmDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleCancel} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 700 }}>{title}</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-          {description}
-        </Typography>
-        {requireConfirmText && (
-          <TextField
-            label='Type "CONFIRM" to proceed'
-            value={confirmInput}
-            onChange={(e) => setConfirmInput(e.target.value)}
-            fullWidth
-            size="small"
-            autoFocus
-          />
-        )}
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={handleCancel} disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          color="error"
-          onClick={handleConfirm}
-          disabled={!canConfirm || loading}
-        >
-          {loading ? "Deleting..." : "Delete"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <ConfirmationModal
+      open={open}
+      onConfirm={handleConfirm}
+      onCancel={handleCancel}
+      title={title}
+      buttonText={loading ? "Deleting..." : "Delete"}
+      variant="danger"
+      confirmDisabled={!canConfirm || loading}
+      darkMode={darkMode}
+    >
+      <p style={{ marginBottom: requireConfirmText ? 16 : 0, opacity: 0.8 }}>
+        {description}
+      </p>
+      {requireConfirmText && (
+        <TextInput
+          label='Type "CONFIRM" to proceed'
+          value={confirmInput}
+          onChange={(e) => setConfirmInput(e.target.value)}
+          darkMode={darkMode}
+        />
+      )}
+    </ConfirmationModal>
   );
 }

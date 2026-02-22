@@ -1,27 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  useTheme,
-  CardContent,
-} from "@mui/material";
-import { LinkOff, Check, Refresh } from "@mui/icons-material";
+import TextInput from "@leafygreen-ui/text-input";
+import Button from "@leafygreen-ui/button";
+import Icon from "@leafygreen-ui/icon";
+import { Unlink } from "lucide-react";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { StatusIndicator } from "@/components/cards/StatusIndicator";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
+import { useThemeMode } from "@/contexts/ThemeContext";
 import { fetchHealth } from "@/lib/api";
 import { DEFAULT_DAEMON_URL } from "@/lib/constants";
+import styles from "./DaemonUrlConfig.module.css";
 
 type TestStatus = "idle" | "testing" | "connected" | "error";
 
 export function DaemonUrlConfig() {
   const { daemonUrl, setDaemonUrl, isDefault } = useDaemonConfig();
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
 
   const [inputUrl, setInputUrl] = useState(daemonUrl);
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
@@ -59,97 +55,82 @@ export function DaemonUrlConfig() {
 
   return (
     <GlassCard>
-      <CardContent sx={{ p: 3 }}>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: "text.disabled",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-            fontWeight: 500,
-            fontSize: "0.68rem",
-            mb: 2,
-          }}
-        >
-          Daemon Connection
-        </Typography>
+      <div className={styles.content}>
+        <div className={styles.sectionLabel}>Daemon Connection</div>
 
-        <Box sx={{ display: "flex", gap: 2, alignItems: "flex-start", flexWrap: "wrap" }}>
-          <TextField
-            label="Daemon URL"
-            value={inputUrl}
-            onChange={(e) => {
-              setInputUrl(e.target.value);
-              setTestStatus("idle");
-            }}
-            fullWidth
-            size="small"
-            placeholder="http://localhost:7654"
-            sx={{ flex: 1, minWidth: 280 }}
-          />
+        <div className={styles.urlRow}>
+          <div className={styles.urlInput}>
+            <TextInput
+              label="Daemon URL"
+              value={inputUrl}
+              onChange={(e) => {
+                setInputUrl(e.target.value);
+                setTestStatus("idle");
+              }}
+              placeholder="http://localhost:7654"
+              darkMode={darkMode}
+            />
+          </div>
           <Button
-            variant="outlined"
+            variant="default"
             onClick={handleTest}
             disabled={testStatus === "testing" || !inputUrl.trim()}
-            startIcon={
-              testStatus === "testing" ? (
-                <Refresh sx={{ animation: "spin 1s linear infinite", "@keyframes spin": { "100%": { transform: "rotate(360deg)" } } }} />
-              ) : testStatus === "connected" ? (
-                <Check />
+            darkMode={darkMode}
+            leftGlyph={
+              testStatus === "connected" ? (
+                <Icon glyph="Checkmark" />
               ) : testStatus === "error" ? (
-                <LinkOff />
+                <Unlink size={16} />
               ) : undefined
             }
           >
             {testStatus === "testing" ? "Testing..." : "Test Connection"}
           </Button>
-        </Box>
+        </div>
 
-        {/* Status feedback */}
         {testMessage && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1.5 }}>
+          <div className={styles.feedback}>
             {testStatus === "connected" && (
               <StatusIndicator status="connected" size="small" />
             )}
             {testStatus === "error" && (
               <StatusIndicator status="error" size="small" />
             )}
-            <Typography
-              variant="body2"
-              sx={{
-                color:
-                  testStatus === "connected"
-                    ? "success.main"
-                    : testStatus === "error"
-                      ? "error.main"
-                      : "text.secondary",
-              }}
+            <span
+              className={
+                testStatus === "connected"
+                  ? styles.feedbackSuccess
+                  : testStatus === "error"
+                    ? styles.feedbackError
+                    : styles.feedbackNeutral
+              }
             >
               {testMessage}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
 
-        <Box sx={{ display: "flex", gap: 2, mt: 2.5 }}>
+        <div className={styles.actions}>
           <Button
-            variant="contained"
+            variant="primary"
             onClick={handleSave}
             disabled={!hasChanges || !inputUrl.trim()}
+            darkMode={darkMode}
           >
             Save
           </Button>
           {!isDefault && (
-            <Button variant="outlined" onClick={handleReset}>
+            <Button variant="default" onClick={handleReset} darkMode={darkMode}>
               Reset to Default
             </Button>
           )}
-        </Box>
+        </div>
 
-        <Typography variant="caption" sx={{ color: "text.disabled", mt: 1.5, display: "block" }}>
+        <span className={styles.currentUrl}>
           Current: {daemonUrl}
           {isDefault && " (default)"}
-        </Typography>
-      </CardContent>
+        </span>
+      </div>
     </GlassCard>
   );
 }

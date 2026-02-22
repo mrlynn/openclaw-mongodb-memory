@@ -1,22 +1,16 @@
 "use client";
 
-import { Box, Typography, useTheme } from "@mui/material";
-import { keyframes } from "@emotion/react";
-
-const pulse = keyframes`
-  0% { box-shadow: 0 0 0 0 var(--pulse-color); }
-  70% { box-shadow: 0 0 0 6px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
-`;
+import { useThemeMode } from "@/contexts/ThemeContext";
+import styles from "./StatusIndicator.module.css";
 
 type StatusType = "ready" | "connected" | "error" | "unknown" | "loading";
 
 const STATUS_COLORS: Record<StatusType, string> = {
-  ready: "#7ec8a4",
-  connected: "#7ec8a4",
-  error: "#e87878",
-  unknown: "#d4a76a",
-  loading: "#6b7085",
+  ready: "#00A35C",
+  connected: "#00A35C",
+  error: "#DB3030",
+  unknown: "#FFC010",
+  loading: "#889397",
 };
 
 interface StatusIndicatorProps {
@@ -34,33 +28,25 @@ export function StatusIndicator({
   label,
   showPulse = status === "ready" || status === "connected",
 }: StatusIndicatorProps) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
   const color = STATUS_COLORS[status];
   const dotSize = SIZE_MAP[size];
 
   return (
-    <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
-      <Box
-        sx={{
-          width: dotSize,
-          height: dotSize,
-          borderRadius: "50%",
-          backgroundColor: color,
-          "--pulse-color": `${color}40`,
-          ...(showPulse
-            ? { animation: `${pulse} 2.5s ease-in-out infinite` }
-            : {}),
-          ...(isDark
-            ? { boxShadow: `0 0 ${dotSize}px ${color}30` }
-            : {}),
-        } as any}
+    <span className={styles.wrapper}>
+      <span
+        className={`${styles.dot} ${showPulse ? styles.pulse : ""}`}
+        style={
+          {
+            width: dotSize,
+            height: dotSize,
+            backgroundColor: color,
+            "--pulse-color": `${color}40`,
+            ...(darkMode ? { boxShadow: `0 0 ${dotSize}px ${color}30` } : {}),
+          } as React.CSSProperties
+        }
       />
-      {label && (
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {label}
-        </Typography>
-      )}
-    </Box>
+      {label && <span className={styles.label}>{label}</span>}
+    </span>
   );
 }
