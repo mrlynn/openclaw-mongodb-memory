@@ -1,0 +1,53 @@
+{
+  "id": "openclaw-memory",
+  "name": "OpenClaw Memory",
+  "version": "1.0.0",
+  "kind": "memory",
+  "description": "MongoDB-backed long-term memory with Voyage AI embeddings (unified plugin)",
+  "author": "Michael Lynn",
+  "slots": ["memory"],
+  "provides": {
+    "tools": ["memory_search", "memory_get"],
+    "gateway": ["memory.status", "memory.remember", "memory.recall", "memory.forget"]
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "daemonUrl": {
+        "type": "string",
+        "default": "http://localhost:7751",
+        "description": "Memory daemon HTTP endpoint"
+      },
+      "agentId": {
+        "type": "string",
+        "default": "openclaw",
+        "description": "Agent ID for memory storage"
+      },
+      "defaultTtl": {
+        "type": "number",
+        "default": 2592000,
+        "description": "Default TTL in seconds (30 days)"
+      },
+      "maxResults": {
+        "type": "number",
+        "default": 6,
+        "description": "Max results for memory_search"
+      },
+      "minScore": {
+        "type": "number",
+        "default": 0.5,
+        "description": "Minimum similarity score"
+      },
+      "autoStartDaemon": {
+        "type": "boolean",
+        "default": true,
+        "description": "Auto-start daemon on gateway launch"
+      },
+      "middlewareEnabled": {
+        "type": "boolean",
+        "default": false,
+        "description": "Enable automatic fact extraction hooks"
+      }
+    }
+  }
+}

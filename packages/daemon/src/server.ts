@@ -10,6 +10,7 @@ import { exportRoute } from "./routes/export";
 import { purgeRoute } from "./routes/purge";
 import { clearRoute } from "./routes/clear";
 import { healthRoute } from "./routes/health";
+import { handleAgents } from "./routes/agents";
 import { connectDatabase } from "./db";
 import { VoyageEmbedder } from "./embedding";
 import { DEFAULT_PORT, DEFAULT_MONGO_URI, MAX_REQUEST_BODY } from "./constants";
@@ -53,6 +54,7 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 app.get("/health/detailed", healthRoute);
+app.get("/agents", handleAgents);
 
 app.post("/remember", rememberRoute);
 app.get("/recall", recallRoute);

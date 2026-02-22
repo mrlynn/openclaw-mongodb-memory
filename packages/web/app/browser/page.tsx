@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -18,6 +18,10 @@ import {
   CircularProgress,
   Fade,
   useTheme,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { Storage, Download, Refresh } from "@mui/icons-material";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
@@ -44,16 +48,24 @@ interface MemoryItem {
   updatedAt: string;
 }
 
+interface AgentInfo {
+  agentId: string;
+  count: number;
+  lastUpdated: string | null;
+}
+
 export default function BrowserPage() {
   const { daemonUrl } = useDaemonConfig();
   const theme = useTheme();
   const isDark = theme.palette.mode === "dark";
 
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(false);
   const [agentId, setAgentId] = useState(() => {
     if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "demo-agent";
+      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "";
     }
-    return "demo-agent";
+    return "";
   });
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,6 +82,34 @@ export default function BrowserPage() {
 
   // Delete dialog
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Fetch available agents on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      setLoadingAgents(true);
+      try {
+        const response = await fetch(`${daemonUrl}/agents`);
+        if (!response.ok) throw new Error("Failed to fetch agents");
+        const data = await response.json();
+        setAgents(data.agents || []);
+        
+        // Auto-select first agent if none selected
+        if (!agentId && data.agents?.length > 0) {
+          const firstAgent = data.agents[0].agentId;
+          setAgentId(firstAgent);
+          if (typeof window !== "undefined") {
+            localStorage.setItem(STORAGE_KEYS.AGENT_ID, firstAgent);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch agents:", err);
+      } finally {
+        setLoadingAgents(false);
+      }
+    };
+
+    fetchAgents();
+  }, [daemonUrl]);
 
   const handleLoad = async () => {
     setLoading(true);
@@ -134,27 +174,47 @@ export default function BrowserPage() {
 
         {/* Filters */}
         <Box sx={{ display: "flex", gap: 2, alignItems: "flex-end", mb: 3, flexWrap: "wrap" }}>
-          <TextField
-            label="Agent ID"
-            value={agentId}
-            onChange={(e) => {
-              setAgentId(e.target.value);
-              if (typeof window !== "undefined") {
-                localStorage.setItem(STORAGE_KEYS.AGENT_ID, e.target.value);
-              }
-            }}
-            size="small"
-            sx={{ minWidth: 200 }}
-          />
+          <FormControl size="small" sx={{ minWidth: 250 }}>
+            <InputLabel>Agent ID</InputLabel>
+            <Select
+              value={agentId}
+              label="Agent ID"
+              onChange={(e) => {
+                setAgentId(e.target.value);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem(STORAGE_KEYS.AGENT_ID, e.target.value);
+                }
+              }}
+              disabled={loadingAgents || agents.length === 0}
+            >
+              {agents.map((agent) => (
+                <MenuItem key={agent.agentId} value={agent.agentId}>
+                  {agent.agentId} ({agent.count} memories)
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <Button
             variant="contained"
             onClick={handleLoad}
-            disabled={loading}
+            disabled={loading || !agentId}
             startIcon={loading ? <CircularProgress size={18} /> : <Refresh />}
           >
             {loading ? "Loading..." : "Load Memories"}
           </Button>
         </Box>
+
+        {loadingAgents && (
+          <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+            Loading available agents...
+          </Alert>
+        )}
+
+        {!loadingAgents && agents.length === 0 && (
+          <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
+            No agents found. Start by creating memories with /remember.
+          </Alert>
+        )}
 
         {error && (
           <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
