@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { Chrono } from "react-chrono";
 import { Select, Option } from "@leafygreen-ui/select";
 import Banner from "@leafygreen-ui/banner";
 import Icon from "@leafygreen-ui/icon";
-import { Clock, ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react";
+import { Clock, ArrowDownWideNarrow, ArrowUpNarrowWide, Tag, Calendar } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
 import { useThemeMode } from "@/contexts/ThemeContext";
 import { fetchMemoriesPage, forgetMemory, MemoryTimelineItem } from "@/lib/api";
@@ -12,7 +13,6 @@ import { STORAGE_KEYS } from "@/lib/constants";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { MemoryDetailDrawer } from "@/components/browser/MemoryDetailDrawer";
 import { DeleteConfirmDialog } from "@/components/browser/DeleteConfirmDialog";
-import { TimelineContainer } from "@/components/timeline-browse/TimelineContainer";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -91,7 +91,7 @@ export default function TimelinePage() {
 
       try {
         const data = await fetchMemoriesPage(daemonUrl, agentId, {
-          limit: 50,
+          limit: 100, // Load more for timeline view
           sort: sortOrder,
         });
         setAllMemories(data.memories);
@@ -107,14 +107,14 @@ export default function TimelinePage() {
     loadFirst();
   }, [agentId, sortOrder, daemonUrl]);
 
-  // Load next page (for infinite scroll)
+  // Load next page
   const loadNextPage = useCallback(async () => {
     if (!agentId || !hasMore || loadingMore || !nextCursor) return;
 
     setLoadingMore(true);
     try {
       const data = await fetchMemoriesPage(daemonUrl, agentId, {
-        limit: 50,
+        limit: 100,
         cursor: nextCursor.cursor,
         cursorId: nextCursor.cursorId,
         sort: sortOrder,
@@ -128,12 +128,6 @@ export default function TimelinePage() {
       setLoadingMore(false);
     }
   }, [agentId, daemonUrl, hasMore, loadingMore, nextCursor, sortOrder]);
-
-  // Handle card click → open drawer
-  const handleCardClick = (memory: MemoryTimelineItem) => {
-    setSelectedMemory(memory);
-    setDrawerOpen(true);
-  };
 
   // Handle agent change
   const handleAgentChange = (val: string) => {
@@ -165,7 +159,7 @@ export default function TimelinePage() {
     }
   };
 
-  // Normalize memory for MemoryDetailDrawer (expects _id, not id)
+  // Normalize memory for MemoryDetailDrawer
   const drawerMemory = selectedMemory
     ? {
         _id: selectedMemory.id,
@@ -178,6 +172,49 @@ export default function TimelinePage() {
       }
     : null;
 
+  // Format memories for React Chrono
+  const chronoItems = allMemories.map((memory) => {
+    const date = new Date(memory.createdAt);
+    const title = date.toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    // Truncate text for card
+    const cardTitle = memory.text.slice(0, 80) + (memory.text.length > 80 ? "..." : "");
+
+    return {
+      title,
+      cardTitle,
+      cardDetailedText: (
+        <div
+          className={styles.chronoCard}
+          onClick={() => {
+            setSelectedMemory(memory);
+            setDrawerOpen(true);
+          }}
+        >
+          <p className={styles.chronoText}>{memory.text.slice(0, 200)}</p>
+          {memory.tags && memory.tags.length > 0 && (
+            <div className={styles.chronoTags}>
+              <Tag size={12} />
+              {memory.tags.slice(0, 3).map((tag) => (
+                <span key={tag} className={styles.chronoTag}>
+                  {tag}
+                </span>
+              ))}
+              {memory.tags.length > 3 && (
+                <span className={styles.chronoTag}>+{memory.tags.length - 3}</span>
+              )}
+            </div>
+          )}
+        </div>
+      ),
+    };
+  });
+
   const isEmpty = !loading && allMemories.length === 0 && !error;
 
   return (
@@ -189,7 +226,7 @@ export default function TimelinePage() {
           <div>
             <h2 className={styles.title}>Memory Timeline</h2>
             <p className={styles.description}>
-              Browse your memories chronologically. Scroll to explore, click to view details.
+              Interactive timeline of your memories. Scroll through time, click to explore.
             </p>
           </div>
         </div>
@@ -250,7 +287,6 @@ export default function TimelinePage() {
               <div className={styles.shimmer} />
               <div className={styles.shimmer} />
               <div className={styles.shimmer} />
-              <div className={styles.shimmer} />
             </div>
           </div>
         </GlassCard>
@@ -265,8 +301,8 @@ export default function TimelinePage() {
             </div>
             <h3 className={styles.emptyTitle}>No memories yet</h3>
             <p className={styles.emptyDesc}>
-              This agent has no memories stored. Create memories using the Remember page or through
-              the API, and they&apos;ll appear here on the timeline.
+              This agent has no memories stored. Create memories and they&apos;ll appear here on the
+              timeline.
             </p>
           </div>
         </GlassCard>
@@ -287,17 +323,40 @@ export default function TimelinePage() {
         </GlassCard>
       )}
 
-      {/* Timeline */}
+      {/* React Chrono Timeline */}
       {allMemories.length > 0 && (
-        <GlassCard>
-          <TimelineContainer
-            memories={allMemories}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            onLoadMore={loadNextPage}
-            onCardClick={handleCardClick}
+        <div className={styles.timelineContainer}>
+          <Chrono
+            items={chronoItems}
+            mode="VERTICAL_ALTERNATING"
+            theme={{
+              primary: darkMode ? "#00ED64" : "#00684A",
+              secondary: darkMode ? "#001E2B" : "#E3FCF7",
+              cardBgColor: darkMode ? "rgba(0, 30, 43, 0.6)" : "rgba(255, 255, 255, 0.8)",
+              titleColor: darkMode ? "#00ED64" : "#00684A",
+              titleColorActive: darkMode ? "#00ED64" : "#023430",
+            }}
+            cardHeight={150}
+            hideControls={false}
+            scrollable={{ scrollbar: false }}
+            disableClickOnCircle={false}
+            enableBreakPoint={true}
+            verticalBreakPoint={768}
           />
-        </GlassCard>
+
+          {/* Load more button */}
+          {hasMore && (
+            <div className={styles.loadMoreContainer}>
+              <button
+                className={styles.loadMoreButton}
+                onClick={loadNextPage}
+                disabled={loadingMore}
+              >
+                {loadingMore ? "Loading..." : "Load More Memories"}
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Detail drawer */}
