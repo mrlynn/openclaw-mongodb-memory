@@ -1,228 +1,389 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
-import { H2, Body } from "@leafygreen-ui/typography";
-import TextInput from "@leafygreen-ui/text-input";
-import Button from "@leafygreen-ui/button";
-import Icon from "@leafygreen-ui/icon";
-import Card from "@leafygreen-ui/card";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Select, Option } from "@leafygreen-ui/select";
 import Badge from "@leafygreen-ui/badge";
-import { Spinner } from "@leafygreen-ui/loading-indicator";
+import Icon from "@leafygreen-ui/icon";
+import { Send, Search, Tag, Clock, Sparkles, BrainCircuit } from "lucide-react";
+import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
+import { useThemeMode } from "@/contexts/ThemeContext";
+import { STORAGE_KEYS } from "@/lib/constants";
+import { SimilarityScoreBar } from "@/components/recall/SimilarityScoreBar";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
+
+interface MemoryResult {
+  id: string;
+  text: string;
+  score: number;
+  tags: string[];
+  createdAt: string;
+}
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
-  results?: Array<{
-    text: string;
-    score: number;
-    tags: string[];
-    createdAt: string;
-  }>;
+  results?: MemoryResult[];
+  resultCount?: number;
+  error?: boolean;
 }
+
+interface AgentInfo {
+  agentId: string;
+  count: number;
+  lastUpdated: string | null;
+}
+
+const EXAMPLE_QUERIES = [
+  "What did we decide about the database schema?",
+  "Show me everything about authentication",
+  "What bugs were fixed this week?",
+  "Any notes about deployment?",
+];
 
 export default function ChatPage() {
   const { daemonUrl } = useDaemonConfig();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Hi! I'm your AI-powered memory assistant. I can search your memories and answer questions based on what you've stored. Just ask me anything!",
-      timestamp: new Date(),
-    },
-  ]);
+  const { darkMode } = useThemeMode();
+  const router = useRouter();
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [agentId, setAgentId] = useState("openclaw");
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [agentId, setAgentId] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+  // Focus input on mount
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    inputRef.current?.focus();
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
+  // Fetch agents on mount
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const response = await fetch(`${daemonUrl}/agents`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const agentsList: AgentInfo[] = data.agents || [];
+        setAgents(agentsList);
 
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input.trim(),
-      timestamp: new Date(),
+        const stored =
+          typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEYS.AGENT_ID) : null;
+        const resolvedAgent =
+          stored && agentsList.some((a: AgentInfo) => a.agentId === stored)
+            ? stored
+            : agentsList[0]?.agentId || "openclaw";
+
+        setAgentId(resolvedAgent);
+        localStorage.setItem(STORAGE_KEYS.AGENT_ID, resolvedAgent);
+      } catch {
+        setAgentId("openclaw");
+      }
     };
+    init();
+  }, [daemonUrl]);
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
-    try {
-      // Call AI-powered chat API
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: userMessage.content,
-          agentId,
-        }),
-      });
+  const handleSubmit = useCallback(
+    async (query?: string) => {
+      const text = (query || input).trim();
+      if (!text || loading) return;
 
-      if (!response.ok) {
-        throw new Error(`Chat API failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      // Check for API error
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: data.answer,
-        timestamp: new Date(),
-        results: data.memories || [],
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}. Make sure the memory daemon and OpenClaw Gateway are running.`,
+      const userMessage: Message = {
+        id: `user-${Date.now()}`,
+        role: "user",
+        content: text,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setLoading(false);
+
+      setMessages((prev) => [...prev, userMessage]);
+      setInput("");
+      setLoading(true);
+
+      try {
+        const url = new URL("/recall", daemonUrl);
+        url.searchParams.set("agentId", agentId);
+        url.searchParams.set("query", text);
+        url.searchParams.set("limit", "5");
+
+        const response = await fetch(url.toString());
+        if (!response.ok) {
+          throw new Error(`Search failed (${response.status})`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && data.count > 0) {
+          const assistantMessage: Message = {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: `Found ${data.count} relevant ${data.count === 1 ? "memory" : "memories"}:`,
+            timestamp: new Date(),
+            results: data.results.slice(0, 5),
+            resultCount: data.count,
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+        } else {
+          const assistantMessage: Message = {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: `No memories found matching your query. Try rephrasing or using different keywords.`,
+            timestamp: new Date(),
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+        }
+      } catch (err) {
+        const errorMessage: Message = {
+          id: `error-${Date.now()}`,
+          role: "assistant",
+          content: `${err instanceof Error ? err.message : "Unknown error"}. Is the daemon running?`,
+          timestamp: new Date(),
+          error: true,
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      } finally {
+        setLoading(false);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      }
+    },
+    [input, loading, daemonUrl, agentId],
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
     }
   };
 
-  const formatTimestamp = (date: Date) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-    });
+  const handleAgentChange = (val: string) => {
+    setAgentId(val);
+    localStorage.setItem(STORAGE_KEYS.AGENT_ID, val);
   };
 
+  const handleResultClick = (text: string) => {
+    const q = text.length > 80 ? text.slice(0, 80) : text;
+    router.push(`/recall?query=${encodeURIComponent(q)}`);
+  };
+
+  const formatTime = (date: Date) =>
+    date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+
+  const formatDate = (dateStr: string) => {
+    try {
+      return new Date(dateStr).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return "";
+    }
+  };
+
+  const isEmpty = messages.length === 0;
+
   return (
-    <div className={styles.container}>
-      {/* Header */}
+    <div className={styles.page}>
+      {/* Header bar */}
       <div className={styles.header}>
-        <H2>💬 Memory Chat</H2>
-        <Body>Ask questions about your memories in natural language</Body>
+        <div className={styles.headerLeft}>
+          <BrainCircuit size={20} className={styles.headerIcon} />
+          <h2 className={styles.headerTitle}>Memory Chat</h2>
+        </div>
+        {agents.length > 1 && (
+          <div className={styles.agentSelect}>
+            <Select
+              aria-label="Agent"
+              value={agentId}
+              onChange={handleAgentChange}
+              size="xsmall"
+              darkMode={darkMode}
+            >
+              {agents.map((a) => (
+                <Option key={a.agentId} value={a.agentId}>
+                  {a.agentId}
+                </Option>
+              ))}
+            </Select>
+          </div>
+        )}
       </div>
 
-      {/* Agent selector */}
-      <div className={styles.agentSelector}>
-        <TextInput
-          label="Agent ID"
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-          placeholder="openclaw"
-        />
-      </div>
-
-      {/* Chat messages */}
-      <div className={styles.chatContainer}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={message.role === "user" ? styles.userMessage : styles.assistantMessage}
-          >
-            <div className={styles.messageHeader}>
-              <Badge variant={message.role === "user" ? "blue" : "green"}>
-                {message.role === "user" ? "You" : "Memory Assistant"}
-              </Badge>
-              <span className={styles.timestamp}>{formatTimestamp(message.timestamp)}</span>
+      {/* Messages area */}
+      <div className={styles.messagesArea}>
+        {/* Empty / welcome state */}
+        {isEmpty && !loading && (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
+              <Sparkles size={40} />
             </div>
-            <div className={styles.messageContent}>
-              {message.content.split("\n").map((line, idx) => (
-                <p key={idx}>{line || "\u00A0"}</p>
+            <h3 className={styles.emptyTitle}>Search your memories</h3>
+            <p className={styles.emptyDesc}>
+              Ask questions in natural language and find semantically relevant memories.
+            </p>
+            <div className={styles.exampleChips}>
+              {EXAMPLE_QUERIES.map((q) => (
+                <button
+                  key={q}
+                  className={styles.exampleChip}
+                  onClick={() => handleSubmit(q)}
+                  disabled={loading}
+                >
+                  <Search size={13} />
+                  {q}
+                </button>
               ))}
             </div>
-            {message.results && message.results.length > 0 && (
-              <div className={styles.resultsGrid}>
-                {message.results.slice(0, 3).map((result, idx) => (
-                  <Card key={idx} className={styles.resultCard}>
-                    <div className={styles.resultScore}>{(result.score * 100).toFixed(0)}%</div>
-                    <div className={styles.resultText}>{result.text}</div>
-                    {result.tags && result.tags.length > 0 && (
-                      <div className={styles.resultTags}>
-                        {result.tags.map((tag) => (
-                          <Badge key={tag} variant="lightgray">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </Card>
-                ))}
+          </div>
+        )}
+
+        {/* Message thread */}
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`${styles.messageBubble} ${
+              msg.role === "user" ? styles.userBubble : styles.assistantBubble
+            } ${msg.error ? styles.errorBubble : ""}`}
+          >
+            {/* Avatar */}
+            <div
+              className={`${styles.avatar} ${
+                msg.role === "user" ? styles.userAvatar : styles.assistantAvatar
+              }`}
+            >
+              {msg.role === "user" ? <Icon glyph="Person" size={16} /> : <BrainCircuit size={16} />}
+            </div>
+
+            {/* Content column */}
+            <div className={styles.messageBody}>
+              <div className={styles.messageMeta}>
+                <span className={styles.messageRole}>
+                  {msg.role === "user" ? "You" : "Memory Search"}
+                </span>
+                <span className={styles.messageTime}>{formatTime(msg.timestamp)}</span>
               </div>
-            )}
+
+              {/* Text content */}
+              <div
+                className={`${styles.messageText} ${
+                  msg.role === "user" ? styles.userText : ""
+                } ${msg.error ? styles.errorText : ""}`}
+              >
+                {msg.content}
+              </div>
+
+              {/* Result cards */}
+              {msg.results && msg.results.length > 0 && (
+                <div className={styles.results}>
+                  {msg.results.map((result, idx) => (
+                    <div
+                      key={result.id || idx}
+                      className={styles.resultCard}
+                      onClick={() => handleResultClick(result.text)}
+                    >
+                      <div className={styles.resultHeader}>
+                        <span className={styles.resultIndex}>#{idx + 1}</span>
+                        <SimilarityScoreBar score={result.score} />
+                      </div>
+                      <div className={styles.resultBody}>{result.text}</div>
+                      <div className={styles.resultFooter}>
+                        {result.tags && result.tags.length > 0 && (
+                          <div className={styles.resultTags}>
+                            <Tag size={11} />
+                            {result.tags.slice(0, 4).map((tag) => (
+                              <Badge key={tag} variant="lightgray" className={styles.tagBadge}>
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {result.createdAt && (
+                          <span className={styles.resultDate}>
+                            <Clock size={11} />
+                            {formatDate(result.createdAt)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {msg.resultCount && msg.resultCount > 5 && (
+                    <div className={styles.moreResults}>
+                      +{msg.resultCount - 5} more memories match this query
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         ))}
 
+        {/* Typing indicator */}
         {loading && (
-          <div className={styles.loadingMessage}>
-            <Spinner />
-            <Body>Searching memories...</Body>
+          <div className={`${styles.messageBubble} ${styles.assistantBubble}`}>
+            <div className={`${styles.avatar} ${styles.assistantAvatar}`}>
+              <BrainCircuit size={16} />
+            </div>
+            <div className={styles.messageBody}>
+              <div className={styles.typingIndicator}>
+                <span />
+                <span />
+                <span />
+              </div>
+            </div>
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input form */}
-      <form onSubmit={handleSubmit} className={styles.inputForm}>
-        <TextInput
-          label="Message"
-          aria-label="Chat message"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask me anything... (e.g., 'What did we decide about Docker?')"
-          disabled={loading}
-          className={styles.input}
-        />
-        <Button type="submit" disabled={!input.trim() || loading}>
-          <Icon glyph="ArrowRight" />
-          Send
-        </Button>
-      </form>
+      {/* Input bar */}
+      <div className={styles.inputBar}>
+        {/* Suggestion chips after first few messages */}
+        {!isEmpty && messages.length < 4 && (
+          <div className={styles.inlineExamples}>
+            {EXAMPLE_QUERIES.slice(0, 3).map((q) => (
+              <button
+                key={q}
+                className={styles.inlineChip}
+                onClick={() => handleSubmit(q)}
+                disabled={loading}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {/* Example queries */}
-      <div className={styles.examples}>
-        <Body className={styles.examplesTitle}>Try asking:</Body>
-        <div className={styles.exampleButtons}>
-          {[
-            "What did we decide about MongoDB Atlas?",
-            "Show me memories about Docker setup",
-            "What work did we complete this week?",
-            "Any blockers or issues mentioned?",
-          ].map((example) => (
-            <Button
-              key={example}
-              size="small"
-              variant="default"
-              onClick={() => setInput(example)}
-              disabled={loading}
-            >
-              {example}
-            </Button>
-          ))}
+        <div className={styles.inputRow}>
+          <input
+            ref={inputRef}
+            type="text"
+            className={styles.chatInput}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about your memories..."
+            disabled={loading}
+            autoComplete="off"
+          />
+          <button
+            className={`${styles.sendButton} ${input.trim() && !loading ? styles.sendActive : ""}`}
+            onClick={() => handleSubmit()}
+            disabled={!input.trim() || loading}
+            aria-label="Send"
+          >
+            <Send size={18} />
+          </button>
         </div>
       </div>
     </div>

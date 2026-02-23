@@ -35,19 +35,22 @@ export class VoyageEmbedder {
     "voyage-code-3-5",
   ];
 
-  constructor(apiKey: string, baseUrl?: string, model?: string) {
+  constructor(apiKey: string, baseUrl?: string, model?: string, mock?: boolean) {
     this.apiKey = apiKey;
-    
+
     // Use custom base URL (e.g., MongoDB AI endpoint) or default to Voyage API
     const url = baseUrl || "https://api.voyageai.com/v1";
-    
-    // Mock mode for testing (set VOYAGE_MOCK=true in env)
-    this.useMock = process.env.VOYAGE_MOCK === "true";
-    
+
+    // Mock mode: prefer explicit parameter, fall back to env var
+    this.useMock = mock ?? process.env.VOYAGE_MOCK === "true";
+
     // Pick appropriate model based on endpoint
     const hostname = url.includes("mongodb") ? "ai.mongodb.com" : "api.voyageai.com";
-    this.model = model || (VoyageEmbedder.DEFAULT_MODELS[hostname as keyof typeof VoyageEmbedder.DEFAULT_MODELS] || "voyage-3");
-    
+    this.model =
+      model ||
+      VoyageEmbedder.DEFAULT_MODELS[hostname as keyof typeof VoyageEmbedder.DEFAULT_MODELS] ||
+      "voyage-3";
+
     // Both MongoDB Atlas AI (al-*) and Voyage.com public API use Bearer tokens
     this.client = axios.create({
       baseURL: url,
@@ -68,7 +71,7 @@ export class VoyageEmbedder {
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
       const char = text.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32bit integer
     }
 
@@ -104,7 +107,9 @@ export class VoyageEmbedder {
    */
   async embed(texts: string[], inputType?: "document" | "query"): Promise<number[][]> {
     try {
-      console.log(`[Voyage] Embedding ${texts.length} text(s)${inputType ? ` (input_type=${inputType})` : ""}...`);
+      console.log(
+        `[Voyage] Embedding ${texts.length} text(s)${inputType ? ` (input_type=${inputType})` : ""}...`,
+      );
 
       // Use mock embeddings if enabled
       if (this.useMock) {
@@ -123,10 +128,7 @@ export class VoyageEmbedder {
       if (inputType) {
         payload.input_type = inputType;
       }
-      const response = await this.client.post<VoyageEmbedResponse>(
-        "/embeddings",
-        payload,
-      );
+      const response = await this.client.post<VoyageEmbedResponse>("/embeddings", payload);
 
       console.log(`[Voyage] Got ${response.data.data.length} embedding(s)`);
 
@@ -139,28 +141,32 @@ export class VoyageEmbedder {
     } catch (error) {
       let errorMsg = "Unknown error";
       let status = 0;
-      
+
       if (axios.isAxiosError(error)) {
         status = error.response?.status || 0;
         const statusText = error.response?.statusText;
         const data = error.response?.data;
         errorMsg = `${status} ${statusText}`;
-        if (typeof data === 'object' && data !== null && 'detail' in data) {
+        if (typeof data === "object" && data !== null && "detail" in data) {
           errorMsg += ` - ${(data as any).detail}`;
-        } else if (typeof data === 'string') {
+        } else if (typeof data === "string") {
           errorMsg += ` - ${data}`;
         }
 
         // If 403 (forbidden), suggest fallback models
         if (status === 403) {
           console.error(`[Voyage] Model "${this.model}" not available for your API key`);
-          console.error(`[Voyage] Try one of these models: ${VoyageEmbedder.FALLBACK_MODELS.join(", ")}`);
-          console.error(`[Voyage] Set VOYAGE_MODEL env var to override (e.g., VOYAGE_MODEL=voyage-3-lite)`);
+          console.error(
+            `[Voyage] Try one of these models: ${VoyageEmbedder.FALLBACK_MODELS.join(", ")}`,
+          );
+          console.error(
+            `[Voyage] Set VOYAGE_MODEL env var to override (e.g., VOYAGE_MODEL=voyage-3-lite)`,
+          );
         }
       } else if (error instanceof Error) {
         errorMsg = error.message;
       }
-      
+
       console.error(`[Voyage] Embedding failed: ${errorMsg}`);
       throw new Error(`Voyage API error: ${errorMsg}`);
     }

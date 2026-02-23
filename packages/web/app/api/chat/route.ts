@@ -65,45 +65,47 @@ export async function POST(request: Request) {
 Memories:
 ${memoryContext}`;
 
-    // Step 3: Call OpenClaw Gateway LLM
-    const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:7777";
-
+    // Step 3: Call OpenClaw Gateway via CLI
     try {
-      const llmResponse = await fetch(`${gatewayUrl}/rpc/invoke`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          method: "ai.chat",
-          params: {
-            messages: [
-              { role: "system", content: systemPrompt },
-              { role: "user", content: query },
-            ],
-            model: "haiku", // Fast + cheap for quick responses
-          },
-        }),
-        signal: AbortSignal.timeout(30000), // 30s timeout
-      });
+      const { exec } = require("child_process");
+      const { promisify } = require("util");
+      const execAsync = promisify(exec);
 
-      if (!llmResponse.ok) {
-        // Fallback if OpenClaw Gateway is not available
-        console.warn("OpenClaw Gateway unavailable, using fallback");
-        return createFallbackResponse(query, memories);
+      // Build the full prompt with context
+      const fullPrompt = `${systemPrompt}\n\nUser question: ${query}\n\nProvide a concise, conversational answer based on the memories above.`;
+
+      // Call openclaw agent command
+      const { stdout, stderr } = await execAsync(
+        `openclaw agent --local --message ${JSON.stringify(fullPrompt)} --json --timeout 30`,
+        {
+          timeout: 30000,
+          maxBuffer: 1024 * 1024, // 1MB buffer
+        },
+      );
+
+      if (stderr && !stderr.includes("Config warnings")) {
+        console.warn("OpenClaw agent stderr:", stderr);
       }
 
-      const llmData = await llmResponse.json();
-      const answer = llmData.result?.content || llmData.result;
+      // Parse JSON response
+      let result;
+      try {
+        result = JSON.parse(stdout);
+      } catch (parseError) {
+        // If not JSON, use stdout directly
+        result = { content: stdout.trim() };
+      }
+
+      const answer = result.content || result.message || stdout.trim();
 
       return NextResponse.json({
         answer,
         memories: memories.slice(0, 3), // Include top 3 for reference
-        source: "llm",
+        source: "openclaw-cli",
       });
-    } catch (llmError) {
-      // OpenClaw Gateway not available - graceful fallback
-      console.warn("OpenClaw Gateway error:", llmError);
+    } catch (llmError: any) {
+      // OpenClaw CLI not available - graceful fallback
+      console.warn("OpenClaw agent error:", llmError.message);
       return createFallbackResponse(query, memories);
     }
   } catch (error) {
