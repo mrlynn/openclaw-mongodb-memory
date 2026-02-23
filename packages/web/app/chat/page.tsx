@@ -111,37 +111,29 @@ export default function ChatPage() {
       setLoading(true);
 
       try {
-        const url = new URL("/recall", daemonUrl);
-        url.searchParams.set("agentId", agentId);
-        url.searchParams.set("query", text);
-        url.searchParams.set("limit", "5");
+        // Call AI chat API instead of direct recall
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: text, agentId }),
+        });
 
-        const response = await fetch(url.toString());
         if (!response.ok) {
-          throw new Error(`Search failed (${response.status})`);
+          throw new Error(`Chat API failed (${response.status})`);
         }
 
         const data = await response.json();
 
-        if (data.success && data.count > 0) {
-          const assistantMessage: Message = {
-            id: `assistant-${Date.now()}`,
-            role: "assistant",
-            content: `Found ${data.count} relevant ${data.count === 1 ? "memory" : "memories"}:`,
-            timestamp: new Date(),
-            results: data.results.slice(0, 5),
-            resultCount: data.count,
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-        } else {
-          const assistantMessage: Message = {
-            id: `assistant-${Date.now()}`,
-            role: "assistant",
-            content: `No memories found matching your query. Try rephrasing or using different keywords.`,
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-        }
+        // AI-generated answer + source memories
+        const assistantMessage: Message = {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.answer || "No response generated",
+          timestamp: new Date(),
+          results: data.memories || [],
+          resultCount: data.memories?.length || 0,
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
       } catch (err) {
         const errorMessage: Message = {
           id: `error-${Date.now()}`,
@@ -156,7 +148,7 @@ export default function ChatPage() {
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     },
-    [input, loading, daemonUrl, agentId],
+    [input, loading, agentId],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
