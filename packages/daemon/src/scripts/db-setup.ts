@@ -89,20 +89,51 @@ async function main() {
     if (hasVectorIndex) {
       console.log(`  4/5  Vector search index "${VECTOR_INDEX_NAME}" found`);
     } else {
-      console.log(`  4/5  Vector search index not found (optional)`);
-      console.log("       The daemon will fall back to in-memory cosine similarity.");
-      console.log("       For Atlas Vector Search, create an index named");
-      console.log(`       "${VECTOR_INDEX_NAME}" with this definition:\n`);
-      console.log("       {");
-      console.log('         "fields": [');
-      console.log(
-        `           { "type": "vector", "path": "embedding", "numDimensions": ${EMBEDDING_DIMENSIONS}, "similarity": "cosine" },`,
-      );
-      console.log('           { "type": "filter", "path": "agentId" },');
-      console.log('           { "type": "filter", "path": "projectId" },');
-      console.log('           { "type": "filter", "path": "tags" }');
-      console.log("         ]");
-      console.log("       }");
+      console.log(`  4/5  Vector search index not found — attempting to create...`);
+      try {
+        await memories.createSearchIndex({
+          name: VECTOR_INDEX_NAME,
+          type: "vectorSearch",
+          definition: {
+            fields: [
+              {
+                type: "vector",
+                path: "embedding",
+                numDimensions: EMBEDDING_DIMENSIONS,
+                similarity: "cosine",
+              },
+              { type: "filter", path: "agentId" },
+              { type: "filter", path: "projectId" },
+              { type: "filter", path: "tags" },
+            ],
+          },
+        });
+        console.log(`       Created "${VECTOR_INDEX_NAME}" — it may take a few minutes to build.`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("already exists")) {
+          console.log(`       Index "${VECTOR_INDEX_NAME}" already exists (may be building).`);
+        } else {
+          console.log("       Could not create vector search index automatically.");
+          console.log(`       Reason: ${msg}`);
+          console.log(
+            "       This is optional — the daemon falls back to in-memory cosine similarity.",
+          );
+          console.log(
+            `       To create manually in Atlas UI, use index name "${VECTOR_INDEX_NAME}":`,
+          );
+          console.log("       {");
+          console.log('         "fields": [');
+          console.log(
+            `           { "type": "vector", "path": "embedding", "numDimensions": ${EMBEDDING_DIMENSIONS}, "similarity": "cosine" },`,
+          );
+          console.log('           { "type": "filter", "path": "agentId" },');
+          console.log('           { "type": "filter", "path": "projectId" },');
+          console.log('           { "type": "filter", "path": "tags" }');
+          console.log("         ]");
+          console.log("       }");
+        }
+      }
     }
 
     // 5. Summary
