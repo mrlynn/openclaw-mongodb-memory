@@ -81,7 +81,8 @@ export default function DocsPage() {
       {/* Search */}
       <div className={styles.search}>
         <TextInput
-          label=""
+          label="Search"
+          aria-label="Search setup guides"
           placeholder="Search setup guides..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}

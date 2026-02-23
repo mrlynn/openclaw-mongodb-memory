@@ -203,7 +203,8 @@ export default function ChatPage() {
       {/* Input form */}
       <form onSubmit={handleSubmit} className={styles.inputForm}>
         <TextInput
-          label=""
+          label="Message"
+          aria-label="Chat message"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask me anything... (e.g., 'What did we decide about Docker?')"
