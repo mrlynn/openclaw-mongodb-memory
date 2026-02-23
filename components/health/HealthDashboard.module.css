@@ -1,0 +1,188 @@
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.lastUpdate {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.4;
+  margin-bottom: 24px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.cardContent {
+  padding: 24px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cardTitle {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.sectionLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-size: 0.68rem;
+  opacity: 0.45;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-weight: 500;
+  font-size: 1.15rem;
+}
+
+.statGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Status row */
+.statusRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Heap bar */
+.heapHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.heapLabel {
+  font-size: 0.8rem;
+  opacity: 0.6;
+}
+
+.heapBarTrack {
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+body[data-theme="dark"] .heapBarTrack {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body[data-theme="light"] .heapBarTrack {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.heapBarFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  background: linear-gradient(90deg, #00ED64, #00684A);
+}
+
+.heapBarFill.danger {
+  background: linear-gradient(90deg, #FFC010, #DB3030);
+}
+
+.externalLabel {
+  font-size: 0.75rem;
+  opacity: 0.4;
+  margin-top: 8px;
+}
+
+/* Integration table */
+.integrationTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+body[data-theme="dark"] .integrationTable {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="light"] .integrationTable {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.integrationTable th {
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+}
+
+.integrationTable th:not(:first-child) {
+  text-align: right;
+}
+
+body[data-theme="dark"] .integrationTable th {
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="light"] .integrationTable th {
+  background: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.integrationTable td {
+  padding: 10px 14px;
+}
+
+.integrationTable td:not(:first-child) {
+  text-align: right;
+}
+
+body[data-theme="dark"] .integrationTable td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+body[data-theme="light"] .integrationTable td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detailText {
+  opacity: 0.6;
+  font-size: 0.8rem;
+}
+
+.statusDescription {
+  opacity: 0.7;
+  font-size: 0.875rem;
+}
+
+.wordBreak {
+  word-break: break-all;
+  opacity: 0.7;
+  font-size: 0.875rem;
+}
