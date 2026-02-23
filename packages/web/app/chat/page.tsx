@@ -32,7 +32,8 @@ export default function ChatPage() {
     {
       id: "welcome",
       role: "assistant",
-      content: "Hi! I can help you search your memories. Ask me anything about what you've stored.",
+      content:
+        "Hi! I'm your AI-powered memory assistant. I can search your memories and answer questions based on what you've stored. Just ask me anything!",
       timestamp: new Date(),
     },
   ]);
@@ -65,50 +66,35 @@ export default function ChatPage() {
     setLoading(true);
 
     try {
-      // Search memories using the recall endpoint
-      const url = new URL("/recall", daemonUrl);
-      url.searchParams.set("agentId", agentId);
-      url.searchParams.set("query", userMessage.content);
-      url.searchParams.set("limit", "5");
-
-      const response = await fetch(url.toString());
+      // Call AI-powered chat API
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: userMessage.content,
+          agentId,
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`Search failed: ${response.statusText}`);
+        throw new Error(`Chat API failed: ${response.statusText}`);
       }
 
       const data = await response.json();
 
-      let content = "";
-      let results = [];
-
-      if (data.success && data.count > 0) {
-        results = data.results;
-        const topResults = results.slice(0, 3);
-
-        content = `I found ${data.count} relevant ${data.count === 1 ? "memory" : "memories"}. Here are the top matches:\n\n`;
-
-        topResults.forEach((result: any, idx: number) => {
-          content += `${idx + 1}. ${result.text}\n`;
-          if (result.tags && result.tags.length > 0) {
-            content += `   Tags: ${result.tags.join(", ")}\n`;
-          }
-          content += `   Relevance: ${(result.score * 100).toFixed(1)}%\n\n`;
-        });
-
-        if (data.count > 3) {
-          content += `...and ${data.count - 3} more.`;
-        }
-      } else {
-        content = `I couldn't find any memories matching "${userMessage.content}". Try rephrasing your question or using different keywords.`;
+      // Check for API error
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content,
+        content: data.answer,
         timestamp: new Date(),
-        results: results.length > 0 ? results : undefined,
+        results: data.memories || [],
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
@@ -116,7 +102,7 @@ export default function ChatPage() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}. Make sure the memory daemon is running.`,
+        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : "Unknown error"}. Make sure the memory daemon and OpenClaw Gateway are running.`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);

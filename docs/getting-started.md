@@ -45,7 +45,7 @@ That's it. Services are running:
 
 Skip to [Verify It Works](#verify-it-works) below.
 
-> For Docker details (Kubernetes, multi-env, volumes, troubleshooting): [Docker Setup Guide](./docker-setup.md)
+> For Docker details (Kubernetes, multi-env, volumes, troubleshooting): see [Deployment](./deployment.md)
 
 ---
 
@@ -55,7 +55,15 @@ Skip to [Verify It Works](#verify-it-works) below.
 
 You need a MongoDB instance. Pick one:
 
-**Option A — Local MongoDB (macOS)**
+**Option A — MongoDB via Docker (simplest)**
+
+```bash
+docker run -d --name mongo -p 27017:27017 mongo:8
+```
+
+**Option B — Local MongoDB (macOS via Homebrew)**
+
+> The MongoDB formula requires a custom tap — it's not in the default Homebrew registry.
 
 ```bash
 brew tap mongodb/brew
@@ -63,21 +71,18 @@ brew install mongodb-community
 brew services start mongodb-community
 ```
 
-**Option A — Local MongoDB (Linux)**
+**Option B — Local MongoDB (Linux/Ubuntu)**
+
+See the [official MongoDB installation docs](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/) for your distro. For Ubuntu 22.04:
 
 ```bash
-# Ubuntu/Debian
 sudo apt-get install -y gnupg curl
-curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
-echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+  sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
+echo "deb [ signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | \
+  sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 sudo apt-get update && sudo apt-get install -y mongodb-org
 sudo systemctl start mongod
-```
-
-**Option B — MongoDB via Docker (just the database)**
-
-```bash
-docker run -d --name mongo -p 27017:27017 mongo:7
 ```
 
 **Option C — MongoDB Atlas (cloud, free tier)**

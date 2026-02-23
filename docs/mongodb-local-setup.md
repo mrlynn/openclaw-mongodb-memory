@@ -12,6 +12,7 @@
 - **Fast iteration:** No network latency
 
 **Trade-offs:**
+
 - No automatic backups (Atlas does this)
 - No vector search index (Atlas feature, use in-memory cosine instead)
 - Manual updates (Atlas auto-updates)
@@ -22,35 +23,39 @@
 
 ### Method 1: Homebrew (Recommended)
 
+> MongoDB is not in the default Homebrew registry. You must add the `mongodb/brew` tap first.
+
 ```bash
-# Install MongoDB
+# Add the MongoDB tap and install
 brew tap mongodb/brew
-brew install mongodb-community@7.0
+brew install mongodb-community
 
 # Start MongoDB as a service (auto-starts on boot)
-brew services start mongodb-community@7.0
+brew services start mongodb-community
 
 # Or start manually (stops when terminal closes)
 mongod --config /opt/homebrew/etc/mongod.conf --fork
 ```
 
 **Verify it's running:**
+
 ```bash
 mongosh
 # Should connect to mongodb://localhost:27017
 # Type: db.version()
-# Expected: 7.0.x
+# Expected: 8.x
 ```
 
 **Stop MongoDB:**
+
 ```bash
-brew services stop mongodb-community@7.0
+brew services stop mongodb-community
 ```
 
 ### Method 2: Download Binary
 
 1. **Download:** https://www.mongodb.com/try/download/community
-   - Select: macOS, version 7.0+, tgz
+   - Select: macOS, version 8.0+, tgz
 2. **Extract:**
    ```bash
    tar -zxvf mongodb-macos-*.tgz
@@ -73,12 +78,12 @@ brew services stop mongodb-community@7.0
 
 ```bash
 # Import MongoDB GPG key
-curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-   sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg --dearmor
+curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+   sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg --dearmor
 
 # Add MongoDB repository
-echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
-   sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
+   sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
 # Install MongoDB
 sudo apt-get update
@@ -96,13 +101,13 @@ mongosh
 
 ```bash
 # Create repo file
-sudo tee /etc/yum.repos.d/mongodb-org-7.0.repo << EOF
-[mongodb-org-7.0]
+sudo tee /etc/yum.repos.d/mongodb-org-8.0.repo << EOF
+[mongodb-org-8.0]
 name=MongoDB Repository
 baseurl=https://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/7.0/x86_64/
 gpgcheck=1
 enabled=1
-gpgkey=https://www.mongodb.org/static/pgp/server-7.0.asc
+gpgkey=https://www.mongodb.org/static/pgp/server-8.0.asc
 EOF
 
 # Install MongoDB
@@ -137,7 +142,7 @@ mongosh
 ### Method 1: Windows Installer (Recommended)
 
 1. **Download:** https://www.mongodb.com/try/download/community
-   - Select: Windows, version 7.0+, msi
+   - Select: Windows, version 8.0+, msi
 2. **Run installer:**
    - Choose "Complete" installation
    - Check "Install MongoDB as a Service"
@@ -256,16 +261,16 @@ db.memories.createIndex(
 
 ## Capability Comparison
 
-| Feature | Local MongoDB | MongoDB Atlas | Docker MongoDB |
-|---------|---------------|---------------|----------------|
-| **Cost** | Free | Free tier available | Free |
-| **Setup time** | 5-10 min | 5 min | 2 min |
-| **Vector search** | ❌ (use in-memory) | ✅ Native | ❌ (use in-memory) |
-| **Backups** | Manual | Automatic | Manual |
-| **Scaling** | Limited by machine | Auto-scale | Limited by machine |
-| **Internet required** | No | Yes | No |
-| **Updates** | Manual | Automatic | Manual (rebuild image) |
-| **Best for** | Offline dev | Production | Quick local dev |
+| Feature               | Local MongoDB      | MongoDB Atlas       | Docker MongoDB         |
+| --------------------- | ------------------ | ------------------- | ---------------------- |
+| **Cost**              | Free               | Free tier available | Free                   |
+| **Setup time**        | 5-10 min           | 5 min               | 2 min                  |
+| **Vector search**     | ❌ (use in-memory) | ✅ Native           | ❌ (use in-memory)     |
+| **Backups**           | Manual             | Automatic           | Manual                 |
+| **Scaling**           | Limited by machine | Auto-scale          | Limited by machine     |
+| **Internet required** | No                 | Yes                 | No                     |
+| **Updates**           | Manual             | Automatic           | Manual (rebuild image) |
+| **Best for**          | Offline dev        | Production          | Quick local dev        |
 
 ---
 
@@ -276,18 +281,21 @@ db.memories.createIndex(
 **Problem:** MongoDB isn't running.
 
 **macOS fix:**
+
 ```bash
 brew services list  # Check if mongod is running
-brew services start mongodb-community@7.0
+brew services start mongodb-community
 ```
 
 **Linux fix:**
+
 ```bash
 sudo systemctl status mongod
 sudo systemctl start mongod
 ```
 
 **Windows fix:**
+
 ```powershell
 net start MongoDB
 ```
@@ -297,13 +305,15 @@ net start MongoDB
 **Problem:** MongoDB shell not in PATH.
 
 **macOS fix:**
+
 ```bash
 # Add to ~/.zshrc or ~/.bashrc
-export PATH="/opt/homebrew/opt/mongodb-community@7.0/bin:$PATH"
+export PATH="/opt/homebrew/opt/mongodb-community/bin:$PATH"
 source ~/.zshrc
 ```
 
 **Linux fix:**
+
 ```bash
 # mongosh is usually in /usr/bin, verify:
 which mongosh
@@ -311,8 +321,9 @@ which mongosh
 ```
 
 **Windows fix:**
+
 ```powershell
-# Add to PATH: C:\Program Files\MongoDB\Server\7.0\bin
+# Add to PATH: C:\Program Files\MongoDB\Server\8.0\bin
 ```
 
 ### "Data directory not found"
@@ -320,6 +331,7 @@ which mongosh
 **Problem:** MongoDB can't find the data directory.
 
 **Fix:**
+
 ```bash
 # Create default data directory
 mkdir -p /data/db  # macOS/Linux
@@ -335,6 +347,7 @@ mongod --dbpath /path/to/your/data
 **Problem:** User doesn't have write access to data directory.
 
 **macOS/Linux fix:**
+
 ```bash
 sudo chown -R $(whoami) /data/db
 # Or use a directory you own:
@@ -343,6 +356,7 @@ mongod --dbpath ~/mongodb-data
 ```
 
 **Windows fix:**
+
 ```powershell
 # Run PowerShell as Administrator
 icacls C:\data\db /grant Everyone:(OI)(CI)F
@@ -351,6 +365,7 @@ icacls C:\data\db /grant Everyone:(OI)(CI)F
 ### MongoDB starts but can't connect
 
 **Check if it's listening:**
+
 ```bash
 # macOS/Linux
 netstat -an | grep 27017
@@ -361,6 +376,7 @@ netstat -an | findstr 27017
 ```
 
 **Check logs:**
+
 ```bash
 # macOS (Homebrew)
 tail -f /opt/homebrew/var/log/mongodb/mongo.log
@@ -369,7 +385,7 @@ tail -f /opt/homebrew/var/log/mongodb/mongo.log
 sudo journalctl -u mongod -f
 
 # Windows
-# Check: C:\Program Files\MongoDB\Server\7.0\log\mongod.log
+# Check: C:\Program Files\MongoDB\Server\8.0\log\mongod.log
 ```
 
 ### "Authentication failed"
@@ -377,11 +393,12 @@ sudo journalctl -u mongod -f
 **Problem:** You enabled authentication but didn't provide credentials.
 
 **Fix 1: Disable auth** (development only):
+
 ```bash
 # Edit mongod.conf
 # macOS: /opt/homebrew/etc/mongod.conf
 # Linux: /etc/mongod.conf
-# Windows: C:\Program Files\MongoDB\Server\7.0\bin\mongod.cfg
+# Windows: C:\Program Files\MongoDB\Server\8.0\bin\mongod.cfg
 
 # Comment out or remove:
 # security:
@@ -391,6 +408,7 @@ sudo journalctl -u mongod -f
 ```
 
 **Fix 2: Create user:**
+
 ```bash
 mongosh
 
@@ -477,8 +495,8 @@ mongorestore --db openclaw_memory --collection memories ~/backups/openclaw_memor
 ### macOS (Homebrew)
 
 ```bash
-brew upgrade mongodb-community@7.0
-brew services restart mongodb-community@7.0
+brew upgrade mongodb-community
+brew services restart mongodb-community
 ```
 
 ### Ubuntu/Debian
@@ -502,8 +520,8 @@ sudo systemctl restart mongod
 ### macOS (Homebrew)
 
 ```bash
-brew services stop mongodb-community@7.0
-brew uninstall mongodb-community@7.0
+brew services stop mongodb-community
+brew uninstall mongodb-community
 rm -rf /opt/homebrew/var/mongodb  # Remove data
 ```
 
