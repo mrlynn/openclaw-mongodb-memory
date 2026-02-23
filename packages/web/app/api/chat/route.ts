@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +23,8 @@ interface Memory {
  *
  * Flow:
  * 1. Search memories semantically
- * 2. Send memories + question to OpenClaw Gateway
- * 3. LLM generates conversational answer based on memories
+ * 2. Send memories + question to local Ollama agent
+ * 3. LLM synthesizes and generates conversational answer
  * 4. Return answer + source memories
  */
 export async function POST(request: Request) {
@@ -72,7 +76,7 @@ Your job is to:
 2. Answer the user's question in a natural, conversational way
 3. DISTILL key insights rather than just listing memories
 4. Connect related information across memories when relevant
-5. Be concise but informative
+5. Be concise but informative (2-3 paragraphs max)
 
 IMPORTANT: Do NOT just list or quote the memories. Understand them, synthesize them, and provide a thoughtful answer.
 
@@ -81,63 +85,35 @@ If the memories don't fully answer the question, acknowledge what you DO know an
 Available memories:
 ${memoryContext}`;
 
-    // Step 3: Call OpenClaw Gateway via HTTP RPC
+    // Step 3: Call OpenClaw agent (using ollama for local inference)
     try {
-      const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:18789";
-      const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
+      const fullPrompt = `${systemPrompt}\n\nUser question: ${query}\n\nProvide a concise, conversational answer:`;
 
-      const rpcPayload = {
-        jsonrpc: "2.0",
-        id: Date.now(),
-        method: "ai.complete",
-        params: {
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: query },
-          ],
-          model: "haiku", // Fast + cheap for chat
-          temperature: 0.7,
+      // Use ollama agent (local model, no session conflicts)
+      const { stdout, stderr } = await execAsync(
+        `openclaw agent --local --agent ollama --message ${JSON.stringify(fullPrompt)} 2>&1`,
+        {
+          timeout: 30000,
+          maxBuffer: 1024 * 1024, // 1MB
         },
-      };
+      );
 
-      const headers: HeadersInit = {
-        "Content-Type": "application/json",
-      };
-
-      if (gatewayToken) {
-        headers["Authorization"] = `Bearer ${gatewayToken}`;
-      }
-
-      const rpcResponse = await fetch(`${gatewayUrl}/rpc`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(rpcPayload),
-        signal: AbortSignal.timeout(30000), // 30s timeout
-      });
-
-      if (!rpcResponse.ok) {
-        throw new Error(`Gateway RPC failed: ${rpcResponse.status} ${rpcResponse.statusText}`);
-      }
-
-      const rpcData = await rpcResponse.json();
-
-      if (rpcData.error) {
-        throw new Error(
-          `Gateway RPC error: ${rpcData.error.message || JSON.stringify(rpcData.error)}`,
-        );
-      }
-
-      const answer = rpcData.result?.content || rpcData.result?.message || "No response generated";
+      // Remove config warnings and extract answer
+      const lines = stdout.split("\n");
+      const answer = lines
+        .filter((line) => !line.includes("Config warnings") && !line.includes("plugin id mismatch"))
+        .join("\n")
+        .trim();
 
       return NextResponse.json({
-        answer,
+        answer: answer || "Sorry, I couldn't generate a response.",
         memories: memories.slice(0, 3), // Include top 3 for reference
-        source: "openclaw-gateway",
-        model: "haiku",
+        source: "openclaw-ollama",
+        model: "qwen3-coder",
       });
     } catch (llmError: any) {
-      // Gateway not available - graceful fallback
-      console.warn("OpenClaw Gateway error:", llmError.message);
+      // Ollama not available - graceful fallback
+      console.warn("Ollama agent error:", llmError.message);
       return createFallbackResponse(query, memories);
     }
   } catch (error) {
@@ -155,7 +131,7 @@ ${memoryContext}`;
 }
 
 /**
- * Fallback response when OpenClaw Gateway is unavailable
+ * Fallback response when LLM is unavailable
  * Returns a simple formatted summary of memories
  */
 function createFallbackResponse(query: string, memories: Memory[]) {
