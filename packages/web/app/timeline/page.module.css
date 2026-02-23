@@ -270,12 +270,20 @@
   box-shadow: 0 4px 12px rgba(0, 237, 100, 0.1);
 }
 
-/* Override Chrono timeline line color */
-:global(.vertical-timeline-element-icon) {
+/* Timeline container wrapper for global overrides */
+.timelineContainer :global(.vertical-timeline-element-icon) {
   background-color: var(--mongodb-spring-green) !important;
   box-shadow: 0 0 0 4px var(--mongodb-spring-green-10) !important;
 }
 
-:global(.vertical-timeline-element-content) {
+.timelineContainer :global(.vertical-timeline-element-content) {
   box-shadow: 0 3px 0 var(--mongodb-spring-green) !important;
+}
+
+.timelineContainer :global(.chrono-icons) {
+  background: var(--mongodb-spring-green) !important;
+}
+
+.timelineContainer :global(.timeline-card-title) {
+  color: var(--mongodb-forest-green) !important;
 }
