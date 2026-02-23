@@ -42,8 +42,8 @@ importers:
   packages/cli:
     dependencies:
       "@openclaw-memory/client":
-        specifier: 0.2.0
-        version: 0.2.0
+        specifier: workspace:*
+        version: link:../client
       axios:
         specifier: ^1.6.5
         version: 1.13.5
@@ -1715,12 +1715,6 @@ packages:
         integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==,
       }
     engines: { node: ">=12.4.0" }
-
-  "@openclaw-memory/client@0.2.0":
-    resolution:
-      {
-        integrity: sha512-x6Nc98zYjb2gUgaxEUZodC88VE2I3nJv/pCpItJ9NZuSVfkTM1k8yBxXgAhlAxdyXzNkuV66YLHoEHaVudfP6Q==,
-      }
 
   "@paralleldrive/cuid2@2.3.1":
     resolution:
@@ -8262,13 +8256,6 @@ snapshots:
       fastq: 1.20.1
 
   "@nolyfill/is-core-module@1.0.39": {}
-
-  "@openclaw-memory/client@0.2.0":
-    dependencies:
-      axios: 1.13.5
-      zod: 3.25.76
-    transitivePeerDependencies:
-      - debug
 
   "@paralleldrive/cuid2@2.3.1":
     dependencies:
