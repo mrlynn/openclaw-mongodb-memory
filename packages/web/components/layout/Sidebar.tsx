@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Icon from "@leafygreen-ui/icon";
 import { Body } from "@leafygreen-ui/typography";
 import { SIDEBAR_WIDTH, NAV_ITEMS } from "@/lib/constants";
@@ -22,8 +23,19 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className={styles.container}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoTitle}>OpenClaw</div>
-        <span className={styles.logoSubtitle}>Memory System</span>
+        <div className={styles.logoRow}>
+          <Image
+            src="/ocmem-trans-1024x1024.png"
+            alt="OpenClaw logo"
+            width={36}
+            height={36}
+            className={styles.logoImage}
+          />
+          <div>
+            <div className={styles.logoTitle}>OpenClaw</div>
+            <span className={styles.logoSubtitle}>Memory System</span>
+          </div>
+        </div>
         <a
           href="https://mongodb.com"
           target="_blank"
@@ -31,7 +43,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           className={styles.poweredBy}
           title="Built with MongoDB"
         >
-          <Icon glyph="Logo" size={12} />
+          <svg width="12" height="12" viewBox="0 0 15 32" fill="currentColor" aria-hidden="true">
+            <path d="M8.1 28.5c-.3-1.7-.5-3.4-.5-3.4s-3.2-2.1-3.7-5.7c-.5-3.5.6-5.3 1.6-7.3C6.9 9.6 7.8 7.2 7.7 4c0 0 1.2 1.6 1.5 2.8.8 2.7-.2 4.8-.2 4.8s1.3-.8 2-2.8c.3-.9.2-2.1.2-2.1s1.1 1.7 1.1 3.7c0 2.5-1.4 4-2.1 5.8-.7 1.7-.5 3.7-.5 3.7s.1 2.4.1 4.7c0 1.3-.1 2.6-.2 3.9h-1.5z" />
+          </svg>
           <span>Powered by MongoDB</span>
         </a>
       </div>

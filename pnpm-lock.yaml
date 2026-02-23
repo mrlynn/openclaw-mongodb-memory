@@ -41,6 +41,9 @@ importers:
 
   packages/cli:
     dependencies:
+      "@openclaw-memory/cli":
+        specifier: 0.2.3
+        version: 0.2.3
       "@openclaw-memory/client":
         specifier: workspace:*
         version: link:../client
@@ -1715,6 +1718,19 @@ packages:
         integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==,
       }
     engines: { node: ">=12.4.0" }
+
+  "@openclaw-memory/cli@0.2.3":
+    resolution:
+      {
+        integrity: sha512-OlfaM3hFtNejSqAT3D5W88wn2Lf+RaAT6lKFO0FBN/0yxZ2ZYGRbR/PzHx9kxm0yXLYo5s7ig1vxoqlUY+793w==,
+      }
+    hasBin: true
+
+  "@openclaw-memory/client@0.2.0":
+    resolution:
+      {
+        integrity: sha512-x6Nc98zYjb2gUgaxEUZodC88VE2I3nJv/pCpItJ9NZuSVfkTM1k8yBxXgAhlAxdyXzNkuV66YLHoEHaVudfP6Q==,
+      }
 
   "@paralleldrive/cuid2@2.3.1":
     resolution:
@@ -8257,6 +8273,23 @@ snapshots:
 
   "@nolyfill/is-core-module@1.0.39": {}
 
+  "@openclaw-memory/cli@0.2.3":
+    dependencies:
+      "@openclaw-memory/client": 0.2.0
+      axios: 1.13.5
+      chalk: 5.6.2
+      commander: 11.1.0
+      table: 6.9.0
+    transitivePeerDependencies:
+      - debug
+
+  "@openclaw-memory/client@0.2.0":
+    dependencies:
+      axios: 1.13.5
+      zod: 3.25.76
+    transitivePeerDependencies:
+      - debug
+
   "@paralleldrive/cuid2@2.3.1":
     dependencies:
       "@noble/hashes": 1.8.0
@@ -9425,7 +9458,7 @@ snapshots:
       eslint: 8.57.1
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1)
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.1)
       eslint-plugin-react: 7.37.5(eslint@8.57.1)
       eslint-plugin-react-hooks: 5.2.0(eslint@8.57.1)
@@ -9459,7 +9492,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1)
+      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -9474,7 +9507,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1))(eslint@8.57.1))(eslint@8.57.1):
+  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.56.0(eslint@8.57.1)(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.1):
     dependencies:
       "@rtsao/scc": 1.1.0
       array-includes: 3.1.9

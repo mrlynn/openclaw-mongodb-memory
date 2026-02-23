@@ -1,29 +1,9 @@
-import { spawn, execSync } from "child_process";
+import { spawn } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import chalk from "chalk";
 import axios from "axios";
-
-function findProjectRoot(): string {
-  let dir = process.cwd();
-  for (let i = 0; i < 10; i++) {
-    const pkg = resolve(dir, "package.json");
-    if (existsSync(pkg)) {
-      try {
-        const content = JSON.parse(readFileSync(pkg, "utf8"));
-        if (content.name === "openclaw-memory" || content.name === "@openclaw-memory/daemon") {
-          return dir;
-        }
-      } catch {
-        // keep looking
-      }
-    }
-    const parent = resolve(dir, "..");
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return process.cwd();
-}
+import { findProjectRoot } from "../resolve";
 
 function readEnvPort(root: string): number {
   const envLocal = resolve(root, ".env.local");
@@ -58,6 +38,16 @@ export async function startCommand(options: {
   web?: boolean;
 }) {
   const root = findProjectRoot();
+
+  if (!root) {
+    console.log(chalk.red("\n  Could not find openclaw-memory project."));
+    console.log(chalk.dim("  Run `ocmem init` from the project directory first, or:"));
+    console.log(chalk.dim("    git clone https://github.com/mrlynn/openclaw-mongodb-memory.git"));
+    console.log(chalk.dim("    cd openclaw-mongodb-memory && pnpm install && pnpm build"));
+    console.log(chalk.dim("    ocmem init\n"));
+    process.exit(1);
+  }
+
   const envLocal = resolve(root, ".env.local");
 
   if (!existsSync(envLocal)) {

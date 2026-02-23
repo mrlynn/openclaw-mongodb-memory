@@ -10,6 +10,17 @@
   margin-bottom: 32px;
 }
 
+.logoRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoImage {
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
 .logoTitle {
   font-weight: 700;
   font-size: 1.1rem;

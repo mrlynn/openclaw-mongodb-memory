@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { execSync } from "child_process";
 import { resolve } from "path";
 import chalk from "chalk";
+import { findProjectRoot, saveConfig } from "../resolve";
 
 function ask(
   rl: ReturnType<typeof createInterface>,
@@ -17,34 +18,26 @@ function ask(
   });
 }
 
-function findProjectRoot(): string {
-  // Walk up from cwd looking for package.json with openclaw-memory
-  let dir = process.cwd();
-  for (let i = 0; i < 10; i++) {
-    const pkg = resolve(dir, "package.json");
-    if (existsSync(pkg)) {
-      try {
-        const content = JSON.parse(readFileSync(pkg, "utf8"));
-        if (content.name === "openclaw-memory" || content.name === "@openclaw-memory/daemon") {
-          return dir;
-        }
-      } catch {
-        // not valid JSON, keep looking
-      }
-    }
-    const parent = resolve(dir, "..");
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return process.cwd();
-}
-
 export async function initCommand(options: { port?: string; mock?: boolean }) {
   const root = findProjectRoot();
+
+  if (!root) {
+    console.log(chalk.red("\n  Could not find openclaw-memory project."));
+    console.log(chalk.dim("  Run this from the project directory, or clone first:"));
+    console.log(chalk.dim("    git clone https://github.com/mrlynn/openclaw-mongodb-memory.git"));
+    console.log(chalk.dim("    cd openclaw-mongodb-memory && pnpm install && pnpm build"));
+    console.log(chalk.dim("    ocmem init\n"));
+    process.exit(1);
+  }
+
   const envLocal = resolve(root, ".env.local");
   const envExample = resolve(root, ".env.example");
 
   console.log(chalk.bold("\n  OpenClaw Memory — Init\n"));
+  console.log(chalk.dim(`  Project: ${root}\n`));
+
+  // Save project root so `ocmem start` works from any directory
+  saveConfig({ projectRoot: root });
 
   // Check if .env.local already exists
   if (existsSync(envLocal)) {
