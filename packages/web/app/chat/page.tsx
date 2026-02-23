@@ -8,7 +8,7 @@ import Button from "@leafygreen-ui/button";
 import Icon from "@leafygreen-ui/icon";
 import Card from "@leafygreen-ui/card";
 import Badge from "@leafygreen-ui/badge";
-import { LoadingIndicator } from "@leafygreen-ui/loading-indicator";
+import { Spinner } from "@leafygreen-ui/loading-indicator";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -192,7 +192,7 @@ export default function ChatPage() {
 
         {loading && (
           <div className={styles.loadingMessage}>
-            <LoadingIndicator />
+            <Spinner />
             <Body>Searching memories...</Body>
           </div>
         )}
