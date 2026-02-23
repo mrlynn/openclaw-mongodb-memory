@@ -95,7 +95,7 @@ Provide a concise, conversational answer:`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "qwen3-coder",
+          model: "llama3.2:3b",
           prompt: fullPrompt,
           stream: false,
           options: {
@@ -117,7 +117,7 @@ Provide a concise, conversational answer:`;
         answer,
         memories: memories.slice(0, 3), // Include top 3 for reference
         source: "ollama-direct",
-        model: "qwen3-coder",
+        model: "llama3.2:3b",
       });
     } catch (llmError: any) {
       // Ollama not available - graceful fallback
