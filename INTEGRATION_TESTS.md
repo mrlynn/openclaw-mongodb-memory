@@ -439,7 +439,11 @@ mongosh "$MONGODB_URI" --eval "db.runCommand({ ping: 1 })"
 - Semantic recall: ✅ (found with score 0.044)
 - Total time: ~20s ✅ (target: <5 min)
 
-**Issues Found:** None
+**Issues Found:** 
+- ⚠️ **CRITICAL:** Test used production database instead of test database
+  - Impact: Test memory stored in production `openclaw_memory` DB
+  - AgentId isolation prevented data corruption, but still bad practice
+  - Fix: Integration tests must use `MEMORY_DB_NAME=openclaw_memory_test`
 
 **Notes:**
 - Daemon build step required (not included in root `pnpm build`)
