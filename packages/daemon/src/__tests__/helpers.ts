@@ -53,9 +53,8 @@ export async function addErrorHandler(app: Express): Promise<void> {
  * Will throw error if used against production database
  */
 export async function cleanupTestData(agentId?: string): Promise<void> {
-  // CRITICAL: Connect fresh using the modified test MONGODB_URI
-  // Don't use getDatabase() singleton which may have been initialized before test setup
-  const { db, client } = await connectDatabase({ mongoUri: process.env.MONGODB_URI! });
+  // Use the singleton database instance (already connected by createTestApp)
+  const db = getDatabase();
   const dbName = db.databaseName;
 
   // CRITICAL SAFETY CHECK: Refuse to delete from production database
@@ -78,8 +77,7 @@ export async function cleanupTestData(agentId?: string): Promise<void> {
     await collection.deleteMany({ agentId: { $regex: /^test-/ } });
   }
 
-  // Close the connection we just opened
-  await client.close();
+  // Don't close the connection - it's shared across all tests
 }
 
 /**
