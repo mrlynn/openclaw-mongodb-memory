@@ -1,9 +1,17 @@
 {
   "name": "@openclaw-memory/daemon",
-  "version": "0.1.0",
-  "description": "Memory daemon for OpenClaw agents",
-  "main": "dist/index.js",
+  "version": "0.2.0",
+  "description": "Memory daemon for OpenClaw agents with MongoDB and Voyage AI semantic search",
+  "main": "dist/server.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "dist/**/*.d.ts.map",
+    "!dist/**/*.test.js",
+    "!dist/**/__tests__/**",
+    "README.md"
+  ],
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
@@ -11,6 +19,28 @@
     "test": "vitest",
     "reembed": "tsx src/scripts/reembed.ts"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory.git",
+    "directory": "packages/daemon"
+  },
+  "keywords": [
+    "openclaw",
+    "memory",
+    "mongodb",
+    "voyage-ai",
+    "semantic-search",
+    "rag",
+    "ai-agent",
+    "embeddings",
+    "vector-search"
+  ],
+  "author": "Michael Lynn <michael.lynn@mongodb.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory/issues"
+  },
+  "homepage": "https://github.com/mrlynn/openclaw-mongodb-memory#readme",
   "dependencies": {
     "axios": "^1.6.5",
     "cors": "^2.8.6",

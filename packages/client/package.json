@@ -1,13 +1,38 @@
 {
   "name": "@openclaw-memory/client",
-  "version": "0.1.0",
-  "description": "Client library for OpenClaw memory daemon",
+  "version": "0.2.0",
+  "description": "TypeScript client library for OpenClaw memory daemon - semantic memory with MongoDB and Voyage AI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory.git",
+    "directory": "packages/client"
+  },
+  "keywords": [
+    "openclaw",
+    "memory",
+    "client",
+    "sdk",
+    "mongodb",
+    "voyage-ai",
+    "semantic-search",
+    "ai-agent"
+  ],
+  "author": "Michael Lynn <michael.lynn@mongodb.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory/issues"
+  },
+  "homepage": "https://github.com/mrlynn/openclaw-mongodb-memory#readme",
   "dependencies": {
     "axios": "^1.6.5",
     "zod": "^3.22.4"

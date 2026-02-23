@@ -12,7 +12,7 @@ import {
   Wifi,
   WifiOff,
   Cloud,
-  Scatter,
+  ScatterChart,
   CalendarDays,
 } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
@@ -303,7 +303,7 @@ function MemoryMapSection({
     <GlassCard>
       <div className={styles.vizHeader}>
         <div className={styles.vizTitleRow}>
-          <Scatter size={16} style={{ opacity: 0.5 }} />
+          <ScatterChart size={16} style={{ opacity: 0.5 }} />
           <div className={styles.sectionLabel}>Semantic Memory Map</div>
         </div>
 
@@ -333,7 +333,7 @@ function MemoryMapSection({
 
       {!loading && !error && points.length === 0 && (
         <div className={styles.vizEmpty}>
-          <Scatter size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
+          <ScatterChart size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
           <div>No memories to map yet.</div>
           <div style={{ fontSize: "0.8rem", marginTop: 4, opacity: 0.6 }}>
             Store some memories to see your semantic map.
