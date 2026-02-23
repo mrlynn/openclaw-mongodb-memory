@@ -57,55 +57,87 @@ export async function POST(request: Request) {
 
     const memories: Memory[] = recallData.results;
 
-    // Step 2: Build context for LLM
-    const memoryContext = memories.map((m, idx) => `[Memory ${idx + 1}] ${m.text}`).join("\n\n");
+    // Step 2: Build context for LLM with emphasis on synthesis
+    const memoryContext = memories
+      .map(
+        (m, idx) =>
+          `Memory ${idx + 1} (relevance: ${Math.round(m.score * 100)}%):\n${m.text}${m.tags?.length ? `\nTags: ${m.tags.join(", ")}` : ""}`,
+      )
+      .join("\n\n");
 
-    const systemPrompt = `You are a helpful memory assistant. Answer the user's question based ONLY on the provided memories. Be conversational and natural. If the memories don't contain enough information to answer fully, say so and mention what you do know.
+    const systemPrompt = `You are an AI assistant helping the user recall and understand their stored memories.
 
-Memories:
+Your job is to:
+1. SYNTHESIZE the information from the memories below
+2. Answer the user's question in a natural, conversational way
+3. DISTILL key insights rather than just listing memories
+4. Connect related information across memories when relevant
+5. Be concise but informative
+
+IMPORTANT: Do NOT just list or quote the memories. Understand them, synthesize them, and provide a thoughtful answer.
+
+If the memories don't fully answer the question, acknowledge what you DO know and what's missing.
+
+Available memories:
 ${memoryContext}`;
 
-    // Step 3: Call OpenClaw Gateway via CLI
+    // Step 3: Call OpenClaw Gateway via HTTP RPC
     try {
-      const { exec } = require("child_process");
-      const { promisify } = require("util");
-      const execAsync = promisify(exec);
+      const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || "http://localhost:18789";
+      const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
 
-      // Build the full prompt with context
-      const fullPrompt = `${systemPrompt}\n\nUser question: ${query}\n\nProvide a concise, conversational answer based on the memories above.`;
-
-      // Call openclaw agent command
-      const { stdout, stderr } = await execAsync(
-        `openclaw agent --local --message ${JSON.stringify(fullPrompt)} --json --timeout 30`,
-        {
-          timeout: 30000,
-          maxBuffer: 1024 * 1024, // 1MB buffer
+      const rpcPayload = {
+        jsonrpc: "2.0",
+        id: Date.now(),
+        method: "ai.complete",
+        params: {
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: query },
+          ],
+          model: "haiku", // Fast + cheap for chat
+          temperature: 0.7,
         },
-      );
+      };
 
-      if (stderr && !stderr.includes("Config warnings")) {
-        console.warn("OpenClaw agent stderr:", stderr);
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (gatewayToken) {
+        headers["Authorization"] = `Bearer ${gatewayToken}`;
       }
 
-      // Parse JSON response
-      let result;
-      try {
-        result = JSON.parse(stdout);
-      } catch (parseError) {
-        // If not JSON, use stdout directly
-        result = { content: stdout.trim() };
+      const rpcResponse = await fetch(`${gatewayUrl}/rpc`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(rpcPayload),
+        signal: AbortSignal.timeout(30000), // 30s timeout
+      });
+
+      if (!rpcResponse.ok) {
+        throw new Error(`Gateway RPC failed: ${rpcResponse.status} ${rpcResponse.statusText}`);
       }
 
-      const answer = result.content || result.message || stdout.trim();
+      const rpcData = await rpcResponse.json();
+
+      if (rpcData.error) {
+        throw new Error(
+          `Gateway RPC error: ${rpcData.error.message || JSON.stringify(rpcData.error)}`,
+        );
+      }
+
+      const answer = rpcData.result?.content || rpcData.result?.message || "No response generated";
 
       return NextResponse.json({
         answer,
         memories: memories.slice(0, 3), // Include top 3 for reference
-        source: "openclaw-cli",
+        source: "openclaw-gateway",
+        model: "haiku",
       });
     } catch (llmError: any) {
-      // OpenClaw CLI not available - graceful fallback
-      console.warn("OpenClaw agent error:", llmError.message);
+      // Gateway not available - graceful fallback
+      console.warn("OpenClaw Gateway error:", llmError.message);
       return createFallbackResponse(query, memories);
     }
   } catch (error) {

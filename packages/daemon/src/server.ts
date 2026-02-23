@@ -132,7 +132,12 @@ const startServer = async () => {
     }
 
     // Create singleton embedder — shared across all requests
-    const embedder = new VoyageEmbedder(voyageKey, config.voyageBaseUrl, config.voyageModel);
+    const embedder = new VoyageEmbedder(
+      voyageKey,
+      config.voyageBaseUrl,
+      config.voyageModel,
+      config.voyageMock,
+    );
 
     // Connect to MongoDB
     const { client, db } = await connectDatabase({ mongoUri: config.mongoUri });
