@@ -1,6 +1,6 @@
 {
   "name": "@openclaw-memory/daemon",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Memory daemon for OpenClaw agents with MongoDB and Voyage AI semantic search",
   "main": "dist/server.js",
   "types": "dist/index.d.ts",

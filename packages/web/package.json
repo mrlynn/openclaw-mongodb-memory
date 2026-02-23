@@ -1,6 +1,6 @@
 {
   "name": "@openclaw-memory/web",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Dashboard for openclaw-memory",
   "scripts": {
     "dev": "next dev",
