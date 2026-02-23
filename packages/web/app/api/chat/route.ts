@@ -1,8 +1,4 @@
 import { NextResponse } from "next/server";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +19,7 @@ interface Memory {
  *
  * Flow:
  * 1. Search memories semantically
- * 2. Send memories + question to local Ollama agent
+ * 2. Send memories + question to Ollama (local LLM)
  * 3. LLM synthesizes and generates conversational answer
  * 4. Return answer + source memories
  */
@@ -69,7 +65,7 @@ export async function POST(request: Request) {
       )
       .join("\n\n");
 
-    const systemPrompt = `You are an AI assistant helping the user recall and understand their stored memories.
+    const fullPrompt = `You are an AI assistant helping the user recall and understand their stored memories.
 
 Your job is to:
 1. SYNTHESIZE the information from the memories below
@@ -83,37 +79,49 @@ IMPORTANT: Do NOT just list or quote the memories. Understand them, synthesize t
 If the memories don't fully answer the question, acknowledge what you DO know and what's missing.
 
 Available memories:
-${memoryContext}`;
+${memoryContext}
 
-    // Step 3: Call OpenClaw agent (using ollama for local inference)
+User question: ${query}
+
+Provide a concise, conversational answer:`;
+
+    // Step 3: Call Ollama API directly
     try {
-      const fullPrompt = `${systemPrompt}\n\nUser question: ${query}\n\nProvide a concise, conversational answer:`;
+      const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
 
-      // Use ollama agent (local model, no session conflicts)
-      const { stdout, stderr } = await execAsync(
-        `openclaw agent --local --agent ollama --message ${JSON.stringify(fullPrompt)} 2>&1`,
-        {
-          timeout: 30000,
-          maxBuffer: 1024 * 1024, // 1MB
+      const ollamaResponse = await fetch(`${ollamaUrl}/api/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          model: "qwen3-coder",
+          prompt: fullPrompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+            num_predict: 512, // Limit response length
+          },
+        }),
+        signal: AbortSignal.timeout(30000), // 30s timeout
+      });
 
-      // Remove config warnings and extract answer
-      const lines = stdout.split("\n");
-      const answer = lines
-        .filter((line) => !line.includes("Config warnings") && !line.includes("plugin id mismatch"))
-        .join("\n")
-        .trim();
+      if (!ollamaResponse.ok) {
+        throw new Error(`Ollama API failed: ${ollamaResponse.status} ${ollamaResponse.statusText}`);
+      }
+
+      const ollamaData = await ollamaResponse.json();
+      const answer = ollamaData.response?.trim() || "Sorry, I couldn't generate a response.";
 
       return NextResponse.json({
-        answer: answer || "Sorry, I couldn't generate a response.",
+        answer,
         memories: memories.slice(0, 3), // Include top 3 for reference
-        source: "openclaw-ollama",
+        source: "ollama-direct",
         model: "qwen3-coder",
       });
     } catch (llmError: any) {
       // Ollama not available - graceful fallback
-      console.warn("Ollama agent error:", llmError.message);
+      console.warn("Ollama API error:", llmError.message);
       return createFallbackResponse(query, memories);
     }
   } catch (error) {
