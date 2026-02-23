@@ -371,7 +371,26 @@ export default function TimelinePage() {
 
       {/* React Chrono Timeline */}
       {allMemories.length > 0 && (
-        <div className={styles.timelineContainer}>
+        <div
+          className={styles.timelineContainer}
+          onClick={(e) => {
+            // Find if user clicked on a timeline card
+            const target = e.target as HTMLElement;
+            const card = target.closest('[data-testid^="timeline-card"]');
+            if (card) {
+              // Extract index from Chrono's data-testid (format: "timeline-card-N")
+              const testId = card.getAttribute("data-testid");
+              const match = testId?.match(/timeline-card-(\d+)/);
+              if (match && match[1]) {
+                const index = parseInt(match[1], 10);
+                if (allMemories[index]) {
+                  setSelectedMemory(allMemories[index]);
+                  setDrawerOpen(true);
+                }
+              }
+            }
+          }}
+        >
           <Chrono
             items={chronoItems}
             mode="VERTICAL_ALTERNATING"
