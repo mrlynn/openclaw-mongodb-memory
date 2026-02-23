@@ -45,6 +45,7 @@
   text-decoration: none;
   transition: all 0.2s ease;
   cursor: pointer;
+  color: #889397; /* fallback: prevents purple flash before data-theme is set */
 }
 
 body[data-theme="dark"] .navLink {
@@ -112,6 +113,8 @@ body[data-theme="light"] .footer {
   width: 260px;
   z-index: 100;
   overflow-y: auto;
+  /* fallback: dark theme default prevents white flash before data-theme is set */
+  background: linear-gradient(180deg, rgba(0, 30, 43, 0.97) 0%, rgba(2, 52, 48, 0.97) 100%);
 }
 
 body[data-theme="dark"] .desktopDrawer {
