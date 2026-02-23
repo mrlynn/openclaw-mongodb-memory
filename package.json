@@ -1,7 +1,7 @@
 {
   "name": "@openclaw-memory/web",
   "version": "0.1.0",
-  "description": "Next.js + LeafyGreen UI dashboard for openclaw-memory",
+  "description": "Dashboard for openclaw-memory",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
