@@ -1,18 +1,18 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { H2, H3, Body } from '@leafygreen-ui/typography';
-import Card from '@leafygreen-ui/card';
-import Badge from '@leafygreen-ui/badge';
-import Button from '@leafygreen-ui/button';
-import TextInput from '@leafygreen-ui/text-input';
-import { LoadingIndicator } from '@leafygreen-ui/loading-indicator';
-import Banner from '@leafygreen-ui/banner';
-import styles from './page.module.css';
+import { useState, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { H2, H3, Body } from "@leafygreen-ui/typography";
+import Card from "@leafygreen-ui/card";
+import Badge from "@leafygreen-ui/badge";
+import Button from "@leafygreen-ui/button";
+import TextInput from "@leafygreen-ui/text-input";
+import { Spinner } from "@leafygreen-ui/loading-indicator";
+import Banner from "@leafygreen-ui/banner";
+import styles from "./page.module.css";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface Doc {
   id: string;
@@ -27,7 +27,7 @@ interface Doc {
 export default function DocsPage() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<Doc | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,13 +35,13 @@ export default function DocsPage() {
   useEffect(() => {
     async function fetchDocs() {
       try {
-        const res = await fetch('/api/docs');
-        if (!res.ok) throw new Error('Failed to fetch docs');
+        const res = await fetch("/api/docs");
+        if (!res.ok) throw new Error("Failed to fetch docs");
         const data = await res.json();
         setDocs(data.docs);
         setLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(err instanceof Error ? err.message : "Unknown error");
         setLoading(false);
       }
     }
@@ -53,20 +53,21 @@ export default function DocsPage() {
     try {
       setLoading(true);
       const res = await fetch(`/api/docs?id=${docId}`);
-      if (!res.ok) throw new Error('Failed to load document');
+      if (!res.ok) throw new Error("Failed to load document");
       const data = await res.json();
       setSelectedDoc(data);
       setLoading(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(err instanceof Error ? err.message : "Unknown error");
       setLoading(false);
     }
   };
 
-  const filteredDocs = docs.filter(doc =>
-    searchQuery === '' ||
-    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredDocs = docs.filter(
+    (doc) =>
+      searchQuery === "" ||
+      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   return (
@@ -89,7 +90,7 @@ export default function DocsPage() {
 
       {loading && !selectedDoc ? (
         <div className={styles.loading}>
-          <LoadingIndicator />
+          <Spinner />
         </div>
       ) : error ? (
         <Banner variant="danger">{error}</Banner>
@@ -97,11 +98,7 @@ export default function DocsPage() {
         /* Document View */
         <div className={styles.documentView}>
           <div className={styles.backButton}>
-            <Button
-              size="small"
-              onClick={() => setSelectedDoc(null)}
-              leftGlyph={<span>←</span>}
-            >
+            <Button size="small" onClick={() => setSelectedDoc(null)} leftGlyph={<span>←</span>}>
               Back to all guides
             </Button>
           </div>
@@ -110,16 +107,16 @@ export default function DocsPage() {
             <div className={styles.documentHeader}>
               <H2>{selectedDoc.title}</H2>
               <div className={styles.tags}>
-                {selectedDoc.tags.map(tag => (
-                  <Badge key={tag} variant="blue">{tag}</Badge>
+                {selectedDoc.tags.map((tag) => (
+                  <Badge key={tag} variant="blue">
+                    {tag}
+                  </Badge>
                 ))}
               </div>
             </div>
 
             <div className={styles.markdownContent}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {selectedDoc.content || ''}
-              </ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedDoc.content || ""}</ReactMarkdown>
             </div>
           </Card>
         </div>
@@ -128,20 +125,22 @@ export default function DocsPage() {
         <div className={styles.documentList}>
           <div className={styles.resultsCount}>
             <Body>
-              {filteredDocs.length} {filteredDocs.length === 1 ? 'guide' : 'guides'}
+              {filteredDocs.length} {filteredDocs.length === 1 ? "guide" : "guides"}
             </Body>
           </div>
 
           <div className={styles.sections}>
-            {filteredDocs.map(doc => (
+            {filteredDocs.map((doc) => (
               <Card key={doc.id} className={styles.card}>
                 <div className={styles.cardHeader}>
                   <H3>{doc.title}</H3>
                 </div>
 
                 <div className={styles.tags}>
-                  {doc.tags.map(tag => (
-                    <Badge key={tag} variant="lightgray">{tag}</Badge>
+                  {doc.tags.map((tag) => (
+                    <Badge key={tag} variant="lightgray">
+                      {tag}
+                    </Badge>
                   ))}
                 </div>
 
@@ -168,7 +167,7 @@ export default function DocsPage() {
       {/* Footer */}
       <div className={styles.footer}>
         <Body>
-          Full repository:{' '}
+          Full repository:{" "}
           <a
             href="https://github.com/mrlynn/openclaw-mongodb-memory"
             target="_blank"

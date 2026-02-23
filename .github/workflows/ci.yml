@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+        env:
+          ESLINT_USE_FLAT_CONFIG: "true"
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm --filter @openclaw-memory/daemon test -- --run
+        env:
+          MONGODB_URI: mongodb://localhost:27017
+          VOYAGE_MOCK: "true"

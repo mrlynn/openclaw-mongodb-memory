@@ -6,15 +6,7 @@ import { useRouter } from "next/navigation";
 import Button from "@leafygreen-ui/button";
 import { Select, Option } from "@leafygreen-ui/select";
 import Icon from "@leafygreen-ui/icon";
-import {
-  Database,
-  Clock,
-  Wifi,
-  WifiOff,
-  Cloud,
-  ScatterChart,
-  CalendarDays,
-} from "lucide-react";
+import { Database, Clock, Wifi, WifiOff, Cloud, ScatterChart, CalendarDays } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
 import { useThemeMode } from "@/contexts/ThemeContext";
 import { useStatus, DaemonStatus } from "@/hooks/useStatus";
@@ -27,6 +19,7 @@ import {
   TimelineDay,
 } from "@/lib/api";
 import { STORAGE_KEYS } from "@/lib/constants";
+import { SetupChecklist } from "@/components/setup/SetupChecklist";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { StatusIndicator } from "@/components/cards/StatusIndicator";
 import { StatCard } from "@/components/cards/StatCard";
@@ -55,8 +48,7 @@ function formatMB(mb: number): string {
 }
 
 function mapStatus(value: string): "ready" | "error" | "unknown" {
-  if (["running", "connected", "ready", "available"].includes(value))
-    return "ready";
+  if (["running", "connected", "ready", "available"].includes(value)) return "ready";
   if (["error", "disconnected"].includes(value)) return "error";
   return "unknown";
 }
@@ -107,13 +99,7 @@ function HeapUsageBar({ used, total }: { used: number; total: number }) {
   );
 }
 
-function DisconnectedState({
-  daemonUrl,
-  onRetry,
-}: {
-  daemonUrl: string;
-  onRetry: () => void;
-}) {
+function DisconnectedState({ daemonUrl, onRetry }: { daemonUrl: string; onRetry: () => void }) {
   const { darkMode } = useThemeMode();
 
   return (
@@ -123,13 +109,11 @@ function DisconnectedState({
           <WifiOff size={48} />
         </div>
         <div className={styles.disconnectedTitle}>Daemon Unreachable</div>
-        <div className={styles.disconnectedDesc}>
-          Could not connect to the memory daemon at:
-        </div>
+        <div className={styles.disconnectedDesc}>Could not connect to the memory daemon at:</div>
         <div className={styles.daemonUrlBadge}>{daemonUrl}</div>
         <div className={styles.disconnectedDesc} style={{ marginBottom: 24 }}>
-          Make sure the daemon is running, or update the URL in Settings if it
-          is on a different host or port.
+          Make sure the daemon is running, or update the URL in Settings if it is on a different
+          host or port.
         </div>
         <div className={styles.disconnectedActions}>
           <Button
@@ -159,13 +143,7 @@ function DisconnectedState({
 // Word Cloud section — receives agentId from parent
 // ---------------------------------------------------------------------------
 
-function WordCloudSection({
-  daemonUrl,
-  agentId,
-}: {
-  daemonUrl: string;
-  agentId: string;
-}) {
+function WordCloudSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: string }) {
   const router = useRouter();
 
   const [words, setWords] = useState<WordCloudWord[]>([]);
@@ -227,10 +205,7 @@ function WordCloudSection({
 
       {loading && (
         <div className={styles.vizLoading}>
-          <div
-            className="skeleton"
-            style={{ width: "100%", height: 360, borderRadius: 8 }}
-          />
+          <div className="skeleton" style={{ width: "100%", height: 360, borderRadius: 8 }} />
         </div>
       )}
 
@@ -261,13 +236,7 @@ function WordCloudSection({
 // Memory Map section — 2D semantic scatter plot via PCA
 // ---------------------------------------------------------------------------
 
-function MemoryMapSection({
-  daemonUrl,
-  agentId,
-}: {
-  daemonUrl: string;
-  agentId: string;
-}) {
+function MemoryMapSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: string }) {
   const router = useRouter();
 
   const [points, setPoints] = useState<MemoryMapPoint[]>([]);
@@ -318,10 +287,7 @@ function MemoryMapSection({
 
       {loading && (
         <div className={styles.vizLoading}>
-          <div
-            className="skeleton"
-            style={{ width: "100%", height: 400, borderRadius: 8 }}
-          />
+          <div className="skeleton" style={{ width: "100%", height: 400, borderRadius: 8 }} />
         </div>
       )}
 
@@ -352,13 +318,7 @@ function MemoryMapSection({
 // Memory Timeline section — GitHub-style activity heatmap
 // ---------------------------------------------------------------------------
 
-function TimelineSection({
-  daemonUrl,
-  agentId,
-}: {
-  daemonUrl: string;
-  agentId: string;
-}) {
+function TimelineSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: string }) {
   const [days, setDays] = useState<TimelineDay[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -397,8 +357,7 @@ function TimelineSection({
         {total > 0 && !loading && (
           <div className={styles.vizStats}>
             <span>
-              <strong>{total.toLocaleString()}</strong> memories in the last 90
-              days
+              <strong>{total.toLocaleString()}</strong> memories in the last 90 days
             </span>
           </div>
         )}
@@ -406,10 +365,7 @@ function TimelineSection({
 
       {loading && (
         <div className={styles.vizLoading}>
-          <div
-            className="skeleton"
-            style={{ width: "100%", height: 140, borderRadius: 8 }}
-          />
+          <div className="skeleton" style={{ width: "100%", height: 140, borderRadius: 8 }} />
         </div>
       )}
 
@@ -421,10 +377,7 @@ function TimelineSection({
 
       {!loading && !error && days.length === 0 && (
         <div className={styles.vizEmpty}>
-          <CalendarDays
-            size={36}
-            style={{ opacity: 0.2, marginBottom: 12 }}
-          />
+          <CalendarDays size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
           <div>No activity yet.</div>
           <div style={{ fontSize: "0.8rem", marginTop: 4, opacity: 0.6 }}>
             Store some memories to see your activity timeline.
@@ -464,9 +417,7 @@ export default function DashboardPage() {
         setAgents(agentsList);
 
         const stored =
-          typeof window !== "undefined"
-            ? localStorage.getItem(STORAGE_KEYS.AGENT_ID)
-            : null;
+          typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEYS.AGENT_ID) : null;
         const resolvedAgent =
           stored && agentsList.some((a) => a.agentId === stored)
             ? stored
@@ -512,6 +463,8 @@ export default function DashboardPage() {
         )}
       </div>
 
+      <SetupChecklist daemonUrl={daemonUrl} />
+
       {!loading && error && (
         <div className={styles.errorWrap}>
           <DisconnectedState daemonUrl={daemonUrl} onRetry={refetch} />
@@ -520,9 +473,7 @@ export default function DashboardPage() {
 
       {loading ? (
         <div className={styles.statsGrid}>
-          <div
-            className={`${styles.fullRow} skeleton ${styles.skeletonCard}`}
-          />
+          <div className={`${styles.fullRow} skeleton ${styles.skeletonCard}`} />
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className={`skeleton ${styles.skeletonStat}`} />
           ))}
@@ -535,24 +486,15 @@ export default function DashboardPage() {
               {agentId && (
                 <>
                   <div className={`${styles.fullRow} ${styles.stagger1}`}>
-                    <WordCloudSection
-                      daemonUrl={daemonUrl}
-                      agentId={agentId}
-                    />
+                    <WordCloudSection daemonUrl={daemonUrl} agentId={agentId} />
                   </div>
 
                   <div className={`${styles.fullRow} ${styles.stagger2}`}>
-                    <MemoryMapSection
-                      daemonUrl={daemonUrl}
-                      agentId={agentId}
-                    />
+                    <MemoryMapSection daemonUrl={daemonUrl} agentId={agentId} />
                   </div>
 
                   <div className={`${styles.fullRow} ${styles.stagger3}`}>
-                    <TimelineSection
-                      daemonUrl={daemonUrl}
-                      agentId={agentId}
-                    />
+                    <TimelineSection daemonUrl={daemonUrl} agentId={agentId} />
                   </div>
                 </>
               )}
@@ -597,10 +539,7 @@ export default function DashboardPage() {
               </div>
 
               <div className={`${styles.fullRow} ${styles.stagger9}`}>
-                <HeapUsageBar
-                  used={status.memory.heapUsed}
-                  total={status.memory.heapTotal}
-                />
+                <HeapUsageBar used={status.memory.heapUsed} total={status.memory.heapTotal} />
               </div>
             </>
           )}

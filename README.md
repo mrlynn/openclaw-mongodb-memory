@@ -1,17 +1,17 @@
-# 🧠 OpenClaw Memory
+# OpenClaw Memory
 
-> **Persistent, semantically-searchable long-term memory for OpenClaw agents**
+> **Persistent, semantically-searchable long-term memory for AI agents**
 
 Give your AI agents a memory that **actually remembers**. Powered by MongoDB and Voyage AI embeddings, OpenClaw Memory lets agents recall context from weeks ago, understand meaning instead of keywords, and build continuity across sessions.
 
-[![Status](https://img.shields.io/badge/status-production--ready-brightgreen)](.) 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue)](.)
-[![License](https://img.shields.io/badge/license-MIT-blue)](.)
-[![Tested](https://img.shields.io/badge/tested-verified-green)](./VERIFIED.md)
+[![Status](https://img.shields.io/badge/status-production--ready-brightgreen)](.)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue)](.)
+[![License](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](.github/workflows/ci.yml)
 
 ---
 
-## 🎯 Why OpenClaw Memory?
+## Why OpenClaw Memory?
 
 **The Problem:** AI agents forget everything between sessions. No continuity, no context, no learning.
 
@@ -19,74 +19,62 @@ Give your AI agents a memory that **actually remembers**. Powered by MongoDB and
 
 ```bash
 # Your agent remembers this...
-Agent: "I prefer Material UI for React projects" (2 weeks ago)
+Agent: "I prefer TypeScript for all new projects" (2 weeks ago)
 
 # ...and finds it semantically when you need it
-User: "What UI library should we use?"
-Agent: *searches memories for "UI library preference"*
-       *finds: "I prefer Material UI" with 0.89 relevance*
-Agent: "Based on our past discussions, Material UI would be a good fit."
+User: "What language should we use?"
+Agent: *searches memories for "language preference"*
+       *finds: "I prefer TypeScript" with 0.89 relevance*
+Agent: "Based on our past discussions, TypeScript would be a good fit."
 ```
 
 **It just works.** No fine-tuning. No prompt engineering. Just pure RAG-powered memory.
 
 ---
 
-## ✨ Features
+## Features
 
-| Feature | Description |
-|---------|-------------|
-| 🔍 **Semantic Search** | Find memories by meaning, not keywords. "What do I like for breakfast?" finds "I love scrambled eggs" |
-| 💾 **Persistent Storage** | MongoDB + TTL auto-expiration. Memories survive restarts, old ones fade naturally |
-| 🎯 **RAG-Ready** | Drop-in vector search for retrieval-augmented generation workflows |
-| 🏷️ **Tagging & Filtering** | Organize by project, topic, or any custom taxonomy |
-| 🌐 **Web Dashboard** | Beautiful UI to browse, search, and manage memories |
-| 🔌 **OpenClaw Plugin** | Native integration — agents use `memory_search` tool automatically |
-| 🧪 **Mock Mode** | Test without API costs using deterministic embeddings |
-| 📊 **Agent Discovery** | See all agents with memories, filter by agent ID |
-| ⚡ **Fast** | In-memory cosine for <10K memories, Atlas Vector Search for scale |
-| 🔒 **Private** | Self-hosted, your data stays yours |
+| Feature                | Description                                                       |
+| ---------------------- | ----------------------------------------------------------------- |
+| **Semantic Search**    | Find memories by meaning, not keywords                            |
+| **Persistent Storage** | MongoDB + TTL auto-expiration                                     |
+| **RAG-Ready**          | Drop-in vector search for retrieval-augmented generation          |
+| **Web Dashboard**      | Browse, search, and manage memories with visualizations           |
+| **Mock Mode**          | Test without API costs using deterministic embeddings             |
+| **Agent Discovery**    | See all agents with memories, filter by agent ID                  |
+| **Visualizations**     | Word cloud, semantic memory map, activity timeline                |
+| **Fast**               | In-memory cosine for <10K memories, Atlas Vector Search for scale |
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### 1️⃣ Install
+### One-command setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/openclaw-memory.git
+git clone https://github.com/mrlynn/openclaw-memory.git
 cd openclaw-memory
-pnpm install
+pnpm setup
 ```
 
-### 2️⃣ Configure
+The interactive setup wizard handles dependencies, environment configuration, building, database validation, and a smoke test.
+
+### Start development
 
 ```bash
-cp .env.example .env.local
+pnpm dev
 ```
 
-Edit `.env.local`:
+This starts both services:
 
-```bash
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/openclaw_memory
-VOYAGE_API_KEY=pa-xxx  # Or use VOYAGE_MOCK=true for testing
-```
+- **Daemon** at `http://localhost:7654` (memory API)
+- **Web Dashboard** at `http://localhost:3000` (browse/search UI)
 
-### 3️⃣ Start
-
-```bash
-# Start daemon
-cd packages/daemon && npm start
-
-# Start web dashboard (optional)
-cd packages/web && pnpm dev
-```
-
-### 4️⃣ Test
+### Try it
 
 ```bash
 # Store a memory
-curl -X POST http://localhost:7751/remember \
+curl -X POST http://localhost:7654/remember \
   -H "Content-Type: application/json" \
   -d '{
     "agentId": "demo",
@@ -95,520 +83,165 @@ curl -X POST http://localhost:7751/remember \
   }'
 
 # Search semantically
-curl "http://localhost:7751/recall?agentId=demo&query=theme+preference"
-
-# 🎉 Returns: "I prefer dark mode..." with relevance score
+curl "http://localhost:7654/recall?agentId=demo&query=theme+preference"
 ```
 
-### 5️⃣ Configure Agent Workflow ⚠️ **IMPORTANT**
-
-The system is installed, but agents won't use it automatically without workflow guidance:
-
-```bash
-# Read the workflow guide
-cat AGENT_WORKFLOW.md
-
-# Update your workspace AGENTS.md with the auto-save pattern
-# This tells agents WHEN to save memories (problem solved, decision made, etc.)
-```
-
-**Without this step, your memory system will sit unused!**
+See the [Installation Guide](./docs/getting-started.md) for complete setup instructions including prerequisites and MongoDB options.
 
 ---
 
-## 📚 Detailed Setup Guides
+## Setup Paths
 
-**Choose your setup path based on your needs:**
+The [Installation Guide](./docs/getting-started.md) covers three paths:
 
-### 🐳 Docker (Fastest - Recommended for first-time setup)
-**Complete stack in one command** — MongoDB, daemon, and web dashboard.
+| Path              | What you need     | Time     | Best for                                  |
+| ----------------- | ----------------- | -------- | ----------------------------------------- |
+| **Docker**        | Docker installed  | 30 sec   | `docker compose up` — everything included |
+| **Local install** | Node.js + MongoDB | 5 min    | `pnpm setup` — interactive wizard         |
+| **Manual**        | Node.js + MongoDB | 5-10 min | Full control over every step              |
 
-👉 **[Docker Setup Guide](./docs/docker-setup.md)**
+Deep-dive guides:
 
-```bash
-docker compose up
-# ✅ Everything running in <2 minutes
-```
-
-**Best for:** Quick local development, testing, isolated environments
-
----
-
-### 💻 Local MongoDB (Full Control)
-**Run MongoDB on your machine** — No cloud, no Docker, just native.
-
-👉 **[Local MongoDB Setup Guide](./docs/mongodb-local-setup.md)**
-
-- macOS (Homebrew), Linux (apt/yum), Windows (installer)
-- Offline development (no internet required)
-- Full control over data and configuration
-- Step-by-step for each OS
-
-**Best for:** Offline development, learning MongoDB, full control
+- [Docker Setup](./docs/docker-setup.md) — Kubernetes, volumes, multi-env
+- [Local MongoDB](./docs/mongodb-local-setup.md) — macOS, Linux, Windows
+- [MongoDB Atlas](./docs/mongodb-atlas-setup.md) — free cloud tier with vector search
 
 ---
 
-### ☁️ MongoDB Atlas (Production - Recommended for deployment)
-**Free cloud database with vector search** — Fully managed, auto-scaling.
-
-👉 **[MongoDB Atlas Setup Guide](./docs/mongodb-atlas-setup.md)**
-
-- Free M0 cluster (512 MB, no credit card)
-- Native vector search (not available locally)
-- Automatic backups and monitoring
-- Global deployment
-
-**Best for:** Production deployments, vector search at scale, team projects
-
----
-
-### 📊 Setup Comparison
-
-| Feature | Docker | Local MongoDB | Atlas (Cloud) |
-|---------|--------|---------------|---------------|
-| **Setup time** | 2 min | 5-10 min | 5 min |
-| **Cost** | Free | Free | Free tier available |
-| **Vector search** | ❌ (in-memory) | ❌ (in-memory) | ✅ Native |
-| **Internet required** | No | No | Yes |
-| **Backups** | Manual | Manual | Automatic |
-| **Scaling** | Limited | Limited | Auto-scale |
-| **Best for** | Quick dev | Offline dev | Production |
-
-**Recommendation:** Start with Docker, switch to Atlas for production.
-
----
-
-## 🎨 What It Looks Like
-
-### Memory Browser with RAG Search
-
-Search 73 memories semantically in milliseconds:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Agent: openclaw (73 memories)  🔍 Search: "what color dog"  │
-├──────────┬──────────────────────────┬──────────┬────────────┤
-│ Relevance│ Text                     │ Tags     │ Created    │
-├──────────┼──────────────────────────┼──────────┼────────────┤
-│  0.872   │ the red dog watched...   │ dog, mem │ 2/22, 5:47 │
-│  0.654   │ heartbeat checkpoint...  │ infrastr │ 2/21, 3:48 │
-│  0.521   │ color preferences in...  │ design   │ 2/19, 4:01 │
-└──────────┴──────────────────────────┴──────────┴────────────┘
-```
-
-### Dashboard Overview
-
-```
-┌──────────────────────────────────────────┐
-│ 🧠 Memory Daemon Status                  │
-├──────────────────────────────────────────┤
-│ ✅ Daemon: ready                         │
-│ ✅ MongoDB: connected                    │
-│ ✅ Voyage: ready (mock mode)             │
-│ 📊 Total Memories: 74                    │
-│ ⏱️  Uptime: 3d 2h 15m                    │
-└──────────────────────────────────────────┘
-```
-
----
-
-## 📦 Project Structure
+## Project Structure
 
 ```
 openclaw-memory/
 ├── packages/
-│   ├── daemon/          # HTTP API server (port 7751)
-│   ├── client/          # TypeScript client library
-│   ├── cli/             # CLI tools (ocmem)
-│   └── web/             # Next.js dashboard (port 3002)
-├── plugin/              # OpenClaw plugin
-│   ├── index.ts         # Plugin implementation
-│   └── openclaw.plugin.json
-├── scripts/             # Management utilities
-│   ├── install.sh       # Automated installation
-│   ├── uninstall.sh     # Clean removal
-│   ├── cleanup.sh       # Database cleanup
-│   └── status.sh        # Health check
-└── docs/                # Full documentation
+│   ├── daemon/     # Express API server (port 7654)
+│   ├── web/        # Next.js + LeafyGreen UI dashboard (port 3000)
+│   ├── client/     # TypeScript client library
+│   └── cli/        # CLI tool (ocmem)
+├── scripts/        # Setup and management scripts
+├── docs/           # Documentation
+└── .env.example    # Environment template
 ```
 
 ---
 
-## 🔧 Core API
+## Core API
 
 ### Remember (Store)
 
-```typescript
+```
 POST /remember
-
-{
-  "agentId": "openclaw",
-  "text": "The user prefers terse responses without fluff",
-  "tags": ["preference", "communication-style"],
-  "ttl": 2592000  // 30 days
-}
-
+{ "agentId": "my-agent", "text": "User prefers dark mode", "tags": ["preference"] }
 → { "success": true, "id": "699ad..." }
 ```
 
 ### Recall (Search)
 
-```typescript
-GET /recall?agentId=openclaw&query=communication+style&limit=5
-
-→ {
-    "success": true,
-    "results": [
-      {
-        "id": "699ad...",
-        "text": "The user prefers terse responses...",
-        "score": 0.91,  // ← Semantic similarity
-        "tags": ["preference", "communication-style"]
-      }
-    ]
-  }
+```
+GET /recall?agentId=my-agent&query=theme+preference&limit=5
+→ { "results": [{ "text": "User prefers dark mode", "score": 0.91 }] }
 ```
 
 ### Forget (Delete)
 
-```typescript
+```
 DELETE /forget/699ad...
-
 → { "success": true }
 ```
 
----
-
-## 🎯 Use Cases
-
-| Scenario | How OpenClaw Memory Helps |
-|----------|---------------------------|
-| **Personal Assistant** | Remembers user preferences, past decisions, and context from weeks ago |
-| **Customer Support** | Recalls prior interactions, tickets, and solutions for continuity |
-| **Code Review** | Remembers architecture decisions, coding standards, and past discussions |
-| **Research** | Stores findings, sources, and insights for later recall |
-| **Project Management** | Tracks decisions, blockers, and status updates across sprints |
-| **Learning Companion** | Remembers what the user has learned, struggles with, and wants to explore |
+See the [full API Reference](./docs/api-reference.md) for all 13 endpoints including analytics, export, and health.
 
 ---
 
-## 🧪 Mock vs Real Embeddings
+## Mock vs Real Embeddings
 
-### Mock Mode (Testing)
+|             | Mock Mode          | Real Voyage AI          |
+| ----------- | ------------------ | ----------------------- |
+| **Cost**    | Free               | ~$0.10 per 1M tokens    |
+| **Setup**   | `VOYAGE_MOCK=true` | `VOYAGE_API_KEY=pa-xxx` |
+| **Quality** | Hash-based (dev)   | Semantic (production)   |
 
-**Cost:** $0  
-**Speed:** Instant (deterministic hash)  
-**Accuracy:** Good for testing, not production  
-
-```bash
-VOYAGE_MOCK=true
-```
-
-### Real Voyage Embeddings (Production)
-
-**Cost:** ~$0.02 per 1M tokens (~5,000 memories)  
-**Speed:** ~100ms per embedding  
-**Accuracy:** State-of-the-art semantic search  
-
-```bash
-VOYAGE_API_KEY=pa-xxx  # Get free key: voyageai.com
-VOYAGE_MOCK=false
-```
-
-**MongoDB Atlas AI** also supported:
-
-```bash
-VOYAGE_API_KEY=al-xxx  # MongoDB Atlas AI key
-VOYAGE_BASE_URL=https://ai.mongodb.com/v1
-VOYAGE_MODEL=voyage-3
-```
+Start with mock mode. Switch to [Voyage AI](https://voyageai.com) when you need production-quality search.
 
 ---
 
-## 🔌 OpenClaw Integration
+## Performance
 
-### Install Plugin
+| Metric                 | In-Memory (Default) | Atlas Vector Search   |
+| ---------------------- | ------------------- | --------------------- |
+| **Max Memories/Agent** | 10,000              | 10,000,000+           |
+| **Search Speed**       | 50-200ms            | 10-50ms               |
+| **Setup**              | Zero config         | Vector index required |
 
-```bash
-cd /Users/michael.lynn/code/openclaw-memory
-./scripts/install.sh
-```
+---
 
-### Configure
+## Documentation
 
-Edit `~/.openclaw/openclaw.json`:
+| Guide                                            | Description                           |
+| ------------------------------------------------ | ------------------------------------- |
+| [**Getting Started**](./docs/getting-started.md) | Installation, setup, first steps      |
+| [**Configuration**](./docs/configuration.md)     | All environment variables and options |
+| [**API Reference**](./docs/api-reference.md)     | Complete HTTP API documentation       |
+| [**Architecture**](./docs/architecture.md)       | System design and data flow           |
+| [**Deployment**](./docs/deployment.md)           | Docker, production, CI/CD, scaling    |
+| [**Troubleshooting**](./docs/troubleshooting.md) | Common issues and fixes               |
+| [**Contributing**](./docs/contributing.md)       | Development workflow and testing      |
 
-```json
-{
-  "plugins": {
-    "slots": { "memory": "openclaw-memory" },
-    "load": {
-      "paths": ["/path/to/openclaw-memory/plugin"]
-    },
-    "allow": ["openclaw-memory"],
-    "entries": {
-      "openclaw-memory": {
-        "enabled": true,
-        "config": {
-          "daemonUrl": "http://localhost:7751",
-          "agentId": "openclaw",
-          "autoStartDaemon": true
-        }
-      }
-    }
-  }
-}
-```
+---
 
-### Use in Agents
+## TypeScript Client
 
 ```typescript
-// Automatically available to agents
-User: "What do I prefer for breakfast?"
+import { MemoryClient } from "@openclaw-memory/client";
 
-Agent: [calls memory_search("breakfast preference")]
-       [finds: "I love scrambled eggs and toast" (score: 0.89)]
+const memory = new MemoryClient({
+  daemonUrl: "http://localhost:7654",
+  agentId: "my-agent",
+});
 
-Agent: "Based on what I remember, you love scrambled eggs and toast!"
+// Store a memory
+await memory.remember("User prefers dark mode", { tags: ["preference"] });
+
+// Search by meaning
+const results = await memory.recall("theme settings", { limit: 5 });
+
+// Delete a memory
+await memory.forget(results[0].id);
 ```
 
 ---
 
-## 📊 Performance & Scale
-
-| Metric | In-Memory (Default) | Atlas Vector Search |
-|--------|---------------------|---------------------|
-| **Max Memories/Agent** | 10,000 | 10,000,000+ |
-| **Search Speed** | 50-200ms | 10-50ms |
-| **Cost** | Free (compute only) | Free tier: 512MB |
-| **Setup** | Zero config | Vector index required |
-
-**When to use Atlas Vector Search:**
-- \>10K memories per agent
-- Multiple agents with 1K+ memories each
-- Production workloads requiring <50ms latency
-
-See [Production Deployment](#-production-deployment) for setup guide.
-
----
-
-## 📚 Documentation
-
-| Guide | Description |
-|-------|-------------|
-| **[FRESH_INSTALL_TEST.md](./FRESH_INSTALL_TEST.md)** | Complete end-to-end test plan (6 phases) |
-| **[scripts/README.md](./scripts/README.md)** | Management script documentation |
-| **[FOR_ENGINEERS.md](./FOR_ENGINEERS.md)** | Architecture deep-dive |
-| **[SKILL.md](./SKILL.md)** | OpenClaw skill reference |
-| **[SCHEMA.md](./SCHEMA.md)** | MongoDB schema and indexes |
-
----
-
-## 🛠️ Management Scripts
+## Development
 
 ```bash
-# Quick health check
-./scripts/status.sh
-
-# Install (automated)
-./scripts/install.sh
-
-# Uninstall (clean removal)
-./scripts/uninstall.sh
-
-# Clean test data
-./scripts/cleanup.sh
+pnpm dev          # Start daemon + web concurrently
+pnpm build        # Build all packages
+pnpm test         # Run all tests
+pnpm lint         # ESLint check
+pnpm typecheck    # TypeScript type check
+pnpm format:check # Prettier check
 ```
+
+Pre-commit hooks (Husky + lint-staged) enforce code quality automatically.
 
 ---
 
-## 🚀 Production Deployment
+## Roadmap
 
-### Step 1: MongoDB Atlas Vector Search Index
-
-1. Create a **Search Index** in MongoDB Atlas
-2. Database: `openclaw_memory`, Collection: `memories`
-3. Index definition:
-
-```json
-{
-  "fields": [
-    {
-      "type": "vector",
-      "path": "embedding",
-      "numDimensions": 1024,
-      "similarity": "cosine"
-    },
-    {"type": "filter", "path": "agentId"},
-    {"type": "filter", "path": "tags"}
-  ]
-}
-```
-
-### Step 2: Run as Service (PM2)
-
-```bash
-pm2 start packages/daemon/dist/server.js --name openclaw-memory
-pm2 save && pm2 startup
-```
-
-### Step 3: Enable Auto-Start in OpenClaw
-
-```json
-{
-  "plugins": {
-    "entries": {
-      "openclaw-memory": {
-        "config": {
-          "autoStartDaemon": true
-        }
-      }
-    }
-  }
-}
-```
+- [ ] Multi-modal embeddings (images, audio, video)
+- [ ] Conversation threading (group related memories)
+- [ ] Memory summarization (automatic compression)
+- [ ] Collaborative memory (shared across agents)
+- [ ] Additional embedding providers (OpenAI, Cohere)
 
 ---
 
-## 💡 Tips & Best Practices
-
-**Organize with Tags:**
-```javascript
-// Good
-{ tags: ["preference", "ui", "theme"] }
-
-// Better
-{ tags: ["user-preference", "interface-theme"] }
-```
-
-**Use TTL for Ephemeral Context:**
-```javascript
-// Temporary context (1 day)
-{ text: "Working on feature X", ttl: 86400 }
-
-// Long-term preferences (30 days)
-{ text: "Prefers Material UI", ttl: 2592000 }
-```
-
-**Batch Similar Memories:**
-```javascript
-// Instead of 10 tiny memories:
-"I like blue"
-"I like Material UI"
-"I like dark mode"
-
-// Use one rich memory:
-"UI Preferences: blue color scheme, Material UI framework, dark mode enabled"
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Daemon Won't Start
-
-```bash
-# Check MongoDB connection
-mongosh "$MONGODB_URI"
-
-# Check port availability
-lsof -i :7751
-
-# Check logs
-tail -f /tmp/openclaw-memory-daemon.log
-```
-
-### Plugin Not Loading
-
-```bash
-# Run OpenClaw doctor
-openclaw doctor
-
-# Check plugin manifest
-cat /path/to/plugin/openclaw.plugin.json
-
-# Verify load path
-grep openclaw-memory ~/.openclaw/openclaw.json
-```
-
-### No Search Results
-
-```bash
-# Verify daemon is running
-curl http://localhost:7751/status
-
-# List all agents
-curl http://localhost:7751/agents
-
-# Check if memories exist
-curl "http://localhost:7751/export?agentId=YOUR_AGENT_ID" | jq '.count'
-```
-
----
-
-## 🤝 Contributing
-
-Contributions welcome! This is a working production system, battle-tested and ready for real use.
-
-**Areas for contribution:**
-- Additional embedding providers (OpenAI, Cohere, etc.)
-- Web dashboard enhancements
-- Performance optimizations
-- Documentation improvements
-- Example workflows and templates
-
-**Process:**
-1. Fork the repo
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Test thoroughly (see `FRESH_INSTALL_TEST.md`)
-4. Commit with clear messages
-5. Push and open a PR
-
----
-
-## 📈 Roadmap
-
-- [ ] **Multi-modal embeddings** (images, audio, video)
-- [ ] **Conversation threading** (group related memories)
-- [ ] **Memory summarization** (automatic compression of old context)
-- [ ] **Collaborative memory** (shared across multiple agents)
-- [ ] **Memory analytics** (usage patterns, popular queries)
-- [ ] **Export/import** (backup and restore workflows)
-
----
-
-## 📝 License
+## License
 
 MIT License - see [LICENSE](./LICENSE) for details.
 
 ---
 
-## 🙏 Credits
-
-**Built by:** [Michael Lynn](https://github.com/mrlynn)  
-**For:** [OpenClaw](https://openclaw.ai)
+**Built by** [Michael Lynn](https://github.com/mrlynn)
 
 **Powered by:**
-- [MongoDB](https://mongodb.com) - Database and vector search
-- [Voyage AI](https://voyageai.com) - State-of-the-art embeddings
-- [Next.js](https://nextjs.org) - Web dashboard framework
-
----
-
-## 📞 Support
-
-- **Issues:** [GitHub Issues](https://github.com/YOUR_USERNAME/openclaw-memory/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/YOUR_USERNAME/openclaw-memory/discussions)
-- **OpenClaw Discord:** [discord.com/invite/clawd](https://discord.com/invite/clawd)
-
----
-
-<div align="center">
-
-**🧠 Give your agents a memory that actually remembers.**
-
-[Get Started](#-quick-start) · [Documentation](./docs) · [Examples](./examples) · [Report Bug](https://github.com/YOUR_USERNAME/openclaw-memory/issues)
-
-Made with ❤️ and ☕ by the OpenClaw community
-
-</div>
+[MongoDB](https://mongodb.com) | [Voyage AI](https://voyageai.com) | [Next.js](https://nextjs.org) | [LeafyGreen UI](https://www.mongodb.design/)

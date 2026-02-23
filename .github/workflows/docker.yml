@@ -1,0 +1,39 @@
+name: Docker Build
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Start stack
+        run: docker compose up -d
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for daemon health..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:7654/health > /dev/null 2>&1; then
+              echo "Daemon is healthy"
+              break
+            fi
+            echo "  Attempt $i/30..."
+            sleep 2
+          done
+
+      - name: Smoke test daemon
+        run: curl -f http://localhost:7654/health
+
+      - name: Smoke test web
+        run: curl -sf http://localhost:3000 > /dev/null
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
