@@ -118,35 +118,63 @@ cat AGENT_WORKFLOW.md
 
 ## 📚 Detailed Setup Guides
 
-Choose your setup path:
+**Choose your setup path based on your needs:**
 
-### 🐳 Docker (Recommended for local development)
+### 🐳 Docker (Fastest - Recommended for first-time setup)
 **Complete stack in one command** — MongoDB, daemon, and web dashboard.
 
 👉 **[Docker Setup Guide](./docs/docker-setup.md)**
 
 ```bash
 docker compose up
-# Everything running on http://localhost:7654
+# ✅ Everything running in <2 minutes
 ```
 
-### ☁️ MongoDB Atlas (Recommended for production)
-**Free cloud database with vector search** — No local MongoDB needed.
+**Best for:** Quick local development, testing, isolated environments
+
+---
+
+### 💻 Local MongoDB (Full Control)
+**Run MongoDB on your machine** — No cloud, no Docker, just native.
+
+👉 **[Local MongoDB Setup Guide](./docs/mongodb-local-setup.md)**
+
+- macOS (Homebrew), Linux (apt/yum), Windows (installer)
+- Offline development (no internet required)
+- Full control over data and configuration
+- Step-by-step for each OS
+
+**Best for:** Offline development, learning MongoDB, full control
+
+---
+
+### ☁️ MongoDB Atlas (Production - Recommended for deployment)
+**Free cloud database with vector search** — Fully managed, auto-scaling.
 
 👉 **[MongoDB Atlas Setup Guide](./docs/mongodb-atlas-setup.md)**
 
-- Free M0 cluster (512 MB)
-- Built-in vector search
+- Free M0 cluster (512 MB, no credit card)
+- Native vector search (not available locally)
+- Automatic backups and monitoring
 - Global deployment
-- Step-by-step with screenshots
 
-### 🛠️ Manual Setup
-Install and configure each component yourself:
+**Best for:** Production deployments, vector search at scale, team projects
 
-1. Install MongoDB locally or use Atlas
-2. Follow Quick Start above
-3. Configure `.env.local`
-4. Run `pnpm install && pnpm build`
+---
+
+### 📊 Setup Comparison
+
+| Feature | Docker | Local MongoDB | Atlas (Cloud) |
+|---------|--------|---------------|---------------|
+| **Setup time** | 2 min | 5-10 min | 5 min |
+| **Cost** | Free | Free | Free tier available |
+| **Vector search** | ❌ (in-memory) | ❌ (in-memory) | ✅ Native |
+| **Internet required** | No | No | Yes |
+| **Backups** | Manual | Manual | Automatic |
+| **Scaling** | Limited | Limited | Auto-scale |
+| **Best for** | Quick dev | Offline dev | Production |
+
+**Recommendation:** Start with Docker, switch to Atlas for production.
 
 ---
 

@@ -1,16 +1,25 @@
 # MongoDB Atlas Setup Guide
 
-**Goal:** Get a free MongoDB Atlas cluster running with vector search in under 5 minutes.
+**Goal:** Get a free MongoDB Atlas **cloud database** running with vector search in under 5 minutes.
+
+> **Note:** This guide is for **MongoDB Atlas** (cloud-hosted). For local MongoDB installation, see [Local MongoDB Setup](./mongodb-local-setup.md).
 
 ---
 
-## Why MongoDB Atlas?
+## Why MongoDB Atlas (Cloud)?
 
 - **Free tier:** M0 cluster (512 MB storage, shared CPU) - perfect for development
-- **Vector search:** Native support for semantic similarity search
+- **Vector search:** Native support for semantic similarity search (not available locally)
 - **Auto-scaling:** Upgrade as your memory grows
 - **Global:** Deploy close to your users
-- **Managed:** No servers to maintain
+- **Managed:** No servers to maintain, automatic backups
+- **Zero installation:** No local MongoDB setup needed
+
+**When to use Atlas vs Local:**
+- **Atlas:** Production deployments, vector search, team collaboration
+- **Local:** Offline development, full control, zero cost
+
+See also: [Local MongoDB Setup](./mongodb-local-setup.md) | [Docker Setup](./docker-setup.md)
 
 ---
 
