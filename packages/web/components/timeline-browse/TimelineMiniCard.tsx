@@ -28,15 +28,9 @@ interface TimelineMiniCardProps {
   memory: MemoryTimelineItem;
   index: number;
   onClick: () => void;
-  animationDelay?: number;
 }
 
-export function TimelineMiniCard({
-  memory,
-  index,
-  onClick,
-  animationDelay = 0,
-}: TimelineMiniCardProps) {
+export function TimelineMiniCard({ memory, index, onClick }: TimelineMiniCardProps) {
   const { darkMode } = useThemeMode();
   const colors = darkMode ? ACCENT_COLORS_DARK : ACCENT_COLORS_LIGHT;
   const accentColor = colors[index % colors.length];
@@ -54,10 +48,7 @@ export function TimelineMiniCard({
     <button
       className={styles.card}
       onClick={onClick}
-      style={{
-        borderLeftColor: accentColor,
-        animationDelay: `${animationDelay}ms`,
-      }}
+      style={{ borderLeftColor: accentColor }}
       type="button"
     >
       <div className={styles.textPreview}>{memory.text}</div>

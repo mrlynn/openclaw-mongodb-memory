@@ -3,8 +3,9 @@
    =================================================================== */
 
 .card {
-  width: 260px;
-  min-height: 100px;
+  width: 100%;
+  max-width: 380px;
+  min-height: 90px;
   padding: 14px 16px;
   border-radius: 12px;
   border: none;
@@ -13,7 +14,6 @@
   text-align: left;
   font-family: inherit;
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  animation: cardIn 0.35s ease-out both;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -103,23 +103,10 @@ body[data-theme="light"] .tag {
   margin-top: auto;
 }
 
-/* --- Animation --- */
-
-@keyframes cardIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* --- Responsive --- */
 
 @media (max-width: 768px) {
   .card {
-    width: 100%;
+    max-width: 100%;
   }
 }

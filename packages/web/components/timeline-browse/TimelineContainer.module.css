@@ -1,193 +1,90 @@
 /* ===================================================================
-   TimelineContainer — Horizontal scrolling timeline with axis
+   TimelineContainer — Custom vertical alternating timeline with spine
    =================================================================== */
 
-.container {
+.timeline {
   position: relative;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x proximity;
-  scroll-behavior: smooth;
-  padding: 24px 0 16px;
-  min-height: 200px;
-  outline: none;
-
-  /* Custom scrollbar */
-  scrollbar-width: thin;
-}
-
-body[data-theme="dark"] .container {
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-
-body[data-theme="light"] .container {
-  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
-}
-
-.container::-webkit-scrollbar {
-  height: 6px;
-}
-
-body[data-theme="dark"] .container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-body[data-theme="dark"] .container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-body[data-theme="light"] .container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-body[data-theme="light"] .container::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-}
-
-/* --- Horizontal axis line --- */
-
-.axisLine {
-  position: absolute;
-  top: 28px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  border-radius: 1px;
-  z-index: 0;
-  pointer-events: none;
-}
-
-body[data-theme="dark"] .axisLine {
-  background: linear-gradient(
-    90deg,
-    rgba(0, 237, 100, 0.2),
-    rgba(0, 237, 100, 0.05)
-  );
-}
-
-body[data-theme="light"] .axisLine {
-  background: linear-gradient(
-    90deg,
-    rgba(0, 104, 74, 0.15),
-    rgba(0, 104, 74, 0.03)
-  );
-}
-
-/* --- Track (flex row of date groups) --- */
-
-.track {
-  display: flex;
-  gap: 40px;
-  padding: 0 24px;
-  align-items: flex-start;
-  position: relative;
-  z-index: 1;
-  min-width: min-content;
-}
-
-/* --- Sentinel for infinite scroll --- */
-
-.sentinel {
-  width: 1px;
-  min-height: 100px;
-  flex-shrink: 0;
-}
-
-/* --- Loading more shimmer --- */
-
-.loadingMore {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
+  align-items: center;
+  padding: 0 16px 24px;
+  min-height: 200px;
 }
 
-.shimmerCard {
-  width: 260px;
-  height: 100px;
-  border-radius: 12px;
-  animation: shimmer 1.5s ease-in-out infinite;
+/* ── Vertical spine line ── */
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  transform: translateX(-50%);
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 1px;
 }
 
-body[data-theme="dark"] .shimmerCard {
+body[data-theme="dark"] .timeline::before {
   background: linear-gradient(
-    110deg,
-    rgba(255, 255, 255, 0.04) 30%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.04) 70%
+    180deg,
+    rgba(0, 237, 100, 0.25) 0%,
+    rgba(0, 237, 100, 0.08) 100%
   );
-  background-size: 200% 100%;
 }
 
-body[data-theme="light"] .shimmerCard {
+body[data-theme="light"] .timeline::before {
   background: linear-gradient(
-    110deg,
-    rgba(0, 0, 0, 0.03) 30%,
-    rgba(0, 0, 0, 0.06) 50%,
-    rgba(0, 0, 0, 0.03) 70%
+    180deg,
+    rgba(0, 104, 74, 0.18) 0%,
+    rgba(0, 104, 74, 0.04) 100%
   );
-  background-size: 200% 100%;
 }
 
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+/* ── Load more button ── */
+
+.loadMoreWrap {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0 8px;
+  z-index: 1;
 }
 
-/* --- Responsive: vertical layout --- */
+.loadMoreBtn {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--mongodb-spring-green);
+  color: var(--mongodb-evergreen);
+}
+
+.loadMoreBtn:hover:not(:disabled) {
+  background: var(--mongodb-forest-green);
+  color: var(--mongodb-white, #fff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 237, 100, 0.25);
+}
+
+.loadMoreBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Responsive: spine moves to left ── */
 
 @media (max-width: 768px) {
-  .container {
-    overflow-x: hidden;
-    overflow-y: auto;
-    scroll-snap-type: y proximity;
-    max-height: none;
-    padding: 16px 0;
+  .timeline {
+    align-items: flex-start;
+    padding: 0 8px 24px;
   }
 
-  .track {
-    flex-direction: column;
-    gap: 24px;
-    padding: 0;
-    min-width: 0;
-  }
-
-  .axisLine {
-    top: 0;
-    bottom: 0;
-    left: 4px;
-    right: auto;
-    width: 2px;
-    height: auto;
-  }
-
-  body[data-theme="dark"] .axisLine {
-    background: linear-gradient(
-      180deg,
-      rgba(0, 237, 100, 0.2),
-      rgba(0, 237, 100, 0.05)
-    );
-  }
-
-  body[data-theme="light"] .axisLine {
-    background: linear-gradient(
-      180deg,
-      rgba(0, 104, 74, 0.15),
-      rgba(0, 104, 74, 0.03)
-    );
-  }
-
-  .loadingMore {
-    width: 100%;
-  }
-
-  .shimmerCard {
-    width: 100%;
+  .timeline::before {
+    left: 26px;
+    transform: none;
   }
 }

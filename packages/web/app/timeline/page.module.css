@@ -151,44 +151,6 @@
   max-width: 400px;
 }
 
-/* React Chrono Timeline Container */
-.timelineContainer {
-  margin-top: 32px;
-  position: relative;
-}
-
-/* Load More Button */
-.loadMoreContainer {
-  display: flex;
-  justify-content: center;
-  margin-top: 32px;
-  margin-bottom: 32px;
-}
-
-.loadMoreButton {
-  padding: 12px 32px;
-  background: var(--mongodb-spring-green);
-  color: var(--mongodb-evergreen);
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.loadMoreButton:hover:not(:disabled) {
-  background: var(--mongodb-forest-green);
-  color: var(--mongodb-white);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 237, 100, 0.3);
-}
-
-.loadMoreButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .page {
@@ -218,7 +180,3 @@
   }
 }
 
-/* React Chrono global overrides — scoped to .timelineContainer */
-.timelineContainer :global(.chrono-icons) {
-  background: var(--mongodb-spring-green) !important;
-}

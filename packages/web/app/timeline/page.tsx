@@ -289,15 +289,13 @@ export default function TimelinePage() {
 
       {/* Timeline */}
       {allMemories.length > 0 && (
-        <GlassCard>
-          <TimelineContainer
-            memories={allMemories}
-            hasMore={hasMore}
-            loadingMore={loadingMore}
-            onLoadMore={loadNextPage}
-            onCardClick={handleCardClick}
-          />
-        </GlassCard>
+        <TimelineContainer
+          memories={allMemories}
+          hasMore={hasMore}
+          loadingMore={loadingMore}
+          onLoadMore={loadNextPage}
+          onCardClick={handleCardClick}
+        />
       )}
 
       {/* Detail drawer */}
