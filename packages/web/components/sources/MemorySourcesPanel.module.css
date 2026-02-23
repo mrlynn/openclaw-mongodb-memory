@@ -1,0 +1,411 @@
+/* --- Header --- */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-size: 0.68rem;
+  opacity: 0.5;
+}
+
+.refreshBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  opacity: 0.4;
+  transition: opacity 0.2s, background 0.2s;
+  color: inherit;
+  display: flex;
+  align-items: center;
+}
+
+.refreshBtn:hover {
+  opacity: 1;
+}
+
+body[data-theme="dark"] .refreshBtn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="light"] .refreshBtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* --- Loading / empty --- */
+.loadingWrap {
+  padding: 12px 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+/* --- Two-column source cards --- */
+.sourcesGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 700px) {
+  .sourcesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sourceCard {
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.2s;
+}
+
+body[data-theme="dark"] .sourceCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="light"] .sourceCard {
+  background: rgba(0, 30, 43, 0.02);
+  border: 1px solid rgba(0, 30, 43, 0.06);
+}
+
+.sourceCardUnavailable {
+  opacity: 0.5;
+}
+
+.sourceHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sourceIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+body[data-theme="dark"] .sourceIcon {
+  background: rgba(0, 237, 100, 0.08);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .sourceIcon {
+  background: rgba(0, 104, 74, 0.08);
+  color: #00684A;
+}
+
+.sourceTitle {
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex: 1;
+}
+
+.sourceBadge {
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badgeActive {
+  color: #00ED64;
+}
+
+body[data-theme="dark"] .badgeActive {
+  background: rgba(0, 237, 100, 0.1);
+}
+
+body[data-theme="light"] .badgeActive {
+  background: rgba(0, 163, 92, 0.1);
+  color: #00684A;
+}
+
+.badgeInactive {
+  opacity: 0.5;
+}
+
+body[data-theme="dark"] .badgeInactive {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body[data-theme="light"] .badgeInactive {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* --- Stat rows --- */
+.statsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  padding: 3px 0;
+}
+
+.statLabel {
+  opacity: 0.5;
+  font-size: 0.75rem;
+}
+
+.statValue {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8rem;
+}
+
+.unavailableMsg {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  padding: 12px 0;
+  text-align: center;
+}
+
+.unavailableMsg code {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* --- Overlap bar --- */
+.overlapSection {
+  margin-bottom: 16px;
+  padding-top: 4px;
+}
+
+.overlapLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.overlapBar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  gap: 2px;
+}
+
+.overlapFileOnly {
+  border-radius: 5px 0 0 5px;
+  min-width: 4px;
+  transition: width 0.5s ease;
+}
+
+body[data-theme="dark"] .overlapFileOnly {
+  background: #FFC010;
+}
+
+body[data-theme="light"] .overlapFileOnly {
+  background: #944F01;
+}
+
+.overlapShared {
+  min-width: 4px;
+  transition: width 0.5s ease;
+}
+
+body[data-theme="dark"] .overlapShared {
+  background: #00ED64;
+}
+
+body[data-theme="light"] .overlapShared {
+  background: #00684A;
+}
+
+.overlapMongoOnly {
+  border-radius: 0 5px 5px 0;
+  min-width: 4px;
+  transition: width 0.5s ease;
+}
+
+body[data-theme="dark"] .overlapMongoOnly {
+  background: #016BF8;
+}
+
+body[data-theme="light"] .overlapMongoOnly {
+  background: #1A567E;
+}
+
+/* --- Legend --- */
+.overlapLegend {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+.legendDotFile {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+body[data-theme="dark"] .legendDotFile {
+  background: #FFC010;
+}
+
+body[data-theme="light"] .legendDotFile {
+  background: #944F01;
+}
+
+.legendDotShared {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+body[data-theme="dark"] .legendDotShared {
+  background: #00ED64;
+}
+
+body[data-theme="light"] .legendDotShared {
+  background: #00684A;
+}
+
+.legendDotMongo {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+body[data-theme="dark"] .legendDotMongo {
+  background: #016BF8;
+}
+
+body[data-theme="light"] .legendDotMongo {
+  background: #1A567E;
+}
+
+/* --- Tag comparison --- */
+.tagComparison {
+  padding-top: 4px;
+}
+
+.tagComparisonLabel {
+  font-size: 0.72rem;
+  font-weight: 500;
+  opacity: 0.5;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+
+.tagColumns {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.tagColumn {
+  flex: 1;
+  min-width: 100px;
+}
+
+.tagColumnHeader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tagChip {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+body[data-theme="dark"] .tagChipFile {
+  background: rgba(255, 192, 16, 0.12);
+  color: #FFC010;
+}
+
+body[data-theme="light"] .tagChipFile {
+  background: rgba(148, 79, 1, 0.08);
+  color: #944F01;
+}
+
+body[data-theme="dark"] .tagChipShared {
+  background: rgba(0, 237, 100, 0.1);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .tagChipShared {
+  background: rgba(0, 104, 74, 0.08);
+  color: #00684A;
+}
+
+body[data-theme="dark"] .tagChipMongo {
+  background: rgba(1, 107, 248, 0.12);
+  color: #016BF8;
+}
+
+body[data-theme="light"] .tagChipMongo {
+  background: rgba(26, 86, 126, 0.08);
+  color: #1A567E;
+}

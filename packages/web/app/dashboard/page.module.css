@@ -59,6 +59,7 @@
 .stagger7 { animation: fadeIn 0.4s ease-out 0.35s both; }
 .stagger8 { animation: fadeIn 0.4s ease-out 0.4s both; }
 .stagger9 { animation: fadeIn 0.4s ease-out 0.45s both; }
+.stagger10 { animation: fadeIn 0.4s ease-out 0.5s both; }
 
 /* Skeleton loading */
 .skeletonCard {

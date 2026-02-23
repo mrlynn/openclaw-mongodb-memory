@@ -26,6 +26,7 @@ import { StatCard } from "@/components/cards/StatCard";
 import { WordCloud } from "@/components/wordcloud/WordCloud";
 import { MemoryMap } from "@/components/memorymap/MemoryMap";
 import { MemoryTimeline } from "@/components/timeline/MemoryTimeline";
+import { MemorySourcesPanel } from "@/components/sources/MemorySourcesPanel";
 import styles from "./page.module.css";
 
 interface AgentInfo {
@@ -496,14 +497,18 @@ export default function DashboardPage() {
                   <div className={`${styles.fullRow} ${styles.stagger3}`}>
                     <TimelineSection daemonUrl={daemonUrl} agentId={agentId} />
                   </div>
+
+                  <div className={`${styles.fullRow} ${styles.stagger4}`}>
+                    <MemorySourcesPanel daemonUrl={daemonUrl} agentId={agentId} />
+                  </div>
                 </>
               )}
 
-              <div className={`${styles.fullRow} ${styles.stagger4}`}>
+              <div className={`${styles.fullRow} ${styles.stagger5}`}>
                 <ServiceStatusPanel status={status} />
               </div>
 
-              <div className={styles.stagger5}>
+              <div className={styles.stagger6}>
                 <StatCard
                   icon={<Database size={22} />}
                   label="Total Memories"
@@ -511,7 +516,7 @@ export default function DashboardPage() {
                   color="#016BF8"
                 />
               </div>
-              <div className={styles.stagger6}>
+              <div className={styles.stagger7}>
                 <StatCard
                   icon={<Clock size={22} />}
                   label="Uptime"
@@ -519,7 +524,7 @@ export default function DashboardPage() {
                   color="#00ED64"
                 />
               </div>
-              <div className={styles.stagger7}>
+              <div className={styles.stagger8}>
                 <StatCard
                   icon={<Icon glyph="Charts" size={22} />}
                   label="Heap Used"
@@ -528,7 +533,7 @@ export default function DashboardPage() {
                   color="#FFC010"
                 />
               </div>
-              <div className={styles.stagger8}>
+              <div className={styles.stagger9}>
                 <StatCard
                   icon={error ? <WifiOff size={22} /> : <Wifi size={22} />}
                   label="Connection"
@@ -538,7 +543,7 @@ export default function DashboardPage() {
                 />
               </div>
 
-              <div className={`${styles.fullRow} ${styles.stagger9}`}>
+              <div className={`${styles.fullRow} ${styles.stagger10}`}>
                 <HeapUsageBar used={status.memory.heapUsed} total={status.memory.heapTotal} />
               </div>
             </>

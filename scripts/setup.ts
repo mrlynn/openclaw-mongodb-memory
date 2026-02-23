@@ -112,6 +112,10 @@ async function generateEnv(): Promise<void> {
   const voyageKey = await ask("Voyage API key (leave blank for mock mode)");
   const useMock = !voyageKey;
   const port = await ask("Daemon port", "7654");
+  const memoryFilePath = await ask(
+    "Memory file path (leave blank to skip)",
+    "~/.openclaw/workspace/MEMORY.md",
+  );
 
   // Read the example as a template, then fill in values
   let content = readFileSync(ENV_EXAMPLE, "utf8");
@@ -121,6 +125,17 @@ async function generateEnv(): Promise<void> {
 
   if (port !== "7654") {
     content = content.replace(/^# MEMORY_DAEMON_PORT=.*$/m, `MEMORY_DAEMON_PORT=${port}`);
+  }
+
+  // Auto-derive web dashboard URL from port
+  content = content.replace(
+    /^NEXT_PUBLIC_DAEMON_URL=.*$/m,
+    `NEXT_PUBLIC_DAEMON_URL=http://localhost:${port}`,
+  );
+
+  // Set memory file path if provided
+  if (memoryFilePath) {
+    content = content.replace(/^# MEMORY_FILE_PATH=.*$/m, `MEMORY_FILE_PATH=${memoryFilePath}`);
   }
 
   writeFileSync(ENV_LOCAL, content, "utf8");

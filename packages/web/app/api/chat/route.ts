@@ -2,9 +2,15 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+interface HistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 interface ChatRequest {
   query: string;
   agentId: string;
+  history?: HistoryMessage[];
 }
 
 interface Memory {
@@ -25,14 +31,15 @@ interface Memory {
  */
 export async function POST(request: Request) {
   try {
-    const { query, agentId }: ChatRequest = await request.json();
+    const { query, agentId, history = [] }: ChatRequest = await request.json();
 
     if (!query || !agentId) {
       return NextResponse.json({ error: "Missing query or agentId" }, { status: 400 });
     }
 
     // Step 1: Search memories
-    const daemonUrl = process.env.DAEMON_URL || "http://localhost:7751";
+    const daemonUrl =
+      process.env.DAEMON_URL || process.env.NEXT_PUBLIC_DAEMON_URL || "http://localhost:7654";
     const recallUrl = new URL("/recall", daemonUrl);
     recallUrl.searchParams.set("agentId", agentId);
     recallUrl.searchParams.set("query", query);
@@ -65,7 +72,14 @@ export async function POST(request: Request) {
       )
       .join("\n\n");
 
-    const fullPrompt = `You are an AI assistant helping the user recall and understand their stored memories.
+    // Build conversation history block for context continuity
+    const recentHistory = history.slice(-10); // Keep last 10 exchanges to fit context window
+    const historyBlock =
+      recentHistory.length > 0
+        ? `\nConversation so far:\n${recentHistory.map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n")}\n`
+        : "";
+
+    const fullPrompt = `You are an AI assistant helping the user recall and understand their stored memories. You are in an ongoing conversation — use the conversation history to maintain context and continuity.
 
 Your job is to:
 1. SYNTHESIZE the information from the memories below
@@ -73,11 +87,13 @@ Your job is to:
 3. DISTILL key insights rather than just listing memories
 4. Connect related information across memories when relevant
 5. Be concise but informative (2-3 paragraphs max)
+6. Reference prior conversation context when relevant (e.g., "As I mentioned earlier..." or "Building on what we discussed...")
 
 IMPORTANT: Do NOT just list or quote the memories. Understand them, synthesize them, and provide a thoughtful answer.
+IMPORTANT: Use the conversation history to understand follow-up questions. If the user says "tell me more" or "what about X", refer back to the prior context.
 
 If the memories don't fully answer the question, acknowledge what you DO know and what's missing.
-
+${historyBlock}
 Available memories:
 ${memoryContext}
 

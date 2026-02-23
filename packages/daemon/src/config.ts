@@ -6,8 +6,18 @@
  */
 
 import { z } from "zod";
+import os from "os";
+import path from "path";
 import { startupError } from "./utils/startupError";
 import { DEFAULT_PORT, DEFAULT_MONGO_URI } from "./constants";
+
+/** Expand ~ to the user's home directory (dotenv doesn't do this). */
+function expandHome(filePath: string): string {
+  if (filePath.startsWith("~/") || filePath === "~") {
+    return path.join(os.homedir(), filePath.slice(1));
+  }
+  return filePath;
+}
 
 const configSchema = z.object({
   port: z.coerce.number().int().min(1).max(65535).default(DEFAULT_PORT),
@@ -17,6 +27,7 @@ const configSchema = z.object({
   voyageModel: z.string().optional(),
   voyageMock: z.boolean().default(false),
   memoryApiKey: z.string().optional(),
+  memoryFilePath: z.string().optional(),
 });
 
 export type DaemonConfig = z.infer<typeof configSchema>;
@@ -30,6 +41,9 @@ export function loadConfig(): DaemonConfig {
     voyageModel: process.env.VOYAGE_MODEL || undefined,
     voyageMock: process.env.VOYAGE_MOCK === "true",
     memoryApiKey: process.env.MEMORY_API_KEY || undefined,
+    memoryFilePath: process.env.MEMORY_FILE_PATH
+      ? expandHome(process.env.MEMORY_FILE_PATH)
+      : undefined,
   };
 
   const result = configSchema.safeParse(raw);

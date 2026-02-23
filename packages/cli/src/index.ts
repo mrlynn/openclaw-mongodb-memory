@@ -7,14 +7,11 @@ import { purgeCommand } from "./commands/purge";
 import { exportCommand } from "./commands/export";
 import { clearCommand } from "./commands/clear";
 
-const DEFAULT_URL = process.env.MEMORY_DAEMON_URL || "http://localhost:7751";
+const DEFAULT_URL = process.env.MEMORY_DAEMON_URL || "http://localhost:7654";
 
 const program = new Command();
 
-program
-  .name("ocmem")
-  .description("OpenClaw Memory daemon management CLI")
-  .version("0.1.0");
+program.name("ocmem").description("OpenClaw Memory daemon management CLI").version("0.1.0");
 
 program
   .command("status")
@@ -38,10 +35,12 @@ program
   .option("--api-key <key>", "API key for daemon auth", process.env.MEMORY_API_KEY)
   .option("--agent <id>", "Agent ID (required)")
   .option("--older-than-days <days>", "Delete memories older than N days", "7")
-  .action((options) => purgeCommand({
-    ...options,
-    olderThanDays: parseInt(options.olderThanDays, 10),
-  }));
+  .action((options) =>
+    purgeCommand({
+      ...options,
+      olderThanDays: parseInt(options.olderThanDays, 10),
+    }),
+  );
 
 program
   .command("export")

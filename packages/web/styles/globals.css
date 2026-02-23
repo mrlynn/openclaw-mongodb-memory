@@ -25,16 +25,16 @@
 
 /* Light Theme Variables */
 body[data-theme="light"] {
-  --bg-primary: var(--mongodb-white);
+  --bg-primary: #F5F6F7;
   --bg-secondary: var(--mongodb-mist);
   --bg-tertiary: var(--mongodb-lavender);
   --text-primary: var(--mongodb-slate-blue);
   --text-secondary: var(--mongodb-forest-green);
   --text-tertiary: var(--mongodb-gray-medium);
-  --border-color: var(--mongodb-gray-lighter);
+  --border-color: #D8DDE0;
   --accent-primary: var(--mongodb-spring-green);
   --accent-hover: var(--mongodb-forest-green);
-  --shadow-color: rgba(0, 30, 43, 0.1);
+  --shadow-color: rgba(0, 30, 43, 0.12);
 }
 
 /* Dark Theme Variables */
@@ -171,7 +171,8 @@ body[data-theme="light"] .skeleton {
 }
 
 body[data-theme="light"] .glass-card {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.10);
 }
 
 /* MongoDB green glow effect */

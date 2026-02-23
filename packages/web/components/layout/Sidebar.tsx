@@ -22,18 +22,25 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className={styles.container}>
       {/* Logo */}
       <div className={styles.logo}>
-        <div className={styles.logoTitle}>
-          OpenClaw
-        </div>
+        <div className={styles.logoTitle}>OpenClaw</div>
         <span className={styles.logoSubtitle}>Memory System</span>
+        <a
+          href="https://mongodb.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.poweredBy}
+          title="Built with MongoDB"
+        >
+          <Icon glyph="University" size={12} />
+          <span>Powered by MongoDB</span>
+        </a>
       </div>
 
       {/* Navigation */}
       <nav className={styles.nav}>
         {NAV_ITEMS.map((item) => {
           const isActive =
-            pathname === item.path ||
-            (item.path === "/dashboard" && pathname === "/");
+            pathname === item.path || (item.path === "/dashboard" && pathname === "/");
           return (
             <Link
               key={item.path}

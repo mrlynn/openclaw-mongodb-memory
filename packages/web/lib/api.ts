@@ -212,6 +212,57 @@ export interface MemoriesPageResponse {
   memories: MemoryTimelineItem[];
 }
 
+// --- Memory Sources (Text-file vs MongoDB comparison) ---
+
+export interface FileSourceStats {
+  available: boolean;
+  filePath: string | null;
+  fileName: string | null;
+  lastModified: string | null;
+  fileSizeBytes: number | null;
+  sectionCount: number;
+  totalChars: number;
+  tags: string[];
+  sections: { title: string; charCount: number; tags: string[] }[];
+}
+
+export interface MongoSourceStats {
+  available: boolean;
+  totalDocuments: number;
+  totalWithEmbeddings: number;
+  uniqueTags: string[];
+  oldestMemory: string | null;
+  newestMemory: string | null;
+  avgTextLength: number;
+}
+
+export interface SourceOverlap {
+  fileSections: number;
+  mongoDocuments: number;
+  sharedCount: number;
+  fileOnlyCount: number;
+  mongoOnlyCount: number;
+}
+
+export interface SourcesResponse {
+  success: boolean;
+  agentId: string;
+  file: FileSourceStats;
+  mongo: MongoSourceStats;
+  overlap: SourceOverlap;
+}
+
+export async function fetchSources(baseUrl: string, agentId: string): Promise<SourcesResponse> {
+  const params = new URLSearchParams({ agentId });
+  const response = await fetch(`${baseUrl}/sources?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Sources failed: ${response.status}`);
+  return response.json();
+}
+
+// --- Memory Timeline Browser (Paginated Chronological Browse) ---
+
 export async function fetchMemoriesPage(
   baseUrl: string,
   agentId: string,

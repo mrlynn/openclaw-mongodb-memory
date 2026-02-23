@@ -17,6 +17,7 @@ import { embeddingsRoute } from "./routes/embeddings";
 import { timelineRoute } from "./routes/timeline";
 import { memoriesRoute } from "./routes/memories";
 import { setupCheckRoute } from "./routes/setupCheck";
+import { sourcesRoute } from "./routes/sources";
 import { connectDatabase } from "./db";
 import { VoyageEmbedder } from "./embedding";
 import { MAX_REQUEST_BODY } from "./constants";
@@ -77,6 +78,7 @@ app.get("/timeline", timelineRoute);
 app.get("/memories", memoriesRoute);
 app.post("/purge", purgeRoute);
 app.delete("/clear", clearRoute);
+app.get("/sources", sourcesRoute);
 
 // --- Global async-safe error handler ---
 

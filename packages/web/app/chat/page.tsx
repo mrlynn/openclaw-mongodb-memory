@@ -111,11 +111,17 @@ export default function ChatPage() {
       setLoading(true);
 
       try {
-        // Call AI chat API instead of direct recall
+        // Build conversation history from existing messages for context continuity
+        const history = messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+        // Call AI chat API with conversation history
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: text, agentId }),
+          body: JSON.stringify({ query: text, agentId, history }),
         });
 
         if (!response.ok) {
@@ -148,7 +154,7 @@ export default function ChatPage() {
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     },
-    [input, loading, agentId],
+    [input, loading, agentId, messages],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
