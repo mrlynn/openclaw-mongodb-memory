@@ -5,7 +5,7 @@ import { asyncHandler } from "../middleware/asyncHandler";
 import { COLLECTION_MEMORIES } from "../constants";
 
 const ExportSchema = z.object({
-  agentId: z.string().min(1),
+  agentId: z.string().min(1).optional(),
   projectId: z.string().optional(),
 });
 
@@ -15,7 +15,8 @@ export const exportRoute = asyncHandler(async (req: Request, res: Response) => {
   const db: Db = req.app.locals.db;
   const collection = db.collection(COLLECTION_MEMORIES);
 
-  const filter: Record<string, unknown> = { agentId: data.agentId };
+  const filter: Record<string, unknown> = {};
+  if (data.agentId) filter.agentId = data.agentId;
   if (data.projectId) filter.projectId = data.projectId;
 
   const memories = await collection
@@ -25,7 +26,7 @@ export const exportRoute = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({
     success: true,
-    agentId: data.agentId,
+    agentId: data.agentId || "all",
     projectId: data.projectId || null,
     count: memories.length,
     exportedAt: new Date().toISOString(),

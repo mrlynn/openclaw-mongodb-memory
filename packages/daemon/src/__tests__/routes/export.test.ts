@@ -59,8 +59,12 @@ describe("GET /export", () => {
     expect(res.body.count).toBe(0);
   });
 
-  it("should reject request without agentId", async () => {
+  it("should export all memories when agentId not provided", async () => {
     const res = await request(app).get("/export");
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.agentId).toBe("all");
+    // Should return all memories across all agents
+    expect(Array.isArray(res.body.memories)).toBe(true);
   });
 });

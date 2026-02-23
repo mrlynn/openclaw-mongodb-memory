@@ -17,5 +17,6 @@ export const NAV_ITEMS = [
   { label: "Timeline", path: "/timeline", icon: "Clock" },
   { label: "Documentation", path: "/docs", icon: "University" },
   { label: "Health & Integration", path: "/health", icon: "Gauge" },
+  { label: "Operations", path: "/operations", icon: "Apps" },
   { label: "Settings", path: "/settings", icon: "Settings" },
 ] as const;

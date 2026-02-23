@@ -287,3 +287,78 @@ export async function fetchMemoriesPage(
   if (!response.ok) throw new Error(`Memories fetch failed: ${response.status}`);
   return response.json();
 }
+
+// --- Agents ---
+
+export interface AgentInfo {
+  agentId: string;
+  count: number;
+  lastUpdated: string | null;
+}
+
+export async function fetchAgents(baseUrl: string): Promise<AgentInfo[]> {
+  const response = await fetch(`${baseUrl}/agents`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`Agents fetch failed: ${response.status}`);
+  const data = await response.json();
+  return data.agents || [];
+}
+
+// --- Backup & Restore Operations ---
+
+export interface ExportResponse {
+  success: boolean;
+  agentId: string;
+  count: number;
+  exportedAt: string;
+  memories: Array<{
+    id: string;
+    text: string;
+    tags: string[];
+    metadata: Record<string, unknown>;
+    createdAt: string;
+    updatedAt: string;
+    expiresAt: string | null;
+  }>;
+}
+
+export async function exportAllMemories(
+  baseUrl: string,
+  agentId?: string,
+): Promise<ExportResponse> {
+  const params = new URLSearchParams();
+  if (agentId) params.set("agentId", agentId);
+  const response = await fetch(`${baseUrl}/export?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+  return response.json();
+}
+
+export interface RestoreResponse {
+  success: boolean;
+  totalReceived: number;
+  totalInserted: number;
+  errors: Array<{ index: number; snippet: string; error: string }>;
+}
+
+export async function restoreMemories(
+  baseUrl: string,
+  agentId: string,
+  memories: Array<{
+    text: string;
+    tags?: string[];
+    metadata?: Record<string, unknown>;
+    createdAt?: string;
+    updatedAt?: string;
+    expiresAt?: string | null;
+  }>,
+  projectId?: string,
+): Promise<RestoreResponse> {
+  const response = await fetch(`${baseUrl}/restore`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ agentId, projectId, memories }),
+  });
+  if (!response.ok) throw new Error(`Restore failed: ${response.status}`);
+  return response.json();
+}
