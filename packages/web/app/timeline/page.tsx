@@ -207,12 +207,18 @@ export default function TimelinePage() {
 
   // Track if this is the first render to ignore React Chrono's auto-selection
   const hasInitialized = useRef(false);
+  const selectionCount = useRef(0);
+
   useEffect(() => {
     if (allMemories.length > 0) {
-      // Allow selections after a brief delay (ignore initial auto-selection)
+      // Reset on new data
+      hasInitialized.current = false;
+      selectionCount.current = 0;
+
+      // Allow selections after Chrono settles (it auto-selects on mount)
       const timer = setTimeout(() => {
         hasInitialized.current = true;
-      }, 100);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [allMemories.length]);
@@ -220,10 +226,21 @@ export default function TimelinePage() {
   // Handle Chrono item click → open drawer
   const handleChronoItemSelect = useCallback(
     (item: { index: number }) => {
-      // Ignore the auto-selection that happens on mount
-      if (!hasInitialized.current) return;
+      // Strategy 1: Ignore if initialization hasn't completed
+      if (!hasInitialized.current) {
+        console.debug("Ignoring selection: not initialized yet");
+        return;
+      }
+
+      // Strategy 2: Ignore the first selection event (auto-selection on mount)
+      selectionCount.current += 1;
+      if (selectionCount.current === 1) {
+        console.debug("Ignoring selection: first event (auto-select)");
+        return;
+      }
 
       if (item && typeof item.index === "number" && allMemories[item.index]) {
+        console.debug("Opening memory:", item.index);
         setSelectedMemory(allMemories[item.index]);
         setDrawerOpen(true);
       }
@@ -371,9 +388,9 @@ export default function TimelinePage() {
               cardTitle: "0.88rem",
               title: "0.78rem",
             }}
-            onItemSelected={handleChronoItemSelect}
             enableBreakPoint
             verticalBreakPoint={768}
+            disableClickOnCircle
           />
 
           {/* Load more button */}
