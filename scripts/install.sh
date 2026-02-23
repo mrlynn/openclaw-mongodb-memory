@@ -113,5 +113,13 @@ echo
 echo "5. Test it:"
 echo '   curl http://localhost:7751/health'
 echo
-echo "📚 Full documentation: $PROJECT_ROOT/INSTALL.md"
+echo "6. Configure agent workflow:"
+echo "   Read $PROJECT_ROOT/AGENT_WORKFLOW.md"
+echo "   Update your workspace AGENTS.md with auto-save patterns"
+echo "   Without this, agents won't know WHEN to save memories!"
+echo
+echo "📚 Documentation:"
+echo "   - AGENT_WORKFLOW.md — When agents should save memories"
+echo "   - INSTALL.md — Full setup guide"
+echo "   - SKILL.md — Complete API reference"
 echo "=================================="

@@ -100,6 +100,20 @@ curl "http://localhost:7751/recall?agentId=demo&query=theme+preference"
 # 🎉 Returns: "I prefer dark mode..." with relevance score
 ```
 
+### 5️⃣ Configure Agent Workflow ⚠️ **IMPORTANT**
+
+The system is installed, but agents won't use it automatically without workflow guidance:
+
+```bash
+# Read the workflow guide
+cat AGENT_WORKFLOW.md
+
+# Update your workspace AGENTS.md with the auto-save pattern
+# This tells agents WHEN to save memories (problem solved, decision made, etc.)
+```
+
+**Without this step, your memory system will sit unused!**
+
 ---
 
 ## 🎨 What It Looks Like
