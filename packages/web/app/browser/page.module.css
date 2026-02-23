@@ -170,3 +170,27 @@ body[data-theme="light"] .pagination {
 .bannerWrap {
   margin-bottom: 24px;
 }
+
+.searchBanner {
+  padding: 12px 16px;
+}
+
+/* Score chip for relevance column */
+.scoreChip {
+  display: inline-block;
+  font-family: 'Source Code Pro', Menlo, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+body[data-theme="dark"] .scoreChip {
+  background: rgba(1, 107, 248, 0.12);
+  color: #C3E7FE;
+}
+
+body[data-theme="light"] .scoreChip {
+  background: rgba(1, 107, 248, 0.08);
+  color: #1A567E;
+}

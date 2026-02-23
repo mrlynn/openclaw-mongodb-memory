@@ -1,42 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Chip,
-  Alert,
-  CircularProgress,
-  Fade,
-  useTheme,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-} from "@mui/material";
-import { Storage, Download, Refresh, Search } from "@mui/icons-material";
+import TextInput from "@leafygreen-ui/text-input";
+import Button from "@leafygreen-ui/button";
+import { Select, Option } from "@leafygreen-ui/select";
+import Banner from "@leafygreen-ui/banner";
+import { Chip } from "@leafygreen-ui/chip";
+import Icon from "@leafygreen-ui/icon";
+import IconButton from "@leafygreen-ui/icon-button";
+import { Database } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
-import { exportMemories, forgetMemory } from "@/lib/api";
+import { useThemeMode } from "@/contexts/ThemeContext";
+import { exportMemories, recallMemory, forgetMemory } from "@/lib/api";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { MemoryDetailDrawer } from "@/components/browser/MemoryDetailDrawer";
 import { DeleteConfirmDialog } from "@/components/browser/DeleteConfirmDialog";
-import { keyframes } from "@emotion/react";
-import { CardContent } from "@mui/material";
-
-const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+import styles from "./page.module.css";
 
 interface MemoryItem {
   _id: string;
@@ -56,8 +36,7 @@ interface AgentInfo {
 
 export default function BrowserPage() {
   const { daemonUrl } = useDaemonConfig();
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
+  const { darkMode } = useThemeMode();
 
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
@@ -77,7 +56,7 @@ export default function BrowserPage() {
 
   // Pagination
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const rowsPerPage = 10;
 
   // Detail drawer
   const [selectedMemory, setSelectedMemory] = useState<MemoryItem | null>(null);
@@ -96,17 +75,22 @@ export default function BrowserPage() {
         const data = await response.json();
         const agentsList = data.agents || [];
         setAgents(agentsList);
-        
-        // Auto-select first agent if none selected
-        const currentAgentId = agentId || (typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEYS.AGENT_ID) : null);
+
+        const currentAgentId =
+          agentId ||
+          (typeof window !== "undefined"
+            ? localStorage.getItem(STORAGE_KEYS.AGENT_ID)
+            : null);
         if (!currentAgentId && agentsList.length > 0) {
           const firstAgent = agentsList[0].agentId;
           setAgentId(firstAgent);
           if (typeof window !== "undefined") {
             localStorage.setItem(STORAGE_KEYS.AGENT_ID, firstAgent);
           }
-        } else if (currentAgentId && !agentsList.find((a: AgentInfo) => a.agentId === currentAgentId)) {
-          // Stored agentId no longer exists, select first available
+        } else if (
+          currentAgentId &&
+          !agentsList.find((a: AgentInfo) => a.agentId === currentAgentId)
+        ) {
           if (agentsList.length > 0) {
             const firstAgent = agentsList[0].agentId;
             setAgentId(firstAgent);
@@ -123,7 +107,7 @@ export default function BrowserPage() {
     };
 
     fetchAgents();
-  }, [daemonUrl]); // Only run on mount or when daemonUrl changes
+  }, [daemonUrl]);
 
   const handleLoad = async () => {
     setLoading(true);
@@ -132,7 +116,12 @@ export default function BrowserPage() {
     setMemoryScores({});
     try {
       const data = await exportMemories(daemonUrl, agentId);
-      const items = data.memories || data || [];
+      const rawItems = data.memories || data || [];
+      // Normalize: export returns "id", MemoryDetailDrawer expects "_id"
+      const items: MemoryItem[] = rawItems.map((item: any) => ({
+        ...item,
+        _id: item._id || item.id,
+      }));
       setMemories(items);
       setHasLoaded(true);
       setPage(0);
@@ -153,38 +142,35 @@ export default function BrowserPage() {
     setError(null);
     setSearchMode(true);
     try {
-      const url = new URL('/recall', daemonUrl);
-      url.searchParams.set('agentId', agentId);
-      url.searchParams.set('query', searchQuery);
-      url.searchParams.set('limit', '50');
+      const results = await recallMemory(daemonUrl, agentId, searchQuery, {
+        limit: 50,
+      });
 
-      const response = await fetch(url.toString());
-      if (!response.ok) throw new Error('Search failed');
-      
-      const data = await response.json();
-      
-      if (data.success && data.results) {
-        // Map id to _id for consistency with export format
-        const mappedResults = data.results.map((result: any) => ({
-          ...result,
-          _id: result.id || result._id,
-        }));
-        setMemories(mappedResults);
-        
-        const scores: Record<string, number> = {};
-        mappedResults.forEach((result: any) => {
-          if (result._id && result.score !== undefined) {
-            scores[result._id] = result.score;
-          }
-        });
-        setMemoryScores(scores);
-        
-        setHasLoaded(true);
-        setPage(0);
-      } else {
-        setMemories([]);
-        setMemoryScores({});
-      }
+      // recallMemory() returns array of { id, text, score, tags, createdAt }
+      // Map to MemoryItem shape (normalize "id" to "_id")
+      const mappedResults: MemoryItem[] = results.map((result: any) => ({
+        _id: result.id || result._id,
+        text: result.text,
+        agentId: agentId,
+        tags: result.tags || [],
+        metadata: result.metadata || {},
+        createdAt: result.createdAt,
+        updatedAt: result.updatedAt || result.createdAt,
+      }));
+      setMemories(mappedResults);
+
+      // Build scores map
+      const scores: Record<string, number> = {};
+      results.forEach((result: any) => {
+        const id = result.id || result._id;
+        if (id && result.score !== undefined) {
+          scores[id] = result.score;
+        }
+      });
+      setMemoryScores(scores);
+
+      setHasLoaded(true);
+      setPage(0);
     } catch (err) {
       setError(String(err));
     } finally {
@@ -213,247 +199,236 @@ export default function BrowserPage() {
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+  const startItem = page * rowsPerPage + 1;
+  const endItem = Math.min((page + 1) * rowsPerPage, memories.length);
 
   return (
-    <Fade in timeout={400}>
-      <Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-          <Storage sx={{ color: "primary.main", fontSize: 24, opacity: 0.8 }} />
-          <Typography
-            variant="h4"
-            sx={{
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              animation: `${fadeInUp} 0.4s ease-out`,
-            }}
-          >
-            Memory Browser
-          </Typography>
-        </Box>
-        <Typography
-          variant="body1"
-          sx={{ color: "text.secondary", mb: 3, maxWidth: 700 }}
-        >
-          Browse, inspect, and manage all stored memories for an agent. Use semantic search (RAG) with vector embeddings to find relevant memories by meaning, not just keywords.
-        </Typography>
+    <div className={styles.page}>
+      <div className={styles.header}>
+        <Database size={24} className={styles.headerIcon} />
+        <h2 className={styles.title}>Memory Browser</h2>
+      </div>
+      <p className={styles.description}>
+        Browse, inspect, and manage all stored memories for an agent. Use
+        semantic search (RAG) with vector embeddings to find relevant memories
+        by meaning, not just keywords.
+      </p>
 
-        {/* Filters */}
-        <Box sx={{ display: "flex", gap: 2, alignItems: "flex-end", mb: 3, flexWrap: "wrap" }}>
-          <FormControl size="small" sx={{ minWidth: 250 }}>
-            <InputLabel>Agent ID</InputLabel>
-            <Select
-              value={agentId}
-              label="Agent ID"
-              onChange={(e) => {
-                setAgentId(e.target.value);
-                if (typeof window !== "undefined") {
-                  localStorage.setItem(STORAGE_KEYS.AGENT_ID, e.target.value);
-                }
-              }}
-              disabled={loadingAgents || agents.length === 0}
-            >
-              {agents.map((agent) => (
-                <MenuItem key={agent.agentId} value={agent.agentId}>
-                  {agent.agentId} ({agent.count} memories)
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <TextField
+      {/* Filters */}
+      <div className={styles.filters}>
+        <div className={styles.agentSelect}>
+          <Select
+            label="Agent ID"
+            value={agentId}
+            onChange={(val) => {
+              setAgentId(val);
+              if (typeof window !== "undefined") {
+                localStorage.setItem(STORAGE_KEYS.AGENT_ID, val);
+              }
+            }}
+            disabled={loadingAgents || agents.length === 0}
+            darkMode={darkMode}
+          >
+            {agents.map((agent) => (
+              <Option key={agent.agentId} value={agent.agentId}>
+                {agent.agentId} ({agent.count} memories)
+              </Option>
+            ))}
+          </Select>
+        </div>
+        <div className={styles.searchInput}>
+          <TextInput
             label="Search Query (RAG)"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && searchQuery.trim() && agentId) {
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && searchQuery.trim() && agentId) {
                 handleSearch();
               }
             }}
-            size="small"
-            sx={{ minWidth: 300 }}
             placeholder="Semantic search using embeddings..."
             disabled={loading || loadingAgents || !agentId}
+            darkMode={darkMode}
           />
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            disabled={loading || loadingAgents || !agentId || !searchQuery.trim()}
-            startIcon={loading && searchMode ? <CircularProgress size={18} /> : <Search />}
-          >
-            {loading && searchMode ? "Searching..." : "Search"}
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={handleLoad}
-            disabled={loading || loadingAgents || !agentId}
-            startIcon={loading && !searchMode ? <CircularProgress size={18} /> : <Refresh />}
-          >
-            {loading && !searchMode ? "Loading..." : "Load All"}
-          </Button>
-        </Box>
+        </div>
+        <Button
+          variant="primary"
+          onClick={handleSearch}
+          disabled={loading || loadingAgents || !agentId || !searchQuery.trim()}
+          darkMode={darkMode}
+          leftGlyph={<Icon glyph="MagnifyingGlass" />}
+        >
+          {loading && searchMode ? "Searching..." : "Search"}
+        </Button>
+        <Button
+          variant="default"
+          onClick={handleLoad}
+          disabled={loading || loadingAgents || !agentId}
+          darkMode={darkMode}
+          leftGlyph={<Icon glyph="Refresh" />}
+        >
+          {loading && !searchMode ? "Loading..." : "Load All"}
+        </Button>
+      </div>
 
-        {loadingAgents && (
-          <Alert severity="info" sx={{ mb: 3, borderRadius: 2 }}>
+      {loadingAgents && (
+        <div className={styles.bannerWrap}>
+          <Banner variant="info" darkMode={darkMode}>
             Loading available agents...
-          </Alert>
-        )}
+          </Banner>
+        </div>
+      )}
 
-        {!loadingAgents && agents.length === 0 && (
-          <Alert severity="warning" sx={{ mb: 3, borderRadius: 2 }}>
+      {!loadingAgents && agents.length === 0 && (
+        <div className={styles.bannerWrap}>
+          <Banner variant="warning" darkMode={darkMode}>
             No agents found. Start by creating memories with /remember.
-          </Alert>
-        )}
+          </Banner>
+        </div>
+      )}
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+      {error && (
+        <div className={styles.bannerWrap}>
+          <Banner variant="danger" darkMode={darkMode}>
             {error}
-          </Alert>
-        )}
+          </Banner>
+        </div>
+      )}
 
-        {/* Results Table */}
-        {hasLoaded && (
-          <GlassCard sx={{ animation: `${fadeInUp} 0.4s ease-out` }}>
-            <CardContent sx={{ p: 0 }}>
-              {searchMode && memories.length > 0 && (
-                <Alert severity="info" sx={{ m: 2, borderRadius: 2 }}>
-                  <Typography variant="body2">
-                    <strong>Search Results:</strong> Showing {memories.length} memories ranked by semantic relevance to "{searchQuery}"
-                  </Typography>
-                </Alert>
-              )}
-              {memories.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: "center" }}>
-                  <Typography
-                    variant="body2"
-                    sx={{ color: "text.disabled", fontStyle: "italic" }}
-                  >
-                    {searchMode 
-                      ? `No memories found matching "${searchQuery}"`
-                      : "No memories found for this agent."}
-                  </Typography>
-                </Box>
-              ) : (
-                <>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          {searchMode && (
-                            <TableCell sx={{ fontWeight: 500, width: "10%" }}>
-                              Relevance
-                            </TableCell>
-                          )}
-                          <TableCell sx={{ fontWeight: 500, width: searchMode ? "40%" : "50%" }}>
-                            Text
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>Tags</TableCell>
-                          <TableCell sx={{ fontWeight: 500 }}>Created</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {paginatedMemories.map((memory) => (
-                          <TableRow
-                            key={memory._id}
-                            hover
-                            sx={{
-                              cursor: "pointer",
-                              "&:hover": {
-                                bgcolor: isDark
-                                  ? "rgba(139, 156, 247, 0.03)"
-                                  : "rgba(0,0,0,0.02)",
-                              },
-                            }}
-                            onClick={() => handleRowClick(memory)}
-                          >
-                            {searchMode && (
-                              <TableCell>
-                                {memoryScores[memory._id] !== undefined && (
-                                  <Chip
-                                    label={memoryScores[memory._id].toFixed(3)}
-                                    size="small"
-                                    color="primary"
-                                    variant="outlined"
-                                    sx={{ 
-                                      height: 24, 
-                                      fontSize: "0.7rem",
-                                      fontWeight: 600,
-                                    }}
-                                  />
-                                )}
-                              </TableCell>
+      {/* Results Table */}
+      {hasLoaded && (
+        <GlassCard className={styles.tableCard}>
+          {searchMode && memories.length > 0 && (
+            <div className={styles.searchBanner}>
+              <Banner variant="info" darkMode={darkMode}>
+                <strong>Search Results:</strong> Showing {memories.length}{" "}
+                memories ranked by semantic relevance to &quot;{searchQuery}
+                &quot;
+              </Banner>
+            </div>
+          )}
+
+          {memories.length === 0 ? (
+            <div className={styles.emptyState}>
+              {searchMode
+                ? `No memories found matching "${searchQuery}"`
+                : "No memories found for this agent."}
+            </div>
+          ) : (
+            <>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      {searchMode && (
+                        <th style={{ width: "10%" }}>Relevance</th>
+                      )}
+                      <th style={{ width: searchMode ? "40%" : "50%" }}>
+                        Text
+                      </th>
+                      <th>Tags</th>
+                      <th>Created</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedMemories.map((memory) => (
+                      <tr
+                        key={memory._id}
+                        className={styles.tableRow}
+                        onClick={() => handleRowClick(memory)}
+                      >
+                        {searchMode && (
+                          <td>
+                            {memoryScores[memory._id] !== undefined && (
+                              <span className={styles.scoreChip}>
+                                {memoryScores[memory._id].toFixed(3)}
+                              </span>
                             )}
-                            <TableCell>
-                              <Typography variant="body2" noWrap sx={{ maxWidth: 400 }}>
-                                {memory.text}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-                                {memory.tags.slice(0, 3).map((tag, i) => (
-                                  <Chip
-                                    key={i}
-                                    label={tag}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ height: 22, fontSize: "0.65rem" }}
-                                  />
-                                ))}
-                                {memory.tags.length > 3 && (
-                                  <Chip
-                                    label={`+${memory.tags.length - 3}`}
-                                    size="small"
-                                    sx={{ height: 22, fontSize: "0.65rem" }}
-                                  />
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                {new Date(memory.createdAt).toLocaleString()}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <TablePagination
-                    component="div"
-                    count={memories.length}
-                    page={page}
-                    onPageChange={(_, p) => setPage(p)}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                  />
-                </>
-              )}
-            </CardContent>
-          </GlassCard>
-        )}
+                          </td>
+                        )}
+                        <td>
+                          <div className={styles.cellText}>{memory.text}</div>
+                        </td>
+                        <td>
+                          <div className={styles.cellTags}>
+                            {memory.tags.slice(0, 3).map((tag) => (
+                              <Chip
+                                key={tag}
+                                label={tag}
+                                variant="blue"
+                                darkMode={darkMode}
+                              />
+                            ))}
+                            {memory.tags.length > 3 && (
+                              <Chip
+                                label={`+${memory.tags.length - 3}`}
+                                variant="gray"
+                                darkMode={darkMode}
+                              />
+                            )}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={styles.cellDate}>
+                            {new Date(memory.createdAt).toLocaleString()}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-        {/* Detail Drawer */}
-        <MemoryDetailDrawer
-          open={drawerOpen}
-          memory={selectedMemory}
-          onClose={() => {
-            setDrawerOpen(false);
-            setSelectedMemory(null);
-          }}
-          onDelete={(id) => setDeleteTarget(id)}
-        />
+              {/* Pagination */}
+              <div className={styles.pagination}>
+                <span className={styles.paginationInfo}>
+                  {startItem}&ndash;{endItem} of {memories.length}
+                </span>
+                <div className={styles.paginationControls}>
+                  <IconButton
+                    aria-label="Previous page"
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                    disabled={page === 0}
+                    darkMode={darkMode}
+                  >
+                    <Icon glyph="ChevronLeft" />
+                  </IconButton>
+                  <IconButton
+                    aria-label="Next page"
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={(page + 1) * rowsPerPage >= memories.length}
+                    darkMode={darkMode}
+                  >
+                    <Icon glyph="ChevronRight" />
+                  </IconButton>
+                </div>
+              </div>
+            </>
+          )}
+        </GlassCard>
+      )}
 
-        {/* Delete Confirmation */}
-        <DeleteConfirmDialog
-          open={!!deleteTarget}
-          title="Delete Memory"
-          description="Are you sure you want to permanently delete this memory? This action cannot be undone."
-          onConfirm={() => { if (deleteTarget) handleDelete(deleteTarget); }}
-          onCancel={() => setDeleteTarget(null)}
-        />
-      </Box>
-    </Fade>
+      {/* Detail Drawer */}
+      <MemoryDetailDrawer
+        open={drawerOpen}
+        memory={selectedMemory}
+        onClose={() => {
+          setDrawerOpen(false);
+          setSelectedMemory(null);
+        }}
+        onDelete={(id) => setDeleteTarget(id)}
+      />
+
+      {/* Delete Confirmation */}
+      <DeleteConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Memory"
+        description="Are you sure you want to permanently delete this memory? This action cannot be undone."
+        onConfirm={() => {
+          if (deleteTarget) handleDelete(deleteTarget);
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </div>
   );
 }
