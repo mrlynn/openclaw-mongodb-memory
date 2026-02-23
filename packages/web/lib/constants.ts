@@ -12,6 +12,7 @@ export const NAV_ITEMS = [
   { label: "Dashboard", path: "/dashboard", icon: "Dashboard" },
   { label: "Remember", path: "/remember", icon: "Download" },
   { label: "Recall", path: "/recall", icon: "MagnifyingGlass" },
+  { label: "Memory Chat", path: "/chat", icon: "Support" },
   { label: "Memory Browser", path: "/browser", icon: "Database" },
   { label: "Documentation", path: "/docs", icon: "University" },
   { label: "Health & Integration", path: "/health", icon: "Gauge" },

@@ -1,0 +1,206 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  gap: 1rem;
+}
+
+.header {
+  flex-shrink: 0;
+}
+
+.agentSelector {
+  flex-shrink: 0;
+  max-width: 300px;
+}
+
+.chatContainer {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.userMessage,
+.assistantMessage {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 80%;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.userMessage {
+  align-self: flex-end;
+}
+
+.assistantMessage {
+  align-self: flex-start;
+}
+
+.messageHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.timestamp {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.messageContent {
+  background: var(--bg-primary);
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.userMessage .messageContent {
+  background: var(--mongodb-spring-green);
+  color: var(--mongodb-slate-blue);
+  border-color: var(--mongodb-forest-green);
+}
+
+.messageContent p {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.messageContent p + p {
+  margin-top: 0.5rem;
+}
+
+.resultsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.resultCard {
+  padding: 1rem;
+  position: relative;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+}
+
+.resultScore {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--mongodb-spring-green);
+  color: var(--mongodb-slate-blue);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.resultText {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+  padding-right: 3rem;
+  color: var(--text-primary);
+}
+
+.resultTags {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.loadingMessage {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  align-self: flex-start;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.inputForm {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.input {
+  flex: 1;
+}
+
+.examples {
+  flex-shrink: 0;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.examplesTitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+}
+
+.exampleButtons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .userMessage,
+  .assistantMessage {
+    max-width: 90%;
+  }
+
+  .resultsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .exampleButtons {
+    flex-direction: column;
+  }
+
+  .exampleButtons button {
+    width: 100%;
+  }
+}
