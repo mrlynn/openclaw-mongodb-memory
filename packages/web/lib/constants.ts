@@ -14,6 +14,7 @@ export const NAV_ITEMS = [
   { label: "Recall", path: "/recall", icon: "MagnifyingGlass" },
   { label: "Memory Chat", path: "/chat", icon: "Support" },
   { label: "Memory Browser", path: "/browser", icon: "Database" },
+  { label: "Timeline", path: "/timeline", icon: "Clock" },
   { label: "Documentation", path: "/docs", icon: "University" },
   { label: "Health & Integration", path: "/health", icon: "Gauge" },
   { label: "Settings", path: "/settings", icon: "Settings" },

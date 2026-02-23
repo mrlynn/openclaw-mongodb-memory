@@ -15,6 +15,7 @@ import { handleAgents } from "./routes/agents";
 import { wordcloudRoute } from "./routes/wordcloud";
 import { embeddingsRoute } from "./routes/embeddings";
 import { timelineRoute } from "./routes/timeline";
+import { memoriesRoute } from "./routes/memories";
 import { setupCheckRoute } from "./routes/setupCheck";
 import { connectDatabase } from "./db";
 import { VoyageEmbedder } from "./embedding";
@@ -73,6 +74,7 @@ app.get("/export", exportRoute);
 app.get("/wordcloud", wordcloudRoute);
 app.get("/embeddings", embeddingsRoute);
 app.get("/timeline", timelineRoute);
+app.get("/memories", memoriesRoute);
 app.post("/purge", purgeRoute);
 app.delete("/clear", clearRoute);
 

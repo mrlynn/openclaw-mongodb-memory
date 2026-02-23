@@ -2,11 +2,11 @@
  * Test helpers - shared utilities for setting up test environment
  */
 
-import express, { Express } from 'express';
-import { VoyageEmbedder } from '../embedding';
-import { connectDatabase, getDatabase } from '../db';
+import express, { Express } from "express";
+import { VoyageEmbedder } from "../embedding";
+import { connectDatabase, getDatabase } from "../db";
 
-let testApp: Express | null = null;
+const testApp: Express | null = null;
 
 /**
  * Create Express app with routes and locals configured for testing
@@ -16,13 +16,13 @@ export async function createTestApp(): Promise<Express> {
   // Always create fresh app for each test suite
   // Ensure database connection
   if (!process.env.MONGODB_URI) {
-    throw new Error('MONGODB_URI not set for tests');
+    throw new Error("MONGODB_URI not set for tests");
   }
 
   const { db, client } = await connectDatabase({ mongoUri: process.env.MONGODB_URI });
-  
+
   // Use mock embeddings for tests (fast, deterministic, no API costs)
-  const apiKey = process.env.VOYAGE_API_KEY || 'mock-key';
+  const apiKey = process.env.VOYAGE_API_KEY || "mock-key";
   const embedder = new VoyageEmbedder(apiKey);
 
   const app = express();
@@ -42,34 +42,59 @@ export async function createTestApp(): Promise<Express> {
  * Add error handler to app (call this AFTER adding all routes)
  */
 export async function addErrorHandler(app: Express): Promise<void> {
-  const { errorHandler } = await import('../middleware/errorHandler');
+  const { errorHandler } = await import("../middleware/errorHandler");
   app.use(errorHandler);
 }
 
 /**
  * Clean up test data from database
+ *
+ * ⚠️ SAFETY: Only works in test database (openclaw_memory_test)
+ * Will throw error if used against production database
  */
 export async function cleanupTestData(agentId?: string): Promise<void> {
-  const db = getDatabase();
-  const collection = db.collection('memories');
-  
+  // CRITICAL: Connect fresh using the modified test MONGODB_URI
+  // Don't use getDatabase() singleton which may have been initialized before test setup
+  const { db, client } = await connectDatabase({ mongoUri: process.env.MONGODB_URI! });
+  const dbName = db.databaseName;
+
+  // CRITICAL SAFETY CHECK: Refuse to delete from production database
+  if (!dbName.includes("test")) {
+    throw new Error(
+      `🚨 SAFETY VIOLATION: Attempted to clean data from production database "${dbName}". ` +
+        `Tests must use "openclaw_memory_test" database. Check test setup configuration.`,
+    );
+  }
+
+  const collection = db.collection("memories");
+
   if (agentId) {
+    // Delete specific agent's test data
     await collection.deleteMany({ agentId });
   } else {
-    await collection.deleteMany({});
+    // Only delete test agents (those starting with "test-")
+    // Never delete everything without explicit agentId
+    console.warn("⚠️  cleanupTestData() called without agentId. Cleaning only test-* agents.");
+    await collection.deleteMany({ agentId: { $regex: /^test-/ } });
   }
+
+  // Close the connection we just opened
+  await client.close();
 }
 
 /**
  * Seed test data for recall tests
  */
-export async function seedTestMemories(agentId: string, memories: Array<{ text: string; tags?: string[] }>): Promise<void> {
+export async function seedTestMemories(
+  agentId: string,
+  memories: Array<{ text: string; tags?: string[] }>,
+): Promise<void> {
   const app = await createTestApp();
-  const { default: request } = await import('supertest');
-  
+  const { default: request } = await import("supertest");
+
   for (const memory of memories) {
     await request(app)
-      .post('/remember')
+      .post("/remember")
       .send({
         agentId,
         text: memory.text,

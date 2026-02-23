@@ -20,7 +20,7 @@ export async function rememberMemory(
     tags?: string[];
     metadata?: Record<string, unknown>;
     ttl?: number;
-  }
+  },
 ) {
   const response = await fetch(`${baseUrl}/remember`, {
     method: "POST",
@@ -41,7 +41,7 @@ export async function recallMemory(
   baseUrl: string,
   agentId: string,
   query: string,
-  options?: { limit?: number; tags?: string[] }
+  options?: { limit?: number; tags?: string[] },
 ) {
   const params = new URLSearchParams({
     agentId,
@@ -77,11 +77,7 @@ export async function exportMemories(baseUrl: string, agentId: string) {
   return response.json();
 }
 
-export async function purgeMemories(
-  baseUrl: string,
-  agentId: string,
-  olderThan?: string
-) {
+export async function purgeMemories(baseUrl: string, agentId: string, olderThan?: string) {
   const response = await fetch(`${baseUrl}/purge`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -119,7 +115,7 @@ export interface WordCloudResponse {
 export async function fetchWordCloud(
   baseUrl: string,
   agentId: string,
-  options?: { limit?: number; minCount?: number }
+  options?: { limit?: number; minCount?: number },
 ): Promise<WordCloudResponse> {
   const params = new URLSearchParams({ agentId });
   if (options?.limit) params.set("limit", String(options.limit));
@@ -153,7 +149,7 @@ export interface MemoryMapResponse {
 export async function fetchMemoryMap(
   baseUrl: string,
   agentId: string,
-  options?: { limit?: number }
+  options?: { limit?: number },
 ): Promise<MemoryMapResponse> {
   const params = new URLSearchParams({ agentId });
   if (options?.limit) params.set("limit", String(options.limit));
@@ -183,7 +179,7 @@ export interface TimelineResponse {
 export async function fetchTimeline(
   baseUrl: string,
   agentId: string,
-  options?: { days?: number }
+  options?: { days?: number },
 ): Promise<TimelineResponse> {
   const params = new URLSearchParams({ agentId });
   if (options?.days) params.set("days", String(options.days));
@@ -192,5 +188,51 @@ export async function fetchTimeline(
     cache: "no-store",
   });
   if (!response.ok) throw new Error(`Timeline failed: ${response.status}`);
+  return response.json();
+}
+
+// --- Memory Timeline Browser (Paginated Chronological Browse) ---
+
+export interface MemoryTimelineItem {
+  id: string;
+  text: string;
+  tags: string[];
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt: string | null;
+}
+
+export interface MemoriesPageResponse {
+  success: boolean;
+  agentId: string;
+  count: number;
+  hasMore: boolean;
+  nextCursor: { cursor: string; cursorId: string } | null;
+  memories: MemoryTimelineItem[];
+}
+
+export async function fetchMemoriesPage(
+  baseUrl: string,
+  agentId: string,
+  options?: {
+    limit?: number;
+    cursor?: string;
+    cursorId?: string;
+    sort?: "desc" | "asc";
+    tags?: string[];
+  },
+): Promise<MemoriesPageResponse> {
+  const params = new URLSearchParams({ agentId });
+  if (options?.limit) params.set("limit", String(options.limit));
+  if (options?.cursor) params.set("cursor", options.cursor);
+  if (options?.cursorId) params.set("cursorId", options.cursorId);
+  if (options?.sort) params.set("sort", options.sort);
+  if (options?.tags?.length) params.set("tags", options.tags.join(","));
+
+  const response = await fetch(`${baseUrl}/memories?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Memories fetch failed: ${response.status}`);
   return response.json();
 }

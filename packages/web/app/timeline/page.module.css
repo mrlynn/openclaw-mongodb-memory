@@ -1,0 +1,221 @@
+/* ===================================================================
+   Timeline Page — Memory timeline browser
+   =================================================================== */
+
+.page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* --- Header --- */
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+}
+
+.headerIcon {
+  opacity: 0.4;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.description {
+  font-size: 0.9rem;
+  opacity: 0.55;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* --- Controls row --- */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.agentSelect {
+  min-width: 180px;
+}
+
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-family: inherit;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+body[data-theme="dark"] .sortButton {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="dark"] .sortButton:hover {
+  background: rgba(0, 237, 100, 0.08);
+  border-color: rgba(0, 237, 100, 0.15);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .sortButton {
+  background: rgba(0, 0, 0, 0.03);
+  color: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+body[data-theme="light"] .sortButton:hover {
+  background: rgba(0, 104, 74, 0.06);
+  border-color: rgba(0, 104, 74, 0.12);
+  color: #00684A;
+}
+
+.memoryCount {
+  font-size: 0.72rem;
+  font-weight: 600;
+  opacity: 0.4;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Loading state --- */
+
+.loadingState {
+  padding: 32px 24px;
+}
+
+.shimmerRow {
+  display: flex;
+  gap: 24px;
+  overflow: hidden;
+}
+
+.shimmer {
+  width: 260px;
+  height: 120px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+body[data-theme="dark"] .shimmer {
+  background: linear-gradient(
+    110deg,
+    rgba(255, 255, 255, 0.04) 30%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 70%
+  );
+  background-size: 200% 100%;
+}
+
+body[data-theme="light"] .shimmer {
+  background: linear-gradient(
+    110deg,
+    rgba(0, 0, 0, 0.03) 30%,
+    rgba(0, 0, 0, 0.06) 50%,
+    rgba(0, 0, 0, 0.03) 70%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* --- Empty state --- */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 24px;
+  gap: 12px;
+}
+
+.emptyIcon {
+  opacity: 0.15;
+  margin-bottom: 4px;
+}
+
+.emptyTitle {
+  font-weight: 600;
+  font-size: 1.2rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.emptyDesc {
+  font-size: 0.88rem;
+  opacity: 0.5;
+  margin: 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+/* --- Animations --- */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .controls {
+    gap: 8px;
+  }
+
+  .agentSelect {
+    min-width: 140px;
+  }
+
+  .shimmerRow {
+    flex-direction: column;
+  }
+
+  .shimmer {
+    width: 100%;
+  }
+}
