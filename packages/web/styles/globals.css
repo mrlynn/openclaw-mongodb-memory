@@ -1,3 +1,56 @@
+/* MongoDB Brand Colors - Global CSS Variables */
+:root {
+  /* Primary Palette */
+  --mongodb-spring-green: #00ED64;
+  --mongodb-forest-green: #00684A;
+  --mongodb-evergreen: #023430;
+  --mongodb-slate-blue: #001E2B;
+  --mongodb-white: #FFFFFF;
+  --mongodb-mist: #E3FCF7;
+  --mongodb-lavender: #F9EBFF;
+  
+  /* Secondary Colors */
+  --mongodb-chartreuse: #B1FF05;
+  --mongodb-violet: #5400F8;
+  --mongodb-purple: #7C25FF;
+  --mongodb-sky: #00D2FF;
+  --mongodb-chrome-yellow: #FF9F10;
+  
+  /* Neutral Grays */
+  --mongodb-gray-dark: #21313C;
+  --mongodb-gray-medium: #5C6C75;
+  --mongodb-gray-light: #C1C7C6;
+  --mongodb-gray-lighter: #E8EDEB;
+}
+
+/* Light Theme Variables */
+body[data-theme="light"] {
+  --bg-primary: var(--mongodb-white);
+  --bg-secondary: var(--mongodb-mist);
+  --bg-tertiary: var(--mongodb-lavender);
+  --text-primary: var(--mongodb-slate-blue);
+  --text-secondary: var(--mongodb-forest-green);
+  --text-tertiary: var(--mongodb-gray-medium);
+  --border-color: var(--mongodb-gray-lighter);
+  --accent-primary: var(--mongodb-spring-green);
+  --accent-hover: var(--mongodb-forest-green);
+  --shadow-color: rgba(0, 30, 43, 0.1);
+}
+
+/* Dark Theme Variables */
+body[data-theme="dark"] {
+  --bg-primary: var(--mongodb-slate-blue);
+  --bg-secondary: var(--mongodb-evergreen);
+  --bg-tertiary: var(--mongodb-forest-green);
+  --text-primary: var(--mongodb-white);
+  --text-secondary: var(--mongodb-gray-light);
+  --text-tertiary: var(--mongodb-gray-medium);
+  --border-color: rgba(255, 255, 255, 0.15);
+  --accent-primary: var(--mongodb-spring-green);
+  --accent-hover: var(--mongodb-chartreuse);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
 /* MongoDB LeafyGreen global styles */
 *,
 *::before,
@@ -16,19 +69,17 @@ html {
 
 body {
   font-family: 'Euclid Circular A', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   scrollbar-width: thin;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body[data-theme="dark"] {
-  background-color: #001e2b;
-  color: #c1c7c6;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
 body[data-theme="light"] {
-  background-color: #ffffff;
-  color: #001e2b;
   scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
@@ -88,9 +139,95 @@ body[data-theme="light"] {
 body[data-theme="light"] .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(0, 0, 0, 0.04) 25%,
-    rgba(0, 0, 0, 0.08) 50%,
-    rgba(0, 0, 0, 0.04) 75%
+    rgba(0, 30, 43, 0.04) 25%,
+    rgba(0, 30, 43, 0.08) 50%,
+    rgba(0, 30, 43, 0.04) 75%
   );
   background-size: 200% 100%;
+}
+
+/* MongoDB Brand Utilities */
+
+/* Accent colors for highlights, CTAs, and key UI elements */
+.accent-primary {
+  color: var(--accent-primary);
+}
+
+.bg-accent-primary {
+  background-color: var(--accent-primary);
+}
+
+.accent-hover:hover {
+  color: var(--accent-hover);
+}
+
+/* Glass morphism effect (MongoDB style) */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+}
+
+body[data-theme="light"] .glass-card {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* MongoDB green glow effect */
+.glow-green {
+  box-shadow: 0 0 20px rgba(0, 237, 100, 0.3);
+}
+
+/* Status colors */
+.status-success {
+  color: var(--mongodb-spring-green);
+}
+
+.status-warning {
+  color: var(--mongodb-chrome-yellow);
+}
+
+.status-error {
+  color: #DB3030;
+}
+
+/* Code block styling with MongoDB colors */
+pre,
+code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+pre {
+  background: var(--mongodb-evergreen);
+  color: var(--mongodb-mist);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+body[data-theme="light"] pre {
+  background: var(--mongodb-slate-blue);
+  color: var(--mongodb-white);
+}
+
+code {
+  background: rgba(0, 237, 100, 0.1);
+  color: var(--mongodb-spring-green);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+}
+
+/* Links with MongoDB brand colors */
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
 }
