@@ -1,0 +1,197 @@
+.page {
+  animation: fadeIn 0.4s ease-out;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 1.75rem;
+  letter-spacing: normal;
+  margin-bottom: 24px;
+}
+
+.errorWrap {
+  margin-bottom: 24px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 599px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fullRow {
+  grid-column: 1 / -1;
+}
+
+/* Stagger animation for stat cards */
+.stagger1 { animation: fadeIn 0.4s ease-out 0.05s both; }
+.stagger2 { animation: fadeIn 0.4s ease-out 0.1s both; }
+.stagger3 { animation: fadeIn 0.4s ease-out 0.15s both; }
+.stagger4 { animation: fadeIn 0.4s ease-out 0.2s both; }
+.stagger5 { animation: fadeIn 0.4s ease-out 0.25s both; }
+.stagger6 { animation: fadeIn 0.4s ease-out 0.3s both; }
+
+/* Skeleton loading */
+.skeletonCard {
+  height: 100px;
+  border-radius: 12px;
+}
+
+.skeletonStat {
+  height: 110px;
+  border-radius: 12px;
+}
+
+/* Service status panel */
+.serviceList {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.serviceItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 10px;
+}
+
+body[data-theme="dark"] .serviceItem {
+  background: rgba(0, 237, 100, 0.03);
+}
+
+body[data-theme="light"] .serviceItem {
+  background: rgba(0, 104, 74, 0.03);
+}
+
+.serviceName {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.serviceStatus {
+  font-size: 0.7rem;
+  text-transform: capitalize;
+  opacity: 0.5;
+}
+
+/* Heap bar */
+.heapHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.sectionLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-size: 0.68rem;
+  opacity: 0.5;
+}
+
+.heapValues {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.heapTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+body[data-theme="dark"] .heapTrack {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body[data-theme="light"] .heapTrack {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.heapFill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #00ED64, #00684A);
+  transition: width 0.8s ease-out;
+}
+
+.heapPercent {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  opacity: 0.5;
+}
+
+/* Disconnected state */
+.disconnected {
+  text-align: center;
+  padding: 32px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.disconnectedIcon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+body[data-theme="dark"] .disconnectedIcon {
+  color: #DB3030;
+}
+
+body[data-theme="light"] .disconnectedIcon {
+  color: #970606;
+}
+
+.disconnectedTitle {
+  font-weight: 600;
+  font-size: 1.25rem;
+  margin-bottom: 8px;
+}
+
+.disconnectedDesc {
+  opacity: 0.7;
+  max-width: 480px;
+  margin: 0 auto 4px;
+  font-size: 0.875rem;
+}
+
+.daemonUrlBadge {
+  display: inline-block;
+  font-family: 'Source Code Pro', Menlo, monospace;
+  font-size: 0.82rem;
+  padding: 4px 16px;
+  border-radius: 6px;
+  margin: 8px 0 20px;
+}
+
+body[data-theme="dark"] .daemonUrlBadge {
+  background: rgba(0, 237, 100, 0.06);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .daemonUrlBadge {
+  background: rgba(0, 104, 74, 0.06);
+  color: #00684A;
+}
+
+.disconnectedActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}

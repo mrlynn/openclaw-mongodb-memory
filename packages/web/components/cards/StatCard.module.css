@@ -1,0 +1,41 @@
+.content {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.iconBox {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.info {
+  min-width: 0;
+}
+
+.label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 500;
+  font-size: 0.68rem;
+  opacity: 0.5;
+}
+
+.value {
+  font-weight: 600;
+  line-height: 1.2;
+  margin-top: 2px;
+  letter-spacing: normal;
+  font-size: 1.4rem;
+}
+
+.subtitle {
+  margin-top: 2px;
+  opacity: 0.5;
+  font-size: 0.75rem;
+}

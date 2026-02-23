@@ -1,0 +1,185 @@
+import axios, { AxiosInstance } from "axios";
+
+export interface VoyageEmbedResponse {
+  object: string;
+  data: Array<{
+    object: string;
+    index: number;
+    embedding: number[];
+  }>;
+  model: string;
+  usage: {
+    total_tokens: number;
+  };
+}
+
+export class VoyageEmbedder {
+  private client: AxiosInstance;
+  private apiKey: string;
+  private model: string;
+  private useMock: boolean;
+
+  // Default models by endpoint, with fallback list
+  private static readonly DEFAULT_MODELS = {
+    "api.voyageai.com": "voyage-3",
+    "ai.mongodb.com": "voyage-3-lite",
+  };
+
+  // Fallback model list (try these in order if primary fails)
+  private static readonly FALLBACK_MODELS = [
+    "voyage-3",
+    "voyage-3-lite",
+    "voyage-3-5-lite",
+    "voyage-2",
+    "voyage-lite-02-instruct",
+    "voyage-code-3-5",
+  ];
+
+  constructor(apiKey: string, baseUrl?: string, model?: string) {
+    this.apiKey = apiKey;
+    
+    // Use custom base URL (e.g., MongoDB AI endpoint) or default to Voyage API
+    const url = baseUrl || "https://api.voyageai.com/v1";
+    
+    // Mock mode for testing (set VOYAGE_MOCK=true in env)
+    this.useMock = process.env.VOYAGE_MOCK === "true";
+    
+    // Pick appropriate model based on endpoint
+    const hostname = url.includes("mongodb") ? "ai.mongodb.com" : "api.voyageai.com";
+    this.model = model || (VoyageEmbedder.DEFAULT_MODELS[hostname as keyof typeof VoyageEmbedder.DEFAULT_MODELS] || "voyage-3");
+    
+    // Both MongoDB Atlas AI (al-*) and Voyage.com public API use Bearer tokens
+    this.client = axios.create({
+      baseURL: url,
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      timeout: 30000,
+    });
+  }
+
+  /**
+   * Generate a mock embedding (deterministic based on text hash)
+   * Useful for testing without API credentials
+   */
+  private mockEmbed(text: string): number[] {
+    // Hash the text to get a seed
+    let hash = 0;
+    for (let i = 0; i < text.length; i++) {
+      const char = text.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+
+    // Use seed to generate deterministic "random" embedding
+    const embedding: number[] = [];
+    const dim = 1024; // Voyage embedding dimension
+    for (let i = 0; i < dim; i++) {
+      const seed = hash + i;
+      const x = Math.sin(seed) * 10000;
+      const value = x - Math.floor(x); // Normalize to 0-1
+      embedding.push(value * 2 - 1); // Scale to -1 to 1
+    }
+
+    // Normalize to unit vector
+    let magnitude = 0;
+    for (const v of embedding) {
+      magnitude += v * v;
+    }
+    magnitude = Math.sqrt(magnitude);
+    for (let i = 0; i < embedding.length; i++) {
+      embedding[i] /= magnitude;
+    }
+
+    return embedding;
+  }
+
+  async embed(texts: string[]): Promise<number[][]> {
+    try {
+      console.log(`[Voyage] Embedding ${texts.length} text(s)...`);
+
+      // Use mock embeddings if enabled
+      if (this.useMock) {
+        console.log(`[Voyage] Using MOCK embeddings (VOYAGE_MOCK=true)`);
+        const embeddings = texts.map((text) => this.mockEmbed(text));
+        console.log(`[Voyage] Generated ${embeddings.length} mock embedding(s)`);
+        return embeddings;
+      }
+
+      // Real Voyage API call
+      console.log(`[Voyage] Using model: ${this.model}`);
+      const response = await this.client.post<VoyageEmbedResponse>(
+        "/embeddings",
+        {
+          input: texts,
+          model: this.model,
+        }
+      );
+
+      console.log(`[Voyage] Got ${response.data.data.length} embedding(s)`);
+
+      // Sort by index to ensure correct order
+      const embeddings = response.data.data
+        .sort((a, b) => a.index - b.index)
+        .map((item) => item.embedding);
+
+      return embeddings;
+    } catch (error) {
+      let errorMsg = "Unknown error";
+      let status = 0;
+      
+      if (axios.isAxiosError(error)) {
+        status = error.response?.status || 0;
+        const statusText = error.response?.statusText;
+        const data = error.response?.data;
+        errorMsg = `${status} ${statusText}`;
+        if (typeof data === 'object' && data !== null && 'detail' in data) {
+          errorMsg += ` - ${(data as any).detail}`;
+        } else if (typeof data === 'string') {
+          errorMsg += ` - ${data}`;
+        }
+
+        // If 403 (forbidden), suggest fallback models
+        if (status === 403) {
+          console.error(`[Voyage] Model "${this.model}" not available for your API key`);
+          console.error(`[Voyage] Try one of these models: ${VoyageEmbedder.FALLBACK_MODELS.join(", ")}`);
+          console.error(`[Voyage] Set VOYAGE_MODEL env var to override (e.g., VOYAGE_MODEL=voyage-3-lite)`);
+        }
+      } else if (error instanceof Error) {
+        errorMsg = error.message;
+      }
+      
+      console.error(`[Voyage] Embedding failed: ${errorMsg}`);
+      throw new Error(`Voyage API error: ${errorMsg}`);
+    }
+  }
+
+  async embedOne(text: string): Promise<number[]> {
+    const [embedding] = await this.embed([text]);
+    return embedding;
+  }
+
+  /**
+   * Calculate cosine similarity between two vectors.
+   * Returns a score between -1 and 1 (typically 0-1 for normalized vectors).
+   */
+  static cosineSimilarity(a: number[], b: number[]): number {
+    if (a.length !== b.length) {
+      throw new Error("Vectors must have the same length");
+    }
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+
+    const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+    return denominator === 0 ? 0 : dotProduct / denominator;
+  }
+}
