@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { STORAGE_KEYS, DEFAULT_DAEMON_URL } from "@/lib/constants";
 
 interface DaemonConfigContextValue {
@@ -23,13 +23,14 @@ function resolveDefaultUrl(): string {
 }
 
 export function DaemonConfigProvider({ children }: { children: ReactNode }) {
-  const [daemonUrl, setDaemonUrlState] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(STORAGE_KEYS.DAEMON_URL);
-      if (stored) return stored;
-    }
-    return resolveDefaultUrl();
-  });
+  // Always start with the default URL to match server render.
+  const [daemonUrl, setDaemonUrlState] = useState(resolveDefaultUrl);
+
+  // On mount, read the user's stored preference.
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.DAEMON_URL);
+    if (stored) setDaemonUrlState(stored);
+  }, []);
 
   const setDaemonUrl = (url: string) => {
     const trimmed = url.replace(/\/+$/, "");

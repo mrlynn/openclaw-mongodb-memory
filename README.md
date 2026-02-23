@@ -116,6 +116,40 @@ cat AGENT_WORKFLOW.md
 
 ---
 
+## 📚 Detailed Setup Guides
+
+Choose your setup path:
+
+### 🐳 Docker (Recommended for local development)
+**Complete stack in one command** — MongoDB, daemon, and web dashboard.
+
+👉 **[Docker Setup Guide](./docs/docker-setup.md)**
+
+```bash
+docker compose up
+# Everything running on http://localhost:7654
+```
+
+### ☁️ MongoDB Atlas (Recommended for production)
+**Free cloud database with vector search** — No local MongoDB needed.
+
+👉 **[MongoDB Atlas Setup Guide](./docs/mongodb-atlas-setup.md)**
+
+- Free M0 cluster (512 MB)
+- Built-in vector search
+- Global deployment
+- Step-by-step with screenshots
+
+### 🛠️ Manual Setup
+Install and configure each component yourself:
+
+1. Install MongoDB locally or use Atlas
+2. Follow Quick Start above
+3. Configure `.env.local`
+4. Run `pnpm install && pnpm build`
+
+---
+
 ## 🎨 What It Looks Like
 
 ### Memory Browser with RAG Search

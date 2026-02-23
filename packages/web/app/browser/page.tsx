@@ -40,12 +40,7 @@ export default function BrowserPage() {
 
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(false);
-  const [agentId, setAgentId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "";
-    }
-    return "";
-  });
+  const [agentId, setAgentId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [memoryScores, setMemoryScores] = useState<Record<string, number>>({});

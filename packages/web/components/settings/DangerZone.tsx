@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TextInput from "@leafygreen-ui/text-input";
 import Button from "@leafygreen-ui/button";
 import Banner from "@leafygreen-ui/banner";
@@ -17,12 +17,12 @@ export function DangerZone() {
   const { daemonUrl } = useDaemonConfig();
   const { darkMode } = useThemeMode();
 
-  const [agentId, setAgentId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "demo-agent";
-    }
-    return "demo-agent";
-  });
+  const [agentId, setAgentId] = useState("demo-agent");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.AGENT_ID);
+    if (stored) setAgentId(stored);
+  }, []);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;

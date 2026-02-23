@@ -450,12 +450,8 @@ export default function DashboardPage() {
 
   // --- Shared agent state ---
   const [agents, setAgents] = useState<AgentInfo[]>([]);
-  const [agentId, setAgentId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "";
-    }
-    return "";
-  });
+  // Always start with "" to match server render; restored from localStorage in the useEffect below.
+  const [agentId, setAgentId] = useState("");
 
   // Fetch agents on mount, resolve which one to use
   useEffect(() => {

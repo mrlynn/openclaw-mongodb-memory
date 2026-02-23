@@ -25,15 +25,21 @@ const ThemeContext = createContext<ThemeContextValue>({
 });
 
 export function ThemeContextProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
-      if (stored === "light" || stored === "dark") return stored;
-    }
-    return "dark";
-  });
+  // Always start with "dark" to match the server render and the inline FOUC script default.
+  const [mode, setMode] = useState<ThemeMode>("dark");
 
   const darkMode = mode === "dark";
+
+  // On mount, read the user's stored preference and sync body attribute.
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
+    if (stored === "light" || stored === "dark") {
+      setMode(stored);
+      document.body.setAttribute("data-theme", stored);
+    } else {
+      document.body.setAttribute("data-theme", "dark");
+    }
+  }, []);
 
   useEffect(() => {
     document.body.setAttribute("data-theme", mode);

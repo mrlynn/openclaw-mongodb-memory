@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TextInput from "@leafygreen-ui/text-input";
 import TextArea from "@leafygreen-ui/text-area";
 import Button from "@leafygreen-ui/button";
@@ -18,12 +18,12 @@ export function RememberForm() {
   const { daemonUrl } = useDaemonConfig();
   const { darkMode } = useThemeMode();
 
-  const [agentId, setAgentId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "demo-agent";
-    }
-    return "demo-agent";
-  });
+  const [agentId, setAgentId] = useState("demo-agent");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.AGENT_ID);
+    if (stored) setAgentId(stored);
+  }, []);
   const [text, setText] = useState("");
   const [tagsInput, setTagsInput] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);

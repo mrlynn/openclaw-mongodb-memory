@@ -29,12 +29,12 @@ function RecallContent() {
   const searchParams = useSearchParams();
   const didAutoSearch = useRef(false);
 
-  const [agentId, setAgentId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "demo-agent";
-    }
-    return "demo-agent";
-  });
+  const [agentId, setAgentId] = useState("demo-agent");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEYS.AGENT_ID);
+    if (stored) setAgentId(stored);
+  }, []);
   const [query, setQuery] = useState(() => searchParams.get("query") || "");
   const [limit, setLimit] = useState("10");
   const [results, setResults] = useState<RecallResult[]>([]);
