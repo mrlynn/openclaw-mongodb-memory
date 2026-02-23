@@ -252,8 +252,8 @@ for pkg in "${PACKAGES[@]}"; do
     fi
   fi
 
-  # Publish
-  if (cd "$PKG_DIR" && npm publish $PUBLISH_FLAGS 2>&1); then
+  # Publish with pnpm (auto-converts workspace:* to actual versions)
+  if (cd "$PKG_DIR" && pnpm publish $PUBLISH_FLAGS 2>&1); then
     success "${PKG_NAME}@${PKG_VERSION} published"
     PUBLISHED_COUNT=$((PUBLISHED_COUNT + 1))
   else
