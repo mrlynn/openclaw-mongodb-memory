@@ -1,36 +1,46 @@
 /**
- * Tests for embedding generation (mock and real)
+ * Tests for VoyageEmbedder (mock and real)
  */
 
 import { describe, it, expect } from 'vitest';
-import { generateEmbedding, generateMockEmbedding } from '../embedding';
+import { VoyageEmbedder } from '../embedding';
 
-describe('Mock Embeddings', () => {
-  it('should generate deterministic embeddings', () => {
+describe('VoyageEmbedder - Mock Mode', () => {
+  const embedder = new VoyageEmbedder('mock-key');
+
+  it('should generate embeddings in mock mode', async () => {
+    const embedding = await embedder.embedOne('Test text');
+    
+    expect(embedding).toBeDefined();
+    expect(Array.isArray(embedding)).toBe(true);
+    expect(embedding.length).toBeGreaterThan(0);
+  });
+
+  it('should generate deterministic embeddings', async () => {
     const text = 'Test memory text';
-    const embedding1 = generateMockEmbedding(text);
-    const embedding2 = generateMockEmbedding(text);
+    const embedding1 = await embedder.embedOne(text);
+    const embedding2 = await embedder.embedOne(text);
 
     expect(embedding1).toEqual(embedding2);
   });
 
-  it('should generate different embeddings for different text', () => {
-    const embedding1 = generateMockEmbedding('First text');
-    const embedding2 = generateMockEmbedding('Second text');
+  it('should generate different embeddings for different text', async () => {
+    const embedding1 = await embedder.embedOne('First text');
+    const embedding2 = await embedder.embedOne('Second text');
 
     expect(embedding1).not.toEqual(embedding2);
   });
 
-  it('should generate embeddings of consistent length', () => {
-    const embedding1 = generateMockEmbedding('Short');
-    const embedding2 = generateMockEmbedding('This is a much longer piece of text for testing');
+  it('should generate embeddings of consistent length', async () => {
+    const embedding1 = await embedder.embedOne('Short');
+    const embedding2 = await embedder.embedOne('This is a much longer piece of text for testing');
 
     expect(embedding1.length).toBe(embedding2.length);
     expect(embedding1.length).toBeGreaterThan(0);
   });
 
-  it('should generate normalized vectors', () => {
-    const embedding = generateMockEmbedding('Test text');
+  it('should generate normalized vectors', async () => {
+    const embedding = await embedder.embedOne('Test text');
     
     // Calculate magnitude
     const magnitude = Math.sqrt(
@@ -41,72 +51,76 @@ describe('Mock Embeddings', () => {
     expect(magnitude).toBeCloseTo(1, 5);
   });
 
-  it('should handle empty string', () => {
-    const embedding = generateMockEmbedding('');
+  it('should handle empty string', async () => {
+    const embedding = await embedder.embedOne('');
     
     expect(embedding).toBeDefined();
     expect(Array.isArray(embedding)).toBe(true);
     expect(embedding.length).toBeGreaterThan(0);
   });
 
-  it('should handle special characters', () => {
-    const embedding = generateMockEmbedding('Test with emoji 🚀 and symbols @#$%');
+  it('should handle special characters', async () => {
+    const embedding = await embedder.embedOne('Test with emoji 🚀 and symbols @#$%');
     
     expect(embedding).toBeDefined();
     expect(embedding.length).toBeGreaterThan(0);
+  });
+
+  it('should handle batch embeddings', async () => {
+    const texts = ['First text', 'Second text', 'Third text'];
+    const embeddings = await embedder.embed(texts);
+
+    expect(embeddings.length).toBe(3);
+    embeddings.forEach(emb => {
+      expect(Array.isArray(emb)).toBe(true);
+      expect(emb.length).toBeGreaterThan(0);
+    });
   });
 });
 
-describe('Embedding Generation (via generateEmbedding)', () => {
-  it('should use mock embeddings when VOYAGE_MOCK=true', async () => {
-    process.env.VOYAGE_MOCK = 'true';
+describe('VoyageEmbedder - Cosine Similarity', () => {
+  it('should calculate cosine similarity correctly', async () => {
+    const embedder = new VoyageEmbedder('mock-key');
     
-    const embedding = await generateEmbedding('Test text');
+    const embedding1 = await embedder.embedOne('Identical text');
+    const embedding2 = await embedder.embedOne('Identical text');
+
+    const similarity = VoyageEmbedder.cosineSimilarity(embedding1, embedding2);
     
-    expect(embedding).toBeDefined();
-    expect(Array.isArray(embedding)).toBe(true);
-    expect(embedding.length).toBeGreaterThan(0);
+    expect(similarity).toBeCloseTo(1, 5); // Should be 1 for identical
   });
 
-  it('should be deterministic in mock mode', async () => {
-    process.env.VOYAGE_MOCK = 'true';
+  it('should give lower similarity for different text', async () => {
+    const embedder = new VoyageEmbedder('mock-key');
     
-    const embedding1 = await generateEmbedding('Same text');
-    const embedding2 = await generateEmbedding('Same text');
+    const embedding1 = await embedder.embedOne('First text');
+    const embedding2 = await embedder.embedOne('Completely different text');
+
+    const similarity = VoyageEmbedder.cosineSimilarity(embedding1, embedding2);
     
-    expect(embedding1).toEqual(embedding2);
+    expect(similarity).toBeLessThan(1);
+    expect(similarity).toBeGreaterThan(-1);
   });
 
-  // Real Voyage API tests (skip if no API key)
-  it.skipIf(!process.env.VOYAGE_API_KEY)('should call real Voyage API', async () => {
-    process.env.VOYAGE_MOCK = 'false';
-    
-    const embedding = await generateEmbedding('Test with real API');
-    
-    expect(embedding).toBeDefined();
-    expect(Array.isArray(embedding)).toBe(true);
-    expect(embedding.length).toBeGreaterThan(100); // Real embeddings are larger
+  it('should throw error for vectors of different length', () => {
+    const vec1 = [1, 2, 3];
+    const vec2 = [1, 2];
+
+    expect(() => VoyageEmbedder.cosineSimilarity(vec1, vec2)).toThrow();
   });
 });
 
-describe('Cosine Similarity (indirectly tested via mock)', () => {
-  it('should give high similarity for identical text', () => {
-    const embedding1 = generateMockEmbedding('Identical text');
-    const embedding2 = generateMockEmbedding('Identical text');
-
-    // Calculate cosine similarity
-    const dotProduct = embedding1.reduce((sum, val, i) => sum + val * embedding2[i], 0);
-    
-    expect(dotProduct).toBeCloseTo(1, 5); // Should be 1 for identical
-  });
-
-  it('should give lower similarity for different text', () => {
-    const embedding1 = generateMockEmbedding('First text');
-    const embedding2 = generateMockEmbedding('Completely different text');
-
-    const dotProduct = embedding1.reduce((sum, val, i) => sum + val * embedding2[i], 0);
-    
-    expect(dotProduct).toBeLessThan(1);
-    expect(dotProduct).toBeGreaterThan(-1);
-  });
+describe('VoyageEmbedder - Real API (conditional)', () => {
+  it.skipIf(!process.env.VOYAGE_API_KEY || process.env.VOYAGE_MOCK === 'true')(
+    'should call real Voyage API', 
+    async () => {
+      const embedder = new VoyageEmbedder(process.env.VOYAGE_API_KEY!);
+      
+      const embedding = await embedder.embedOne('Test with real API');
+      
+      expect(embedding).toBeDefined();
+      expect(Array.isArray(embedding)).toBe(true);
+      expect(embedding.length).toBeGreaterThan(100); // Real embeddings are larger
+    }
+  );
 });

@@ -4,27 +4,28 @@
 
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
-import express from 'express';
+import { Express } from 'express';
 import { forgetRoute } from '../../routes/forget';
 import { rememberRoute } from '../../routes/remember';
-import { getDb, connectDb } from '../../db';
+import { createTestApp, cleanupTestData } from '../helpers';
+import { getDatabase } from '../../db';
 
-const app = express();
-app.use(express.json());
-app.post('/remember', rememberRoute);
-app.delete('/forget/:id', forgetRoute);
+let app: Express;
+let testMemoryId: string;
 
 describe('DELETE /forget/:id', () => {
-  let testMemoryId: string;
-
   beforeEach(async () => {
-    await connectDb();
+    const { addErrorHandler } = await import('../helpers');
+    app = await createTestApp();
+    app.post('/remember', rememberRoute);
+    app.delete('/forget/:id', forgetRoute);
+    await addErrorHandler(app);
     
     // Create a memory to delete
     const response = await request(app)
       .post('/remember')
       .send({
-        agentId: 'test-agent',
+        agentId: 'test-agent-forget',
         text: 'Memory to be deleted',
         tags: ['test'],
       });
@@ -33,8 +34,7 @@ describe('DELETE /forget/:id', () => {
   });
 
   afterAll(async () => {
-    const db = await getDb();
-    await db.collection('memories').deleteMany({});
+    await cleanupTestData();
   });
 
   it('should delete an existing memory', async () => {
@@ -43,14 +43,15 @@ describe('DELETE /forget/:id', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.deletedCount).toBe(1);
+    expect(response.body.message).toBe('Memory deleted');
   });
 
   it('should verify memory is actually deleted from DB', async () => {
     await request(app).delete(`/forget/${testMemoryId}`);
 
-    const db = await getDb();
-    const memory = await db.collection('memories').findOne({ _id: testMemoryId });
+    const db = getDatabase();
+    const { ObjectId } = await import('mongodb');
+    const memory = await db.collection('memories').findOne({ _id: new ObjectId(testMemoryId) });
     expect(memory).toBeNull();
   });
 
