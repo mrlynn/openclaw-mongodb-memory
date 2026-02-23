@@ -89,8 +89,176 @@
   white-space: pre;
 }
 
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.documentList {
+  width: 100%;
+}
+
+.documentView {
+  width: 100%;
+}
+
+.backButton {
+  margin-bottom: 1.5rem;
+}
+
+.documentCard {
+  padding: 2rem;
+}
+
+.documentHeader {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.fileInfo {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Markdown Content Styling */
+.markdownContent {
+  color: var(--text-primary);
+  line-height: 1.7;
+}
+
+.markdownContent h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.markdownContent h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdownContent h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdownContent p {
+  margin-bottom: 1rem;
+}
+
+.markdownContent ul,
+.markdownContent ol {
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+}
+
+.markdownContent li {
+  margin-bottom: 0.5rem;
+}
+
+.markdownContent code {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+}
+
+.markdownContent pre {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin-bottom: 1rem;
+}
+
+.markdownContent pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.markdownContent blockquote {
+  border-left: 4px solid var(--border-color);
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 1rem;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.markdownContent table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+}
+
+.markdownContent table th,
+.markdownContent table td {
+  border: 1px solid var(--border-color);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.markdownContent table th {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+}
+
+.markdownContent a {
+  color: #00ED64;
+  text-decoration: none;
+}
+
+.markdownContent a:hover {
+  text-decoration: underline;
+}
+
+.markdownContent hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2rem 0;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
+  }
+  
+  .documentCard {
+    padding: 1rem;
+  }
+  
+  .markdownContent h1 {
+    font-size: 1.5rem;
+  }
+  
+  .markdownContent h2 {
+    font-size: 1.25rem;
+  }
+  
+  .markdownContent h3 {
+    font-size: 1.1rem;
   }
 }
