@@ -33,6 +33,9 @@
   ],
   "author": "Michael Lynn <michael.lynn@mongodb.com>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "bugs": {
     "url": "https://github.com/mrlynn/openclaw-mongodb-memory/issues"
   },
