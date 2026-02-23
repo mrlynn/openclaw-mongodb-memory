@@ -59,8 +59,8 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
@@ -69,7 +69,7 @@
 }
 
 .sortButton:hover {
-  background: var(--surface-3);
+  background: var(--bg-tertiary);
   border-color: var(--mongodb-spring-green);
 }
 
@@ -78,7 +78,7 @@
   font-size: 14px;
   color: var(--text-secondary);
   padding: 8px 12px;
-  background: var(--surface-2);
+  background: var(--bg-secondary);
   border-radius: 8px;
 }
 
@@ -97,9 +97,9 @@
   height: 100px;
   background: linear-gradient(
     90deg,
-    var(--surface-2) 0%,
-    var(--surface-3) 50%,
-    var(--surface-2) 100%
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 50%,
+    var(--bg-secondary) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
@@ -129,7 +129,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: var(--surface-3);
+  background: var(--bg-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,49 +157,6 @@
   position: relative;
 }
 
-/* Chrono Card Styling */
-.chronoCard {
-  padding: 16px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.chronoCard:hover {
-  transform: translateY(-2px);
-}
-
-.chronoText {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-primary);
-  margin: 0 0 12px 0;
-}
-
-.chronoTags {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border-secondary);
-}
-
-.chronoTags svg {
-  color: var(--mongodb-forest-green);
-  flex-shrink: 0;
-}
-
-.chronoTag {
-  display: inline-block;
-  padding: 2px 8px;
-  background: var(--mongodb-spring-green-10);
-  color: var(--mongodb-forest-green);
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
 /* Load More Button */
 .loadMoreContainer {
   display: flex;
@@ -222,6 +179,7 @@
 
 .loadMoreButton:hover:not(:disabled) {
   background: var(--mongodb-forest-green);
+  color: var(--mongodb-white);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 237, 100, 0.3);
 }
@@ -260,30 +218,7 @@
   }
 }
 
-/* Dark mode overrides for React Chrono */
-:global(.dark) .chronoCard {
-  border: 1px solid rgba(0, 237, 100, 0.1);
-}
-
-:global(.dark) .chronoCard:hover {
-  border-color: rgba(0, 237, 100, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 237, 100, 0.1);
-}
-
-/* Timeline container wrapper for global overrides */
-.timelineContainer :global(.vertical-timeline-element-icon) {
-  background-color: var(--mongodb-spring-green) !important;
-  box-shadow: 0 0 0 4px var(--mongodb-spring-green-10) !important;
-}
-
-.timelineContainer :global(.vertical-timeline-element-content) {
-  box-shadow: 0 3px 0 var(--mongodb-spring-green) !important;
-}
-
+/* React Chrono global overrides — scoped to .timelineContainer */
 .timelineContainer :global(.chrono-icons) {
   background: var(--mongodb-spring-green) !important;
-}
-
-.timelineContainer :global(.timeline-card-title) {
-  color: var(--mongodb-forest-green) !important;
 }

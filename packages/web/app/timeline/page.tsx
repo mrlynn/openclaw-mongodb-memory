@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Chrono } from "react-chrono";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import nextDynamic from "next/dynamic";
 import { Select, Option } from "@leafygreen-ui/select";
 import Banner from "@leafygreen-ui/banner";
 import Icon from "@leafygreen-ui/icon";
-import { Clock, ArrowDownWideNarrow, ArrowUpNarrowWide, Tag, Calendar } from "lucide-react";
+import { Clock, ArrowDownWideNarrow, ArrowUpNarrowWide } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
 import { useThemeMode } from "@/contexts/ThemeContext";
 import { fetchMemoriesPage, forgetMemory, MemoryTimelineItem } from "@/lib/api";
@@ -15,7 +15,13 @@ import { MemoryDetailDrawer } from "@/components/browser/MemoryDetailDrawer";
 import { DeleteConfirmDialog } from "@/components/browser/DeleteConfirmDialog";
 import styles from "./page.module.css";
 
-export const dynamic = "force-dynamic";
+// Dynamic import for react-chrono (SSR not supported)
+const Chrono = nextDynamic(() => import("react-chrono").then((m) => m.Chrono), {
+  ssr: false,
+  loading: () => (
+    <div style={{ padding: 40, textAlign: "center", opacity: 0.4 }}>Loading timeline...</div>
+  ),
+});
 
 interface AgentInfo {
   agentId: string;
@@ -91,7 +97,7 @@ export default function TimelinePage() {
 
       try {
         const data = await fetchMemoriesPage(daemonUrl, agentId, {
-          limit: 100, // Load more for timeline view
+          limit: 100,
           sort: sortOrder,
         });
         setAllMemories(data.memories);
@@ -172,50 +178,73 @@ export default function TimelinePage() {
       }
     : null;
 
-  // Format memories for React Chrono
-  const chronoItems = allMemories.map((memory) => {
-    const date = new Date(memory.createdAt);
-    const title = date.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+  // Format memories for React Chrono — cardDetailedText must be a string
+  const chronoItems = useMemo(
+    () =>
+      allMemories.map((memory) => {
+        const date = new Date(memory.createdAt);
+        const title = date.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+        });
 
-    // Truncate text for card
-    const cardTitle = memory.text.slice(0, 80) + (memory.text.length > 80 ? "..." : "");
+        const tagStr =
+          memory.tags.length > 0
+            ? `\n\nTags: ${memory.tags.slice(0, 4).join(", ")}${memory.tags.length > 4 ? ` +${memory.tags.length - 4}` : ""}`
+            : "";
 
-    return {
-      title,
-      cardTitle,
-      cardDetailedText: (
-        <div
-          className={styles.chronoCard}
-          onClick={() => {
-            setSelectedMemory(memory);
-            setDrawerOpen(true);
-          }}
-        >
-          <p className={styles.chronoText}>{memory.text.slice(0, 200)}</p>
-          {memory.tags && memory.tags.length > 0 && (
-            <div className={styles.chronoTags}>
-              <Tag size={12} />
-              {memory.tags.slice(0, 3).map((tag) => (
-                <span key={tag} className={styles.chronoTag}>
-                  {tag}
-                </span>
-              ))}
-              {memory.tags.length > 3 && (
-                <span className={styles.chronoTag}>+{memory.tags.length - 3}</span>
-              )}
-            </div>
-          )}
-        </div>
-      ),
-    };
-  });
+        return {
+          title,
+          cardTitle: memory.text.slice(0, 100) + (memory.text.length > 100 ? "..." : ""),
+          cardSubtitle: memory.tags.slice(0, 3).join(" · ") || undefined,
+          cardDetailedText: memory.text.slice(0, 300) + tagStr,
+        };
+      }),
+    [allMemories],
+  );
+
+  // Track if this is the first render to ignore React Chrono's auto-selection
+  const hasInitialized = useRef(false);
+  useEffect(() => {
+    if (allMemories.length > 0) {
+      // Allow selections after a brief delay (ignore initial auto-selection)
+      const timer = setTimeout(() => {
+        hasInitialized.current = true;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [allMemories.length]);
+
+  // Handle Chrono item click → open drawer
+  const handleChronoItemSelect = useCallback(
+    (item: { index: number }) => {
+      // Ignore the auto-selection that happens on mount
+      if (!hasInitialized.current) return;
+
+      if (item && typeof item.index === "number" && allMemories[item.index]) {
+        setSelectedMemory(allMemories[item.index]);
+        setDrawerOpen(true);
+      }
+    },
+    [allMemories],
+  );
 
   const isEmpty = !loading && allMemories.length === 0 && !error;
+
+  // Chrono theme — set here to keep render clean
+  const chronoTheme = useMemo(
+    () => ({
+      primary: darkMode ? "#00ED64" : "#00684A",
+      secondary: darkMode ? "rgba(0, 30, 43, 0.85)" : "rgba(227, 252, 247, 0.85)",
+      cardBgColor: darkMode ? "rgba(0, 30, 43, 0.7)" : "#ffffff",
+      cardForeColor: darkMode ? "#ffffff" : "#001E2B",
+      titleColor: darkMode ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.5)",
+      titleColorActive: darkMode ? "#00ED64" : "#00684A",
+    }),
+    [darkMode],
+  );
 
   return (
     <div className={styles.page}>
@@ -329,18 +358,21 @@ export default function TimelinePage() {
           <Chrono
             items={chronoItems}
             mode="VERTICAL_ALTERNATING"
-            theme={{
-              primary: darkMode ? "#00ED64" : "#00684A",
-              secondary: darkMode ? "#001E2B" : "#E3FCF7",
-              cardBgColor: darkMode ? "rgba(0, 30, 43, 0.6)" : "rgba(255, 255, 255, 0.8)",
-              titleColor: darkMode ? "#00ED64" : "#00684A",
-              titleColorActive: darkMode ? "#00ED64" : "#023430",
+            theme={chronoTheme}
+            cardHeight={120}
+            hideControls
+            scrollable
+            useReadMore={false}
+            disableToolbar
+            disableAutoScrollOnClick
+            fontSizes={{
+              cardSubtitle: "0.75rem",
+              cardText: "0.85rem",
+              cardTitle: "0.88rem",
+              title: "0.78rem",
             }}
-            cardHeight={150}
-            hideControls={false}
-            scrollable={{ scrollbar: false }}
-            disableClickOnCircle={false}
-            enableBreakPoint={true}
+            onItemSelected={handleChronoItemSelect}
+            enableBreakPoint
             verticalBreakPoint={768}
           />
 
