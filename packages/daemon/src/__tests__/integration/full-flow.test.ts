@@ -71,11 +71,11 @@ describe("Full lifecycle integration", () => {
   it("3. recall — should find stored memories", async () => {
     const res = await request(app)
       .get("/recall")
-      .query({ agentId: AGENT, text: "TypeScript scalable" });
+      .query({ agentId: AGENT, query: "TypeScript scalable" }); // Changed 'text' to 'query'
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
-    expect(res.body.memories.length).toBeGreaterThanOrEqual(1);
+    expect(res.body.results.length).toBeGreaterThanOrEqual(1); // Changed 'memories' to 'results'
   });
 
   it("4. wordcloud — should return words from memories", async () => {

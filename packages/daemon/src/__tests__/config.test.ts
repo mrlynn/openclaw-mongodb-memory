@@ -21,12 +21,13 @@ describe("loadConfig", () => {
     process.env.MONGODB_URI = "mongodb://localhost:27017";
     process.env.VOYAGE_MOCK = "true";
     delete process.env.VOYAGE_API_KEY;
+    delete process.env.MEMORY_DAEMON_PORT; // Use default
 
     const { loadConfig } = await import("../config");
     const config = loadConfig();
 
     expect(config.mongoUri).toBe("mongodb://localhost:27017");
-    expect(config.port).toBe(7654);
+    expect(config.port).toBe(7654); // Default port when not set
     expect(config.voyageMock).toBe(true);
   });
 
