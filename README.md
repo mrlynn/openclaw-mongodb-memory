@@ -176,15 +176,16 @@ Start with mock mode. Switch to [Voyage AI](https://voyageai.com) when you need 
 
 ## Documentation
 
-| Guide                                            | Description                           |
-| ------------------------------------------------ | ------------------------------------- |
-| [**Getting Started**](./docs/getting-started.md) | Installation, setup, first steps      |
-| [**Configuration**](./docs/configuration.md)     | All environment variables and options |
-| [**API Reference**](./docs/api-reference.md)     | Complete HTTP API documentation       |
-| [**Architecture**](./docs/architecture.md)       | System design and data flow           |
-| [**Deployment**](./docs/deployment.md)           | Docker, production, CI/CD, scaling    |
-| [**Troubleshooting**](./docs/troubleshooting.md) | Common issues and fixes               |
-| [**Contributing**](./docs/contributing.md)       | Development workflow and testing      |
+| Guide                                            | Description                                 |
+| ------------------------------------------------ | ------------------------------------------- |
+| [**FAQ**](./docs/FAQ.md)                         | 💡 Frequently asked questions (start here!) |
+| [**Getting Started**](./docs/getting-started.md) | Installation, setup, first steps            |
+| [**Configuration**](./docs/configuration.md)     | All environment variables and options       |
+| [**API Reference**](./docs/api-reference.md)     | Complete HTTP API documentation             |
+| [**Architecture**](./docs/architecture.md)       | System design and data flow                 |
+| [**Deployment**](./docs/deployment.md)           | Docker, production, CI/CD, scaling          |
+| [**Troubleshooting**](./docs/troubleshooting.md) | Common issues and fixes                     |
+| [**Contributing**](./docs/contributing.md)       | Development workflow and testing            |
 
 ---
 

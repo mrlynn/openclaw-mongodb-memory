@@ -228,6 +228,7 @@ openclaw-memory/
 
 ## Next Steps
 
+- **[FAQ](./FAQ.md) — frequently asked questions (memory architecture, workflows, troubleshooting)**
 - [Configuration Reference](./configuration.md) — all environment variables and options
 - [API Reference](./api-reference.md) — complete HTTP API documentation
 - [Architecture](./architecture.md) — how the system works internally
