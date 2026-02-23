@@ -31,7 +31,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           className={styles.poweredBy}
           title="Built with MongoDB"
         >
-          <Icon glyph="University" size={12} />
+          <Icon glyph="Logo" size={12} />
           <span>Powered by MongoDB</span>
         </a>
       </div>
