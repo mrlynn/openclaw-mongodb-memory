@@ -25,7 +25,7 @@ export const recallRoute = asyncHandler(async (req: Request, res: Response) => {
   const embedder: VoyageEmbedder = req.app.locals.embedder;
   const collection = db.collection(COLLECTION_MEMORIES);
 
-  const queryEmbedding = await embedder.embedOne(data.query);
+  const queryEmbedding = await embedder.embedOne(data.query, "query");
 
   // Build pre-filter
   const filter: Record<string, unknown> = { agentId: data.agentId };

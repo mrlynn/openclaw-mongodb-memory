@@ -8,7 +8,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "vitest"
+    "test": "vitest",
+    "reembed": "tsx src/scripts/reembed.ts"
   },
   "dependencies": {
     "axios": "^1.6.5",
@@ -21,6 +22,11 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
+    "@types/node": "^20.19.33",
+    "@types/supertest": "^6.0.3",
+    "@vitest/ui": "^4.0.18",
+    "mongodb-memory-server": "^11.0.1",
+    "supertest": "^7.2.2",
     "tsx": "^4.7.0",
     "typescript": "^5.3",
     "vitest": "^1.0.0"

@@ -95,9 +95,16 @@ export class VoyageEmbedder {
     return embedding;
   }
 
-  async embed(texts: string[]): Promise<number[][]> {
+  /**
+   * Embed texts with an optional input_type hint.
+   * Voyage AI uses input_type to optimize embeddings:
+   *   - "document": for text being stored/indexed
+   *   - "query": for search queries at recall time
+   * This asymmetry improves retrieval accuracy significantly.
+   */
+  async embed(texts: string[], inputType?: "document" | "query"): Promise<number[][]> {
     try {
-      console.log(`[Voyage] Embedding ${texts.length} text(s)...`);
+      console.log(`[Voyage] Embedding ${texts.length} text(s)${inputType ? ` (input_type=${inputType})` : ""}...`);
 
       // Use mock embeddings if enabled
       if (this.useMock) {
@@ -109,12 +116,16 @@ export class VoyageEmbedder {
 
       // Real Voyage API call
       console.log(`[Voyage] Using model: ${this.model}`);
+      const payload: Record<string, unknown> = {
+        input: texts,
+        model: this.model,
+      };
+      if (inputType) {
+        payload.input_type = inputType;
+      }
       const response = await this.client.post<VoyageEmbedResponse>(
         "/embeddings",
-        {
-          input: texts,
-          model: this.model,
-        }
+        payload,
       );
 
       console.log(`[Voyage] Got ${response.data.data.length} embedding(s)`);
@@ -155,8 +166,8 @@ export class VoyageEmbedder {
     }
   }
 
-  async embedOne(text: string): Promise<number[]> {
-    const [embedding] = await this.embed([text]);
+  async embedOne(text: string, inputType?: "document" | "query"): Promise<number[]> {
+    const [embedding] = await this.embed([text], inputType);
     return embedding;
   }
 

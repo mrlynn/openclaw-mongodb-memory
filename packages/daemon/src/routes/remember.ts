@@ -21,7 +21,7 @@ export const rememberRoute = asyncHandler(async (req: Request, res: Response) =>
   const embedder: VoyageEmbedder = req.app.locals.embedder;
   const collection = db.collection(COLLECTION_MEMORIES);
 
-  const embedding = await embedder.embedOne(data.text);
+  const embedding = await embedder.embedOne(data.text, "document");
 
   const doc = {
     agentId: data.agentId,
