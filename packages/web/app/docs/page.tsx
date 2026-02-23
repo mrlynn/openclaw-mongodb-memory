@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import { useState } from 'react';
+
+// Disable static generation to avoid SSR issues
+export const dynamic = 'force-dynamic';
 import { AppShell } from '../../components/layout/AppShell';
 import TextInput from '@leafygreen-ui/text-input';
 import Icon from '@leafygreen-ui/icon';
