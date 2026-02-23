@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import TextInput from "@leafygreen-ui/text-input";
 import Button from "@leafygreen-ui/button";
 import { Select, Option } from "@leafygreen-ui/select";
@@ -22,9 +23,11 @@ interface RecallResult {
   createdAt: string;
 }
 
-export default function RecallPage() {
+function RecallContent() {
   const { daemonUrl } = useDaemonConfig();
   const { darkMode } = useThemeMode();
+  const searchParams = useSearchParams();
+  const didAutoSearch = useRef(false);
 
   const [agentId, setAgentId] = useState(() => {
     if (typeof window !== "undefined") {
@@ -32,29 +35,43 @@ export default function RecallPage() {
     }
     return "demo-agent";
   });
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => searchParams.get("query") || "");
   const [limit, setLimit] = useState("10");
   const [results, setResults] = useState<RecallResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async () => {
-    if (!query.trim()) return;
-    setSearching(true);
-    setError(null);
-    try {
-      const data = await recallMemory(daemonUrl, agentId, query, {
-        limit: parseInt(limit, 10),
-      });
-      setResults(data);
-      setHasSearched(true);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setSearching(false);
+  const handleSearch = useCallback(
+    async (searchQuery?: string) => {
+      const q = searchQuery ?? query;
+      if (!q.trim()) return;
+      setSearching(true);
+      setError(null);
+      try {
+        const data = await recallMemory(daemonUrl, agentId, q, {
+          limit: parseInt(limit, 10),
+        });
+        setResults(data);
+        setHasSearched(true);
+      } catch (err) {
+        setError(String(err));
+      } finally {
+        setSearching(false);
+      }
+    },
+    [daemonUrl, agentId, query, limit],
+  );
+
+  // Auto-search when arriving with a ?query= parameter (e.g. from word cloud)
+  useEffect(() => {
+    const paramQuery = searchParams.get("query");
+    if (paramQuery && !didAutoSearch.current) {
+      didAutoSearch.current = true;
+      setQuery(paramQuery);
+      handleSearch(paramQuery);
     }
-  };
+  }, [searchParams, handleSearch]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -120,7 +137,7 @@ export default function RecallPage() {
 
         <Button
           variant="primary"
-          onClick={handleSearch}
+          onClick={() => handleSearch()}
           disabled={!query.trim() || searching}
           darkMode={darkMode}
           leftGlyph={<Icon glyph="MagnifyingGlass" />}
@@ -163,5 +180,13 @@ export default function RecallPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RecallPage() {
+  return (
+    <Suspense>
+      <RecallContent />
+    </Suspense>
   );
 }

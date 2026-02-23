@@ -99,3 +99,35 @@ export async function clearMemories(baseUrl: string, agentId: string) {
   if (!response.ok) throw new Error(`Clear failed: ${response.status}`);
   return response.json();
 }
+
+// --- Word Cloud ---
+
+export interface WordCloudWord {
+  text: string;
+  count: number;
+  frequency: number;
+}
+
+export interface WordCloudResponse {
+  success: boolean;
+  agentId: string;
+  totalMemories: number;
+  totalUniqueWords: number;
+  words: WordCloudWord[];
+}
+
+export async function fetchWordCloud(
+  baseUrl: string,
+  agentId: string,
+  options?: { limit?: number; minCount?: number }
+): Promise<WordCloudResponse> {
+  const params = new URLSearchParams({ agentId });
+  if (options?.limit) params.set("limit", String(options.limit));
+  if (options?.minCount) params.set("minCount", String(options.minCount));
+
+  const response = await fetch(`${baseUrl}/wordcloud?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Word cloud failed: ${response.status}`);
+  return response.json();
+}

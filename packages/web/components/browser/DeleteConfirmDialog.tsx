@@ -51,7 +51,7 @@ export function DeleteConfirmDialog({
       title={title}
       buttonText={loading ? "Deleting..." : "Delete"}
       variant="danger"
-      confirmDisabled={!canConfirm || loading}
+      submitDisabled={!canConfirm || loading}
       darkMode={darkMode}
     >
       <p style={{ marginBottom: requireConfirmText ? 16 : 0, opacity: 0.8 }}>

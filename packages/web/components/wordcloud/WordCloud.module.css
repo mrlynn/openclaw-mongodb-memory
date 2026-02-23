@@ -1,0 +1,36 @@
+.container {
+  width: 100%;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.word {
+  font-family: 'Euclid Circular A', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 600;
+  transition: opacity 0.2s ease, filter 0.2s ease;
+  animation: wordFadeIn 0.4s ease-out both;
+  user-select: none;
+}
+
+.word:hover {
+  opacity: 0.75;
+  filter: brightness(1.25);
+}
+
+@keyframes wordFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -42,6 +42,7 @@
 .stagger4 { animation: fadeIn 0.4s ease-out 0.2s both; }
 .stagger5 { animation: fadeIn 0.4s ease-out 0.25s both; }
 .stagger6 { animation: fadeIn 0.4s ease-out 0.3s both; }
+.stagger7 { animation: fadeIn 0.4s ease-out 0.35s both; }
 
 /* Skeleton loading */
 .skeletonCard {
@@ -194,4 +195,68 @@ body[data-theme="light"] .daemonUrlBadge {
   display: flex;
   gap: 12px;
   justify-content: center;
+}
+
+/* Word Cloud section */
+.wordCloudHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wordCloudTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wordCloudControls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.wordCloudSelect {
+  min-width: 160px;
+}
+
+.wordCloudStats {
+  display: flex;
+  gap: 6px;
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.wordCloudStats strong {
+  font-weight: 600;
+}
+
+body[data-theme="dark"] .wordCloudStats strong {
+  color: #00ED64;
+}
+
+body[data-theme="light"] .wordCloudStats strong {
+  color: #00684A;
+}
+
+.statSep {
+  opacity: 0.4;
+}
+
+.wordCloudEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  opacity: 0.5;
+  font-size: 0.9rem;
+}
+
+.wordCloudLoading {
+  padding: 12px 0;
 }
