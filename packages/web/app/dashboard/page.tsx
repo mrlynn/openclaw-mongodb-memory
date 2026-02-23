@@ -6,16 +6,33 @@ import { useRouter } from "next/navigation";
 import Button from "@leafygreen-ui/button";
 import { Select, Option } from "@leafygreen-ui/select";
 import Icon from "@leafygreen-ui/icon";
-import { Database, Clock, Wifi, WifiOff, Cloud } from "lucide-react";
+import {
+  Database,
+  Clock,
+  Wifi,
+  WifiOff,
+  Cloud,
+  Scatter,
+  CalendarDays,
+} from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
 import { useThemeMode } from "@/contexts/ThemeContext";
 import { useStatus, DaemonStatus } from "@/hooks/useStatus";
-import { fetchWordCloud, WordCloudWord } from "@/lib/api";
+import {
+  fetchWordCloud,
+  WordCloudWord,
+  fetchMemoryMap,
+  MemoryMapPoint,
+  fetchTimeline,
+  TimelineDay,
+} from "@/lib/api";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { GlassCard } from "@/components/cards/GlassCard";
 import { StatusIndicator } from "@/components/cards/StatusIndicator";
 import { StatCard } from "@/components/cards/StatCard";
 import { WordCloud } from "@/components/wordcloud/WordCloud";
+import { MemoryMap } from "@/components/memorymap/MemoryMap";
+import { MemoryTimeline } from "@/components/timeline/MemoryTimeline";
 import styles from "./page.module.css";
 
 interface AgentInfo {
@@ -139,33 +156,29 @@ function DisconnectedState({
 }
 
 // ---------------------------------------------------------------------------
-// Word Cloud section — auto-loads on mount, refreshes when agent changes
+// Word Cloud section — receives agentId from parent
 // ---------------------------------------------------------------------------
 
-function WordCloudSection({ daemonUrl }: { daemonUrl: string }) {
-  const { darkMode } = useThemeMode();
+function WordCloudSection({
+  daemonUrl,
+  agentId,
+}: {
+  daemonUrl: string;
+  agentId: string;
+}) {
   const router = useRouter();
-
-  const [agents, setAgents] = useState<AgentInfo[]>([]);
-  const [agentId, setAgentId] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "";
-    }
-    return "";
-  });
 
   const [words, setWords] = useState<WordCloudWord[]>([]);
   const [totalMemories, setTotalMemories] = useState(0);
   const [totalUniqueWords, setTotalUniqueWords] = useState(0);
-  const [loadingCloud, setLoadingCloud] = useState(false);
-  const [cloudError, setCloudError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch word cloud for a given agent
   const loadWordCloud = useCallback(
     async (agent: string) => {
       if (!agent) return;
-      setLoadingCloud(true);
-      setCloudError(null);
+      setLoading(true);
+      setError(null);
       try {
         const data = await fetchWordCloud(daemonUrl, agent, {
           limit: 150,
@@ -175,15 +188,276 @@ function WordCloudSection({ daemonUrl }: { daemonUrl: string }) {
         setTotalMemories(data.totalMemories);
         setTotalUniqueWords(data.totalUniqueWords);
       } catch (err) {
-        setCloudError(err instanceof Error ? err.message : String(err));
+        setError(err instanceof Error ? err.message : String(err));
       } finally {
-        setLoadingCloud(false);
+        setLoading(false);
       }
     },
     [daemonUrl],
   );
 
-  // Fetch agents on mount, then auto-load word cloud
+  useEffect(() => {
+    if (agentId) loadWordCloud(agentId);
+  }, [agentId, loadWordCloud]);
+
+  const handleWordClick = (word: string) => {
+    router.push(`/recall?query=${encodeURIComponent(word)}`);
+  };
+
+  return (
+    <GlassCard>
+      <div className={styles.vizHeader}>
+        <div className={styles.vizTitleRow}>
+          <Cloud size={16} style={{ opacity: 0.5 }} />
+          <div className={styles.sectionLabel}>Memory Word Cloud</div>
+        </div>
+
+        {words.length > 0 && !loading && (
+          <div className={styles.vizStats}>
+            <span>
+              <strong>{totalMemories.toLocaleString()}</strong> memories
+            </span>
+            <span className={styles.statSep}>·</span>
+            <span>
+              <strong>{totalUniqueWords.toLocaleString()}</strong> words
+            </span>
+          </div>
+        )}
+      </div>
+
+      {loading && (
+        <div className={styles.vizLoading}>
+          <div
+            className="skeleton"
+            style={{ width: "100%", height: 360, borderRadius: 8 }}
+          />
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className={styles.vizEmpty}>
+          <div style={{ opacity: 0.5 }}>Could not load word cloud.</div>
+        </div>
+      )}
+
+      {!loading && !error && words.length === 0 && (
+        <div className={styles.vizEmpty}>
+          <Cloud size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
+          <div>No words to display yet.</div>
+          <div style={{ fontSize: "0.8rem", marginTop: 4, opacity: 0.6 }}>
+            Store some memories to see your word cloud.
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && words.length > 0 && (
+        <WordCloud words={words} onWordClick={handleWordClick} />
+      )}
+    </GlassCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Memory Map section — 2D semantic scatter plot via PCA
+// ---------------------------------------------------------------------------
+
+function MemoryMapSection({
+  daemonUrl,
+  agentId,
+}: {
+  daemonUrl: string;
+  agentId: string;
+}) {
+  const router = useRouter();
+
+  const [points, setPoints] = useState<MemoryMapPoint[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMap = useCallback(
+    async (agent: string) => {
+      if (!agent) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchMemoryMap(daemonUrl, agent, { limit: 300 });
+        setPoints(data.points);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [daemonUrl],
+  );
+
+  useEffect(() => {
+    if (agentId) loadMap(agentId);
+  }, [agentId, loadMap]);
+
+  const handlePointClick = (text: string) => {
+    router.push(`/recall?query=${encodeURIComponent(text)}`);
+  };
+
+  return (
+    <GlassCard>
+      <div className={styles.vizHeader}>
+        <div className={styles.vizTitleRow}>
+          <Scatter size={16} style={{ opacity: 0.5 }} />
+          <div className={styles.sectionLabel}>Semantic Memory Map</div>
+        </div>
+
+        {points.length > 0 && !loading && (
+          <div className={styles.vizStats}>
+            <span>
+              <strong>{points.length}</strong> memories projected to 2D via PCA
+            </span>
+          </div>
+        )}
+      </div>
+
+      {loading && (
+        <div className={styles.vizLoading}>
+          <div
+            className="skeleton"
+            style={{ width: "100%", height: 400, borderRadius: 8 }}
+          />
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className={styles.vizEmpty}>
+          <div style={{ opacity: 0.5 }}>Could not load memory map.</div>
+        </div>
+      )}
+
+      {!loading && !error && points.length === 0 && (
+        <div className={styles.vizEmpty}>
+          <Scatter size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
+          <div>No memories to map yet.</div>
+          <div style={{ fontSize: "0.8rem", marginTop: 4, opacity: 0.6 }}>
+            Store some memories to see your semantic map.
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && points.length > 0 && (
+        <MemoryMap points={points} onPointClick={handlePointClick} />
+      )}
+    </GlassCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Memory Timeline section — GitHub-style activity heatmap
+// ---------------------------------------------------------------------------
+
+function TimelineSection({
+  daemonUrl,
+  agentId,
+}: {
+  daemonUrl: string;
+  agentId: string;
+}) {
+  const [days, setDays] = useState<TimelineDay[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadTimeline = useCallback(
+    async (agent: string) => {
+      if (!agent) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchTimeline(daemonUrl, agent, { days: 90 });
+        setDays(data.days);
+        setTotal(data.total);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [daemonUrl],
+  );
+
+  useEffect(() => {
+    if (agentId) loadTimeline(agentId);
+  }, [agentId, loadTimeline]);
+
+  return (
+    <GlassCard>
+      <div className={styles.vizHeader}>
+        <div className={styles.vizTitleRow}>
+          <CalendarDays size={16} style={{ opacity: 0.5 }} />
+          <div className={styles.sectionLabel}>Memory Activity</div>
+        </div>
+
+        {total > 0 && !loading && (
+          <div className={styles.vizStats}>
+            <span>
+              <strong>{total.toLocaleString()}</strong> memories in the last 90
+              days
+            </span>
+          </div>
+        )}
+      </div>
+
+      {loading && (
+        <div className={styles.vizLoading}>
+          <div
+            className="skeleton"
+            style={{ width: "100%", height: 140, borderRadius: 8 }}
+          />
+        </div>
+      )}
+
+      {error && !loading && (
+        <div className={styles.vizEmpty}>
+          <div style={{ opacity: 0.5 }}>Could not load timeline.</div>
+        </div>
+      )}
+
+      {!loading && !error && days.length === 0 && (
+        <div className={styles.vizEmpty}>
+          <CalendarDays
+            size={36}
+            style={{ opacity: 0.2, marginBottom: 12 }}
+          />
+          <div>No activity yet.</div>
+          <div style={{ fontSize: "0.8rem", marginTop: 4, opacity: 0.6 }}>
+            Store some memories to see your activity timeline.
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && (days.length > 0 || total === 0) && total >= 0 && days.length > 0 && (
+        <MemoryTimeline days={days} numDays={90} />
+      )}
+    </GlassCard>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main Dashboard — agent state lifted here, shared across all viz sections
+// ---------------------------------------------------------------------------
+
+export default function DashboardPage() {
+  const { daemonUrl } = useDaemonConfig();
+  const { darkMode } = useThemeMode();
+  const { status, loading, error, refetch } = useStatus(daemonUrl);
+
+  // --- Shared agent state ---
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [agentId, setAgentId] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem(STORAGE_KEYS.AGENT_ID) || "";
+    }
+    return "";
+  });
+
+  // Fetch agents on mount, resolve which one to use
   useEffect(() => {
     const init = async () => {
       try {
@@ -193,7 +467,6 @@ function WordCloudSection({ daemonUrl }: { daemonUrl: string }) {
         const agentsList: AgentInfo[] = data.agents || [];
         setAgents(agentsList);
 
-        // Resolve which agent to use
         const stored =
           typeof window !== "undefined"
             ? localStorage.getItem(STORAGE_KEYS.AGENT_ID)
@@ -206,120 +479,42 @@ function WordCloudSection({ daemonUrl }: { daemonUrl: string }) {
         if (resolvedAgent) {
           setAgentId(resolvedAgent);
           localStorage.setItem(STORAGE_KEYS.AGENT_ID, resolvedAgent);
-          loadWordCloud(resolvedAgent);
         }
       } catch {
-        // Silently fail — dashboard system stats are still useful
+        // Silently fail — dashboard system stats still useful
       }
     };
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [daemonUrl]);
 
   const handleAgentChange = (val: string) => {
     setAgentId(val);
     localStorage.setItem(STORAGE_KEYS.AGENT_ID, val);
-    loadWordCloud(val);
   };
-
-  const handleWordClick = (word: string) => {
-    localStorage.setItem(STORAGE_KEYS.AGENT_ID, agentId);
-    router.push(`/recall?query=${encodeURIComponent(word)}`);
-  };
-
-  // Don't render section at all if no agents available
-  if (agents.length === 0 && !loadingCloud) return null;
-
-  return (
-    <GlassCard>
-      <div className={styles.wordCloudHeader}>
-        <div className={styles.wordCloudTitleRow}>
-          <Cloud size={16} style={{ opacity: 0.5 }} />
-          <div className={styles.sectionLabel}>Memory Word Cloud</div>
-        </div>
-
-        <div className={styles.wordCloudControls}>
-          {words.length > 0 && !loadingCloud && (
-            <div className={styles.wordCloudStats}>
-              <span>
-                <strong>{totalMemories.toLocaleString()}</strong> memories
-              </span>
-              <span className={styles.statSep}>·</span>
-              <span>
-                <strong>{totalUniqueWords.toLocaleString()}</strong> words
-              </span>
-            </div>
-          )}
-
-          {agents.length > 1 && (
-            <div className={styles.wordCloudSelect}>
-              <Select
-                aria-label="Agent"
-                value={agentId}
-                onChange={handleAgentChange}
-                size="xsmall"
-                darkMode={darkMode}
-              >
-                {agents.map((agent) => (
-                  <Option key={agent.agentId} value={agent.agentId}>
-                    {agent.agentId}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Loading */}
-      {loadingCloud && (
-        <div className={styles.wordCloudLoading}>
-          <div
-            className="skeleton"
-            style={{ width: "100%", height: 360, borderRadius: 8 }}
-          />
-        </div>
-      )}
-
-      {/* Error */}
-      {cloudError && !loadingCloud && (
-        <div className={styles.wordCloudEmpty}>
-          <div style={{ opacity: 0.5 }}>
-            Could not load word cloud.
-          </div>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!loadingCloud && !cloudError && words.length === 0 && (
-        <div className={styles.wordCloudEmpty}>
-          <Cloud size={36} style={{ opacity: 0.2, marginBottom: 12 }} />
-          <div>No words to display yet.</div>
-          <div style={{ fontSize: "0.8rem", marginTop: 4, opacity: 0.6 }}>
-            Store some memories to see your word cloud.
-          </div>
-        </div>
-      )}
-
-      {/* Word cloud */}
-      {!loadingCloud && !cloudError && words.length > 0 && (
-        <WordCloud words={words} onWordClick={handleWordClick} />
-      )}
-    </GlassCard>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main Dashboard
-// ---------------------------------------------------------------------------
-
-export default function DashboardPage() {
-  const { daemonUrl } = useDaemonConfig();
-  const { status, loading, error, refetch } = useStatus(daemonUrl);
 
   return (
     <div className={styles.page}>
-      <h2 className={styles.title}>Dashboard</h2>
+      <div className={styles.dashboardHeader}>
+        <h2 className={styles.title}>Dashboard</h2>
+
+        {agents.length > 1 && (
+          <div className={styles.agentSelector}>
+            <Select
+              aria-label="Agent"
+              value={agentId}
+              onChange={handleAgentChange}
+              size="xsmall"
+              darkMode={darkMode}
+            >
+              {agents.map((agent) => (
+                <Option key={agent.agentId} value={agent.agentId}>
+                  {agent.agentId}
+                </Option>
+              ))}
+            </Select>
+          </div>
+        )}
+      </div>
 
       {!loading && error && (
         <div className={styles.errorWrap}>
@@ -329,7 +524,9 @@ export default function DashboardPage() {
 
       {loading ? (
         <div className={styles.statsGrid}>
-          <div className={`${styles.fullRow} skeleton ${styles.skeletonCard}`} />
+          <div
+            className={`${styles.fullRow} skeleton ${styles.skeletonCard}`}
+          />
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className={`skeleton ${styles.skeletonStat}`} />
           ))}
@@ -338,15 +535,37 @@ export default function DashboardPage() {
         <div className={styles.statsGrid}>
           {status && (
             <>
-              <div className={`${styles.fullRow} ${styles.stagger1}`}>
-                <WordCloudSection daemonUrl={daemonUrl} />
-              </div>
+              {/* Visualization sections — only show if we have an agent */}
+              {agentId && (
+                <>
+                  <div className={`${styles.fullRow} ${styles.stagger1}`}>
+                    <WordCloudSection
+                      daemonUrl={daemonUrl}
+                      agentId={agentId}
+                    />
+                  </div>
 
-              <div className={`${styles.fullRow} ${styles.stagger2}`}>
+                  <div className={`${styles.fullRow} ${styles.stagger2}`}>
+                    <MemoryMapSection
+                      daemonUrl={daemonUrl}
+                      agentId={agentId}
+                    />
+                  </div>
+
+                  <div className={`${styles.fullRow} ${styles.stagger3}`}>
+                    <TimelineSection
+                      daemonUrl={daemonUrl}
+                      agentId={agentId}
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className={`${styles.fullRow} ${styles.stagger4}`}>
                 <ServiceStatusPanel status={status} />
               </div>
 
-              <div className={styles.stagger3}>
+              <div className={styles.stagger5}>
                 <StatCard
                   icon={<Database size={22} />}
                   label="Total Memories"
@@ -354,7 +573,7 @@ export default function DashboardPage() {
                   color="#016BF8"
                 />
               </div>
-              <div className={styles.stagger4}>
+              <div className={styles.stagger6}>
                 <StatCard
                   icon={<Clock size={22} />}
                   label="Uptime"
@@ -362,7 +581,7 @@ export default function DashboardPage() {
                   color="#00ED64"
                 />
               </div>
-              <div className={styles.stagger5}>
+              <div className={styles.stagger7}>
                 <StatCard
                   icon={<Icon glyph="Charts" size={22} />}
                   label="Heap Used"
@@ -371,7 +590,7 @@ export default function DashboardPage() {
                   color="#FFC010"
                 />
               </div>
-              <div className={styles.stagger6}>
+              <div className={styles.stagger8}>
                 <StatCard
                   icon={error ? <WifiOff size={22} /> : <Wifi size={22} />}
                   label="Connection"
@@ -381,7 +600,7 @@ export default function DashboardPage() {
                 />
               </div>
 
-              <div className={`${styles.fullRow} ${styles.stagger7}`}>
+              <div className={`${styles.fullRow} ${styles.stagger9}`}>
                 <HeapUsageBar
                   used={status.memory.heapUsed}
                   total={status.memory.heapTotal}

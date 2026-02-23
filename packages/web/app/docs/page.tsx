@@ -1,40 +1,18 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  TextField,
-  InputAdornment,
-  Chip,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemText,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  IconButton,
-  Tooltip,
-  Alert,
-} from '@mui/material';
-import {
-  Search as SearchIcon,
-  ExpandMore as ExpandMoreIcon,
-  ContentCopy as CopyIcon,
-  CheckCircle as CheckIcon,
-  PlayArrow as RunIcon,
-  Architecture as ArchitectureIcon,
-  Help as HelpIcon,
-  Code as CodeIcon,
-  Book as BookIcon,
-} from '@mui/icons-material';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { AppShell } from '../../components/layout/AppShell';
+import TextInput from '@leafygreen-ui/text-input';
+import Icon from '@leafygreen-ui/icon';
+import { H2, Body, Label } from '@leafygreen-ui/typography';
+import Card from '@leafygreen-ui/card';
+// import { Tabs, Tab } from '@leafygreen-ui/tabs'; // SSR issues, using buttons instead
+import Badge from '@leafygreen-ui/badge';
+import Button from '@leafygreen-ui/button';
+// import Code from '@leafygreen-ui/code'; // SSR issues, using pre/code instead
+import Banner from '@leafygreen-ui/banner';
+import styles from './page.module.css';
 
 interface DocSection {
   id: string;
@@ -54,7 +32,7 @@ const docSections: DocSection[] = [
     id: 'quickstart-install',
     title: 'Quick Start - Installation',
     category: 'quickstart',
-    content: `Get started with OpenClaw Memory in under 5 minutes.`,
+    content: 'Get started with OpenClaw Memory in under 5 minutes.',
     codeExamples: [
       {
         language: 'bash',
@@ -68,7 +46,6 @@ pnpm install
 # Configure environment
 cd packages/daemon
 cp .env.example .env.local
-# Edit .env.local with your MongoDB URI
 
 # Start daemon
 npm start`,
@@ -80,7 +57,7 @@ npm start`,
     id: 'api-remember',
     title: 'API - Store Memory',
     category: 'api',
-    content: `Store a memory with semantic embedding.`,
+    content: 'Store a memory with semantic embedding.',
     codeExamples: [
       {
         language: 'bash',
@@ -93,17 +70,6 @@ npm start`,
   }'`,
         runnable: true,
       },
-      {
-        language: 'typescript',
-        code: `import { MemoryClient } from '@openclaw-memory/client';
-
-const client = new MemoryClient('http://localhost:7751', 'my-agent');
-
-await client.remember({
-  text: 'Important fact to remember',
-  tags: ['work', 'priority'],
-});`,
-      },
     ],
     tags: ['api', 'remember', 'store', 'example'],
   },
@@ -111,19 +77,12 @@ await client.remember({
     id: 'api-recall',
     title: 'API - Semantic Search',
     category: 'api',
-    content: `Search memories using semantic similarity.`,
+    content: 'Search memories using semantic similarity.',
     codeExamples: [
       {
         language: 'bash',
         code: `curl "http://localhost:7751/recall?agentId=my-agent&query=important+facts&limit=5"`,
         runnable: true,
-      },
-      {
-        language: 'typescript',
-        code: `const results = await client.recall('important facts', 5);
-results.forEach(memory => {
-  console.log(memory.text, memory.score);
-});`,
       },
     ],
     tags: ['api', 'recall', 'search', 'semantic', 'example'],
@@ -132,7 +91,7 @@ results.forEach(memory => {
     id: 'troubleshooting-port',
     title: 'Troubleshooting - Port Already in Use',
     category: 'troubleshooting',
-    content: `Error: listen EADDRINUSE: address already in use :::7751`,
+    content: 'Error: listen EADDRINUSE: address already in use :::7751',
     codeExamples: [
       {
         language: 'bash',
@@ -143,13 +102,13 @@ lsof -ti:7751 | xargs kill -9
 echo "MEMORY_DAEMON_PORT=7752" >> packages/daemon/.env.local`,
       },
     ],
-    tags: ['troubleshooting', 'error', 'port', 'eaddrinuse'],
+    tags: ['troubleshooting', 'error', 'port'],
   },
   {
     id: 'architecture-overview',
     title: 'Architecture - System Overview',
     category: 'architecture',
-    content: `OpenClaw Memory uses a two-tier strategy: file-based memory (MEMORY.md) for curated long-term wisdom, and MongoDB for semantic search at scale.`,
+    content: 'OpenClaw Memory uses a two-tier strategy: file-based memory (MEMORY.md) for curated long-term wisdom, and MongoDB for semantic search at scale.',
     tags: ['architecture', 'overview', 'design'],
   },
 ];
@@ -159,8 +118,14 @@ export default function DocsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const categories = ['All', 'Quick Start', 'API Reference', 'Architecture', 'Troubleshooting'];
-  
+  const categories = [
+    { id: 0, label: 'All' },
+    { id: 1, label: 'Quick Start' },
+    { id: 2, label: 'API Reference' },
+    { id: 3, label: 'Architecture' },
+    { id: 4, label: 'Troubleshooting' },
+  ];
+
   const filteredSections = docSections.filter(section => {
     const matchesTab = selectedTab === 0 || 
       (selectedTab === 1 && section.category === 'quickstart') ||
@@ -182,147 +147,109 @@ export default function DocsPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleRun = async (code: string) => {
-    // Extract the curl command and execute it
-    alert('Running code... (Demo mode)');
-    // TODO: Implement actual code execution
-  };
-
   return (
     <AppShell>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <div className={styles.container}>
         {/* Header */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h3" gutterBottom>
-            📚 Documentation
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Interactive guides, API reference, and troubleshooting
-          </Typography>
-        </Box>
+        <div className={styles.header}>
+          <H2>📚 Documentation</H2>
+          <Body>Interactive guides, API reference, and troubleshooting</Body>
+        </div>
 
         {/* Search */}
-        <TextField
-          fullWidth
-          placeholder="Search documentation..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-          sx={{ mb: 3 }}
-        />
+        <div className={styles.search}>
+          <TextInput
+            label=""
+            placeholder="Search documentation..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-        {/* Tabs */}
-        <Tabs value={selectedTab} onChange={(_, v) => setSelectedTab(v)} sx={{ mb: 3 }}>
-          {categories.map((cat, i) => (
-            <Tab key={i} label={cat} />
+        {/* Category Buttons (instead of Tabs for SSR compatibility) */}
+        <div className={styles.categories}>
+          {categories.map((cat) => (
+            <Button
+              key={cat.id}
+              variant={selectedTab === cat.id ? 'primary' : 'default'}
+              onClick={() => setSelectedTab(cat.id)}
+              size="small"
+            >
+              {cat.label}
+            </Button>
           ))}
-        </Tabs>
+        </div>
 
         {/* Results Count */}
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {filteredSections.length} {filteredSections.length === 1 ? 'result' : 'results'}
-        </Typography>
+        <div className={styles.resultsCount}>
+          <Body>
+            {filteredSections.length} {filteredSections.length === 1 ? 'result' : 'results'}
+          </Body>
+        </div>
 
         {/* Documentation Sections */}
-        {filteredSections.map((section) => (
-          <Card key={section.id} sx={{ mb: 2 }}>
-            <CardContent>
+        <div className={styles.sections}>
+          {filteredSections.map((section) => (
+            <Card key={section.id} className={styles.card}>
               {/* Section Header */}
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                {section.category === 'architecture' && <ArchitectureIcon sx={{ mr: 1 }} />}
-                {section.category === 'troubleshooting' && <HelpIcon sx={{ mr: 1 }} />}
-                {section.category === 'api' && <CodeIcon sx={{ mr: 1 }} />}
-                {section.category === 'quickstart' && <BookIcon sx={{ mr: 1 }} />}
-                <Typography variant="h6">{section.title}</Typography>
-              </Box>
+              <div className={styles.cardHeader}>
+                <H2>{section.title}</H2>
+              </div>
 
               {/* Tags */}
-              <Box sx={{ mb: 2 }}>
+              <div className={styles.tags}>
                 {section.tags.map((tag) => (
-                  <Chip key={tag} label={tag} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                  <Badge key={tag} variant="lightgray">{tag}</Badge>
                 ))}
-              </Box>
+              </div>
 
               {/* Content */}
-              <Typography variant="body1" sx={{ mb: 2 }}>
-                {section.content}
-              </Typography>
+              <div className={styles.content}>
+                <Body>{section.content}</Body>
+              </div>
 
               {/* Code Examples */}
               {section.codeExamples?.map((example, idx) => (
-                <Box key={idx} sx={{ mb: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Chip label={example.language} size="small" />
-                    <Box>
-                      {example.runnable && (
-                        <Tooltip title="Run code">
-                          <IconButton size="small" onClick={() => handleRun(example.code)}>
-                            <RunIcon fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <Tooltip title={copiedId === `${section.id}-${idx}` ? 'Copied!' : 'Copy code'}>
-                        <IconButton 
-                          size="small" 
-                          onClick={() => handleCopy(example.code, `${section.id}-${idx}`)}
-                        >
-                          {copiedId === `${section.id}-${idx}` ? (
-                            <CheckIcon fontSize="small" color="success" />
-                          ) : (
-                            <CopyIcon fontSize="small" />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                  <Box
-                    component="pre"
-                    sx={{
-                      p: 2,
-                      bgcolor: 'grey.900',
-                      color: 'grey.100',
-                      borderRadius: 1,
-                      overflow: 'auto',
-                      fontSize: '0.875rem',
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {example.code}
-                  </Box>
-                </Box>
+                <div key={idx} className={styles.codeBlock}>
+                  <div className={styles.codeHeader}>
+                    <Badge>{example.language}</Badge>
+                    <Button
+                      size="small"
+                      onClick={() => handleCopy(example.code, `${section.id}-${idx}`)}
+                    >
+                      {copiedId === `${section.id}-${idx}` ? '✓ Copied' : 'Copy'}
+                    </Button>
+                  </div>
+                  <pre className={styles.codeSnippet}>
+                    <code>{example.code}</code>
+                  </pre>
+                </div>
               ))}
-            </CardContent>
-          </Card>
-        ))}
+            </Card>
+          ))}
+        </div>
 
         {/* No Results */}
         {filteredSections.length === 0 && (
-          <Alert severity="info">
-            No documentation found for "{searchQuery}". Try a different search term.
-          </Alert>
+          <Banner variant="info">
+            No documentation found for &quot;{searchQuery}&quot;. Try a different search term.
+          </Banner>
         )}
 
-        {/* Footer Links */}
-        <Box sx={{ mt: 4, pt: 3, borderTop: 1, borderColor: 'divider' }}>
-          <Typography variant="body2" color="text.secondary">
+        {/* Footer */}
+        <div className={styles.footer}>
+          <Body>
             Full documentation available on{' '}
             <a 
               href="https://github.com/mrlynn/openclaw-mongodb-memory" 
               target="_blank" 
               rel="noopener noreferrer"
-              style={{ color: 'inherit' }}
             >
               GitHub
             </a>
-          </Typography>
-        </Box>
-      </Container>
+          </Body>
+        </div>
+      </div>
     </AppShell>
   );
 }

@@ -131,3 +131,66 @@ export async function fetchWordCloud(
   if (!response.ok) throw new Error(`Word cloud failed: ${response.status}`);
   return response.json();
 }
+
+// --- Memory Map (Semantic Scatter Plot) ---
+
+export interface MemoryMapPoint {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  tags: string[];
+  createdAt: string;
+}
+
+export interface MemoryMapResponse {
+  success: boolean;
+  agentId: string;
+  count: number;
+  points: MemoryMapPoint[];
+}
+
+export async function fetchMemoryMap(
+  baseUrl: string,
+  agentId: string,
+  options?: { limit?: number }
+): Promise<MemoryMapResponse> {
+  const params = new URLSearchParams({ agentId });
+  if (options?.limit) params.set("limit", String(options.limit));
+
+  const response = await fetch(`${baseUrl}/embeddings?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Memory map failed: ${response.status}`);
+  return response.json();
+}
+
+// --- Memory Timeline (Activity Heatmap) ---
+
+export interface TimelineDay {
+  date: string;
+  count: number;
+}
+
+export interface TimelineResponse {
+  success: boolean;
+  agentId: string;
+  days: TimelineDay[];
+  total: number;
+  dateRange: { from: string; to: string };
+}
+
+export async function fetchTimeline(
+  baseUrl: string,
+  agentId: string,
+  options?: { days?: number }
+): Promise<TimelineResponse> {
+  const params = new URLSearchParams({ agentId });
+  if (options?.days) params.set("days", String(options.days));
+
+  const response = await fetch(`${baseUrl}/timeline?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Timeline failed: ${response.status}`);
+  return response.json();
+}

@@ -2,11 +2,25 @@
   animation: fadeIn 0.4s ease-out;
 }
 
+/* Dashboard header with title + agent selector */
+.dashboardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .title {
   font-weight: 600;
   font-size: 1.75rem;
   letter-spacing: normal;
-  margin-bottom: 24px;
+  margin: 0;
+}
+
+.agentSelector {
+  min-width: 160px;
 }
 
 .errorWrap {
@@ -35,7 +49,7 @@
   grid-column: 1 / -1;
 }
 
-/* Stagger animation for stat cards */
+/* Stagger animation for cards */
 .stagger1 { animation: fadeIn 0.4s ease-out 0.05s both; }
 .stagger2 { animation: fadeIn 0.4s ease-out 0.1s both; }
 .stagger3 { animation: fadeIn 0.4s ease-out 0.15s both; }
@@ -43,6 +57,8 @@
 .stagger5 { animation: fadeIn 0.4s ease-out 0.25s both; }
 .stagger6 { animation: fadeIn 0.4s ease-out 0.3s both; }
 .stagger7 { animation: fadeIn 0.4s ease-out 0.35s both; }
+.stagger8 { animation: fadeIn 0.4s ease-out 0.4s both; }
+.stagger9 { animation: fadeIn 0.4s ease-out 0.45s both; }
 
 /* Skeleton loading */
 .skeletonCard {
@@ -197,8 +213,8 @@ body[data-theme="light"] .daemonUrlBadge {
   justify-content: center;
 }
 
-/* Word Cloud section */
-.wordCloudHeader {
+/* --- Shared visualization section styles --- */
+.vizHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -207,38 +223,28 @@ body[data-theme="light"] .daemonUrlBadge {
   gap: 8px;
 }
 
-.wordCloudTitleRow {
+.vizTitleRow {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.wordCloudControls {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.wordCloudSelect {
-  min-width: 160px;
-}
-
-.wordCloudStats {
+.vizStats {
   display: flex;
   gap: 6px;
   font-size: 0.75rem;
   opacity: 0.6;
 }
 
-.wordCloudStats strong {
+.vizStats strong {
   font-weight: 600;
 }
 
-body[data-theme="dark"] .wordCloudStats strong {
+body[data-theme="dark"] .vizStats strong {
   color: #00ED64;
 }
 
-body[data-theme="light"] .wordCloudStats strong {
+body[data-theme="light"] .vizStats strong {
   color: #00684A;
 }
 
@@ -246,7 +252,7 @@ body[data-theme="light"] .wordCloudStats strong {
   opacity: 0.4;
 }
 
-.wordCloudEmpty {
+.vizEmpty {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -257,6 +263,6 @@ body[data-theme="light"] .wordCloudStats strong {
   font-size: 0.9rem;
 }
 
-.wordCloudLoading {
+.vizLoading {
   padding: 12px 0;
 }
