@@ -60,6 +60,7 @@
 .stagger8 { animation: fadeIn 0.4s ease-out 0.4s both; }
 .stagger9 { animation: fadeIn 0.4s ease-out 0.45s both; }
 .stagger10 { animation: fadeIn 0.4s ease-out 0.5s both; }
+.stagger11 { animation: fadeIn 0.4s ease-out 0.55s both; }
 
 /* Skeleton loading */
 .skeletonCard {
@@ -266,4 +267,42 @@ body[data-theme="light"] .vizStats strong {
 
 .vizLoading {
   padding: 12px 0;
+}
+
+/* 2D / 3D dimension toggle pill */
+.dimensionToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: background 0.2s, color 0.2s;
+  line-height: 1;
+  height: 22px;
+}
+
+body[data-theme="dark"] .dimensionToggle {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+body[data-theme="dark"] .dimensionToggle:hover {
+  background: rgba(0, 237, 100, 0.12);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .dimensionToggle {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.45);
+}
+
+body[data-theme="light"] .dimensionToggle:hover {
+  background: rgba(0, 104, 74, 0.1);
+  color: #00684A;
 }

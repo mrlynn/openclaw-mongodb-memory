@@ -3,11 +3,12 @@ import { z } from "zod";
 import { Db } from "mongodb";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { COLLECTION_MEMORIES } from "../constants";
-import { projectTo2D } from "../pca";
+import { projectTo2D, projectTo3D } from "../pca";
 
 const EmbeddingsSchema = z.object({
   agentId: z.string().min(1),
   limit: z.coerce.number().int().positive().max(500).default(200),
+  dimensions: z.coerce.number().int().min(2).max(3).default(2),
 });
 
 /**
@@ -68,23 +69,56 @@ export const embeddingsRoute = asyncHandler(
     }
 
     const vectors = validDocs.map((d) => d.embedding as number[]);
+
+    const truncateText = (doc: (typeof validDocs)[0]) =>
+      typeof doc.text === "string"
+        ? doc.text.length > 200
+          ? doc.text.slice(0, 200) + "..."
+          : doc.text
+        : "";
+
+    const getTags = (doc: (typeof validDocs)[0]) =>
+      Array.isArray(doc.tags) ? doc.tags : [];
+
+    const getDate = (doc: (typeof validDocs)[0]) =>
+      doc.createdAt
+        ? new Date(doc.createdAt).toISOString()
+        : new Date().toISOString();
+
+    if (data.dimensions === 3) {
+      const { points: projected, varianceExplained } = projectTo3D(vectors);
+
+      const points = validDocs.map((doc, i) => ({
+        id: doc._id.toString(),
+        x: Math.round(projected[i][0] * 10000) / 10000,
+        y: Math.round(projected[i][1] * 10000) / 10000,
+        z: Math.round(projected[i][2] * 10000) / 10000,
+        text: truncateText(doc),
+        tags: getTags(doc),
+        createdAt: getDate(doc),
+      }));
+
+      res.json({
+        success: true,
+        agentId: data.agentId,
+        count: points.length,
+        dimensions: 3,
+        varianceExplained,
+        points,
+      });
+      return;
+    }
+
+    // Default: 2D projection
     const { points: projected } = projectTo2D(vectors);
 
-    // Build response with 2D points and truncated text previews
     const points = validDocs.map((doc, i) => ({
       id: doc._id.toString(),
       x: Math.round(projected[i][0] * 10000) / 10000,
       y: Math.round(projected[i][1] * 10000) / 10000,
-      text:
-        typeof doc.text === "string"
-          ? doc.text.length > 200
-            ? doc.text.slice(0, 200) + "..."
-            : doc.text
-          : "",
-      tags: Array.isArray(doc.tags) ? doc.tags : [],
-      createdAt: doc.createdAt
-        ? new Date(doc.createdAt).toISOString()
-        : new Date().toISOString(),
+      text: truncateText(doc),
+      tags: getTags(doc),
+      createdAt: getDate(doc),
     }));
 
     res.json({

@@ -22,7 +22,7 @@ All configuration is done through environment variables. The daemon loads `.env`
 | ----------------- | ------------------------------------------------------ | ----------------------------- |
 | `VOYAGE_API_KEY`  | Voyage AI API key (required unless `VOYAGE_MOCK=true`) | —                             |
 | `VOYAGE_MOCK`     | Use deterministic mock embeddings                      | `false`                       |
-| `VOYAGE_MODEL`    | Embedding model name                                   | `voyage-3`                    |
+| `VOYAGE_MODEL`    | Embedding model name                                   | `voyage-4`                    |
 | `VOYAGE_BASE_URL` | Custom API base URL (for MongoDB Atlas AI)             | `https://api.voyageai.com/v1` |
 
 ### Daemon
@@ -71,7 +71,7 @@ To use MongoDB Atlas as your embedding provider instead of Voyage AI directly:
 ```bash
 VOYAGE_API_KEY=al-xxx  # MongoDB Atlas AI key
 VOYAGE_BASE_URL=https://ai.mongodb.com/v1
-VOYAGE_MODEL=voyage-3
+VOYAGE_MODEL=voyage-4
 ```
 
 ## Config Validation

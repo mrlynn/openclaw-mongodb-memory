@@ -23,27 +23,47 @@ mkdir -p "$PACKAGE_DIR"
 
 echo "Copying files..."
 
-# Copy source packages
-cp -r "$PROJECT_ROOT/packages" "$PACKAGE_DIR/"
+# Copy source packages (excluding build artifacts)
+echo "  - packages/"
+rsync -a --exclude='node_modules' \
+         --exclude='.next' \
+         --exclude='dist' \
+         --exclude='build' \
+         --exclude='.turbo' \
+         "$PROJECT_ROOT/packages/" "$PACKAGE_DIR/packages/"
 
 # Copy plugin
 if [ -d "$PROJECT_ROOT/plugin" ]; then
-    cp -r "$PROJECT_ROOT/plugin" "$PACKAGE_DIR/"
+    echo "  - plugin/"
+    rsync -a --exclude='node_modules' \
+             --exclude='dist' \
+             --exclude='build' \
+             "$PROJECT_ROOT/plugin/" "$PACKAGE_DIR/plugin/"
 else
-    echo "⚠️  Plugin directory not found, skipping"
+    echo "  ⚠️  Plugin directory not found, skipping"
 fi
 
 # Copy documentation
+echo "  - documentation"
 cp "$PROJECT_ROOT/README.md" "$PACKAGE_DIR/"
 cp "$PROJECT_ROOT/INSTALL.md" "$PACKAGE_DIR/"
-cp "$PROJECT_ROOT/SCHEMA.md" "$PACKAGE_DIR/"
-cp "$PROJECT_ROOT/FOR_ENGINEERS.md" "$PACKAGE_DIR/"
-cp "$PROJECT_ROOT/SKILL.md" "$PACKAGE_DIR/"
+cp "$PROJECT_ROOT/CHANGELOG.md" "$PACKAGE_DIR/" 2>/dev/null || true
+cp "$PROJECT_ROOT/TROUBLESHOOTING.md" "$PACKAGE_DIR/" 2>/dev/null || true
+
+# Copy docs directory
+if [ -d "$PROJECT_ROOT/docs" ]; then
+    echo "  - docs/"
+    cp -r "$PROJECT_ROOT/docs" "$PACKAGE_DIR/"
+else
+    echo "  ⚠️  Docs directory not found, skipping"
+fi
 
 # Copy scripts
+echo "  - scripts/"
 cp -r "$PROJECT_ROOT/scripts" "$PACKAGE_DIR/"
 
 # Copy root package.json and pnpm files
+echo "  - package config"
 cp "$PROJECT_ROOT/package.json" "$PACKAGE_DIR/"
 cp "$PROJECT_ROOT/pnpm-workspace.yaml" "$PACKAGE_DIR/" 2>/dev/null || true
 cp "$PROJECT_ROOT/pnpm-lock.yaml" "$PACKAGE_DIR/" 2>/dev/null || true

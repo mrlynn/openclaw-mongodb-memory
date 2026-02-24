@@ -134,6 +134,7 @@ export interface MemoryMapPoint {
   id: string;
   x: number;
   y: number;
+  z?: number;
   text: string;
   tags: string[];
   createdAt: string;
@@ -143,16 +144,19 @@ export interface MemoryMapResponse {
   success: boolean;
   agentId: string;
   count: number;
+  dimensions?: number;
+  varianceExplained?: [number, number, number];
   points: MemoryMapPoint[];
 }
 
 export async function fetchMemoryMap(
   baseUrl: string,
   agentId: string,
-  options?: { limit?: number },
+  options?: { limit?: number; dimensions?: number },
 ): Promise<MemoryMapResponse> {
   const params = new URLSearchParams({ agentId });
   if (options?.limit) params.set("limit", String(options.limit));
+  if (options?.dimensions) params.set("dimensions", String(options.dimensions));
 
   const response = await fetch(`${baseUrl}/embeddings?${params.toString()}`, {
     cache: "no-store",
@@ -201,6 +205,9 @@ export interface MemoryTimelineItem {
   createdAt: string;
   updatedAt: string;
   expiresAt: string | null;
+  layer: string | null;
+  memoryType: string | null;
+  confidence: number | null;
 }
 
 export interface MemoriesPageResponse {
@@ -339,6 +346,157 @@ export interface RestoreResponse {
   totalReceived: number;
   totalInserted: number;
   errors: Array<{ index: number; snippet: string; error: string }>;
+}
+
+// --- Usage & Cost Tracking ---
+
+// Matches actual daemon response from GET /usage/summary
+export interface UsageSummary {
+  success: boolean;
+  days: number;
+  agentId: string;
+  totalTokens: number;
+  totalCostUsd: number;
+  totalCalls: number;
+  avgTokensPerCall: number;
+  costPerMemory: number;
+  totalMemories: number;
+  byOperation: Record<string, { tokens: number; cost: number; calls: number }>;
+  byModel: Record<string, { tokens: number; cost: number; calls: number }>;
+}
+
+// Matches actual daemon response from GET /usage/timeline
+export interface UsageTimelineBucket {
+  date: string;
+  tokens: number;
+  cost: number;
+  calls: number;
+}
+
+export interface UsageTimelineResponse {
+  success: boolean;
+  days: number;
+  granularity: string;
+  buckets: UsageTimelineBucket[];
+}
+
+// Matches actual daemon response from GET /usage/by-agent
+export interface UsageAgentBreakdown {
+  agentId: string;
+  tokens: number;
+  cost: number;
+  calls: number;
+  memoryCount: number;
+  costPerMemory: number;
+  lastActivity: string;
+}
+
+export interface UsageByAgentResponse {
+  success: boolean;
+  days: number;
+  agents: UsageAgentBreakdown[];
+}
+
+// Matches actual daemon response from GET /usage/pipeline-breakdown
+export interface PipelineStageBreakdown {
+  stage: string;
+  tokens: number;
+  cost: number;
+  calls: number;
+  avgTokensPerCall: number;
+  percentOfTotal: number;
+}
+
+export interface PipelineBreakdownResponse {
+  success: boolean;
+  days: number;
+  totalPipelineTokens: number;
+  stages: PipelineStageBreakdown[];
+}
+
+// Matches actual daemon response from GET /usage/projections
+export interface UsageProjections {
+  success: boolean;
+  windowDays: number;
+  projectedMonthlyCostUsd: number;
+  projectedMonthlyTokens: number;
+  costPerMemory: number;
+  costEfficiency: number;
+  reflectionCostRatio: number;
+  dailyAvgCostUsd: number;
+  dailyAvgTokens: number;
+  totalMemories: number;
+  recallsInWindow: number;
+}
+
+export async function fetchUsageSummary(
+  baseUrl: string,
+  options?: { days?: number; agentId?: string },
+): Promise<UsageSummary> {
+  const params = new URLSearchParams();
+  if (options?.days) params.set("days", String(options.days));
+  if (options?.agentId) params.set("agentId", options.agentId);
+  const response = await fetch(`${baseUrl}/usage/summary?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Usage summary failed: ${response.status}`);
+  return response.json();
+}
+
+export async function fetchUsageTimeline(
+  baseUrl: string,
+  options?: { days?: number; granularity?: string; agentId?: string },
+): Promise<UsageTimelineResponse> {
+  const params = new URLSearchParams();
+  if (options?.days) params.set("days", String(options.days));
+  if (options?.granularity) params.set("granularity", options.granularity);
+  if (options?.agentId) params.set("agentId", options.agentId);
+  const response = await fetch(`${baseUrl}/usage/timeline?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Usage timeline failed: ${response.status}`);
+  return response.json();
+}
+
+export async function fetchUsageByAgent(
+  baseUrl: string,
+  options?: { days?: number },
+): Promise<UsageByAgentResponse> {
+  const params = new URLSearchParams();
+  if (options?.days) params.set("days", String(options.days));
+  const response = await fetch(`${baseUrl}/usage/by-agent?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Usage by-agent failed: ${response.status}`);
+  return response.json();
+}
+
+export async function fetchPipelineBreakdown(
+  baseUrl: string,
+  options?: { days?: number; agentId?: string },
+): Promise<PipelineBreakdownResponse> {
+  const params = new URLSearchParams();
+  if (options?.days) params.set("days", String(options.days));
+  if (options?.agentId) params.set("agentId", options.agentId);
+  const response = await fetch(`${baseUrl}/usage/pipeline-breakdown?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Pipeline breakdown failed: ${response.status}`);
+  return response.json();
+}
+
+export async function fetchUsageProjections(
+  baseUrl: string,
+  options?: { days?: number; agentId?: string },
+): Promise<UsageProjections> {
+  const params = new URLSearchParams();
+  if (options?.days) params.set("days", String(options.days));
+  if (options?.agentId) params.set("agentId", options.agentId);
+  const response = await fetch(`${baseUrl}/usage/projections?${params.toString()}`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`Usage projections failed: ${response.status}`);
+  return response.json();
 }
 
 export async function restoreMemories(

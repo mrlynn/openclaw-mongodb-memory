@@ -1,14 +1,15 @@
 {
   "id": "openclaw-memory",
   "name": "OpenClaw Memory",
-  "version": "1.0.0",
+  "version": "0.2.1",
   "kind": "memory",
   "description": "MongoDB-backed long-term memory with Voyage AI embeddings (unified plugin)",
   "author": "Michael Lynn",
   "slots": ["memory"],
   "provides": {
-    "tools": ["memory_search", "memory_get"],
-    "gateway": ["memory.status", "memory.remember", "memory.recall", "memory.forget"]
+    "tools": ["memory_search", "memory_remember", "memory_forget", "memory_list", "memory_status"],
+    "gateway": ["memory.status", "memory.remember", "memory.recall", "memory.forget"],
+    "hooks": ["auto-remember", "session-to-memory", "memory-bootstrap", "memory-enriched-tools"]
   },
   "configSchema": {
     "type": "object",
@@ -22,6 +23,14 @@
         "type": "string",
         "default": "openclaw",
         "description": "Agent ID for memory storage"
+      },
+      "apiKey": {
+        "type": "string",
+        "description": "API key for daemon authentication (matches MEMORY_API_KEY on daemon)"
+      },
+      "projectId": {
+        "type": "string",
+        "description": "Project ID for multi-project memory isolation (optional)"
       },
       "defaultTtl": {
         "type": "number",
@@ -43,11 +52,25 @@
         "default": true,
         "description": "Auto-start daemon on gateway launch"
       },
-      "middlewareEnabled": {
+      "hooksEnabled": {
         "type": "boolean",
-        "default": false,
-        "description": "Enable automatic fact extraction hooks"
+        "default": true,
+        "description": "Enable memory lifecycle hooks (auto-remember, session-to-memory, memory-bootstrap, memory-enriched-tools)"
       }
+    }
+  },
+  "uiHints": {
+    "apiKey": {
+      "label": "API Key",
+      "sensitive": true
+    },
+    "daemonUrl": {
+      "label": "Daemon URL",
+      "placeholder": "http://localhost:7654"
+    },
+    "agentId": {
+      "label": "Agent ID",
+      "placeholder": "openclaw"
     }
   }
 }

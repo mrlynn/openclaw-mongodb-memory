@@ -14,6 +14,8 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { resolve, join } from "path";
 import os from "os";
 
+const DEFAULT_PORT = 7654;
+
 const CONFIG_DIR = join(os.homedir(), ".ocmem");
 const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
@@ -72,4 +74,37 @@ export function findProjectRoot(): string | null {
   }
 
   return null;
+}
+
+/**
+ * Read MEMORY_DAEMON_PORT from .env.local or .env in the project root.
+ * Returns the default port (7654) if not found.
+ */
+export function readEnvPort(root: string): number {
+  const envLocal = resolve(root, ".env.local");
+  const envFile = resolve(root, ".env");
+  for (const file of [envLocal, envFile]) {
+    if (existsSync(file)) {
+      const content = readFileSync(file, "utf8");
+      const match = content.match(/^MEMORY_DAEMON_PORT=(\d+)$/m);
+      if (match) return parseInt(match[1], 10);
+    }
+  }
+  return DEFAULT_PORT;
+}
+
+/**
+ * Resolve the daemon URL from environment, .env.local, or fallback to default.
+ * Priority: MEMORY_DAEMON_URL env var > .env.local port > default 7654
+ */
+export function resolveDaemonUrl(): string {
+  if (process.env.MEMORY_DAEMON_URL) {
+    return process.env.MEMORY_DAEMON_URL;
+  }
+  const root = findProjectRoot();
+  if (root) {
+    const port = readEnvPort(root);
+    return `http://localhost:${port}`;
+  }
+  return `http://localhost:${DEFAULT_PORT}`;
 }

@@ -19,7 +19,54 @@ import { memoriesRoute } from "./routes/memories";
 import { setupCheckRoute } from "./routes/setupCheck";
 import { restoreRoute } from "./routes/restore";
 import { sourcesRoute } from "./routes/sources";
+import { getConflictsRoute, resolveConflictRoute } from "./routes/conflicts";
+import { enhanceContradictionsRoute, getContradictionDetailsRoute } from "./routes/contradictions";
+import {
+  triggerDecayRoute,
+  getArchivalCandidatesRoute,
+  getExpirationCandidatesRoute,
+  promoteToArchivalRoute,
+} from "./routes/decay";
+import {
+  createEpisodeRoute,
+  listEpisodesRoute,
+  getEpisodeRoute,
+  getEpisodeBySessionRoute,
+} from "./routes/episodes";
+import { triggerReflectRoute, getReflectStatusRoute, listReflectJobsRoute } from "./routes/reflect";
+import { listEntitiesRoute, getEntityRoute, searchEntitiesRoute } from "./routes/entities";
+import {
+  getPendingEdgesRoute,
+  approvePendingEdgeRoute,
+  rejectPendingEdgeRoute,
+  approveBatchRoute,
+  traverseGraphRoute,
+  getNodeRoute,
+  createEdgeRoute,
+} from "./routes/graph";
+import {
+  runClusteringRoute,
+  listClustersRoute,
+  getClusterRoute,
+  getClusterStatsRoute,
+} from "./routes/clusters";
+import {
+  usageSummaryRoute,
+  usageTimelineRoute,
+  usageByAgentRoute,
+  usagePipelineRoute,
+  usageProjectionsRoute,
+} from "./routes/usage";
+import {
+  getSettingsRoute,
+  upsertSettingsRoute,
+  patchSettingsRoute,
+  deleteSettingsRoute,
+  testLlmRoute,
+} from "./routes/settings";
 import { connectDatabase } from "./db";
+import { startScheduler, stopScheduler } from "./services/scheduler";
+import { UsageTracker } from "./services/usageTracker";
 import { VoyageEmbedder } from "./embedding";
 import { MAX_REQUEST_BODY } from "./constants";
 import { loadConfig } from "./config";
@@ -73,6 +120,35 @@ app.get("/recall", recallRoute);
 app.delete("/forget/:id", forgetRoute);
 app.get("/status", statusRoute);
 app.get("/export", exportRoute);
+app.get("/conflicts", getConflictsRoute);
+app.patch("/conflicts/:id/resolve", resolveConflictRoute);
+app.post("/contradictions/enhance", enhanceContradictionsRoute);
+app.get("/contradictions/:memoryId", getContradictionDetailsRoute);
+app.post("/decay", triggerDecayRoute);
+app.get("/decay/archival-candidates", getArchivalCandidatesRoute);
+app.get("/decay/expiration-candidates", getExpirationCandidatesRoute);
+app.post("/decay/promote-archival/:id", promoteToArchivalRoute);
+app.post("/episodes", createEpisodeRoute);
+app.get("/episodes", listEpisodesRoute);
+app.get("/episodes/:id", getEpisodeRoute);
+app.get("/episodes/by-session/:sessionId", getEpisodeBySessionRoute);
+app.post("/reflect", triggerReflectRoute);
+app.get("/reflect/status", getReflectStatusRoute);
+app.get("/reflect/jobs", listReflectJobsRoute);
+app.get("/entities", listEntitiesRoute);
+app.get("/entities/search", searchEntitiesRoute);
+app.get("/entities/:slug", getEntityRoute);
+app.get("/graph/pending-edges", getPendingEdgesRoute);
+app.post("/graph/pending-edges/:id/approve", approvePendingEdgeRoute);
+app.post("/graph/pending-edges/:id/reject", rejectPendingEdgeRoute);
+app.post("/graph/pending-edges/approve-batch", approveBatchRoute);
+app.get("/graph/traverse/:id", traverseGraphRoute);
+app.get("/graph/node/:id", getNodeRoute);
+app.post("/graph/edges", createEdgeRoute);
+app.post("/clusters/run", runClusteringRoute);
+app.get("/clusters", listClustersRoute);
+app.get("/clusters/stats", getClusterStatsRoute);
+app.get("/clusters/:clusterId", getClusterRoute);
 app.get("/wordcloud", wordcloudRoute);
 app.get("/embeddings", embeddingsRoute);
 app.get("/timeline", timelineRoute);
@@ -81,6 +157,20 @@ app.post("/purge", purgeRoute);
 app.delete("/clear", clearRoute);
 app.post("/restore", express.json({ limit: "10mb" }), restoreRoute);
 app.get("/sources", sourcesRoute);
+
+// Semantic / LLM settings
+app.get("/settings/:agentId", getSettingsRoute);
+app.put("/settings/:agentId", upsertSettingsRoute);
+app.patch("/settings/:agentId", patchSettingsRoute);
+app.delete("/settings/:agentId", deleteSettingsRoute);
+app.post("/settings/:agentId/test-llm", testLlmRoute);
+
+// Usage & Cost observability
+app.get("/usage/summary", usageSummaryRoute);
+app.get("/usage/timeline", usageTimelineRoute);
+app.get("/usage/by-agent", usageByAgentRoute);
+app.get("/usage/pipeline-breakdown", usagePipelineRoute);
+app.get("/usage/projections", usageProjectionsRoute);
 
 // --- Global async-safe error handler ---
 
@@ -149,10 +239,14 @@ const startServer = async () => {
     const { client, db } = await connectDatabase({ mongoUri: config.mongoUri });
     console.log("  Connected to MongoDB");
 
+    // Initialize usage tracking (captures token counts from every Voyage API call)
+    const usageTracker = new UsageTracker(db, embedder);
+
     // Store shared resources for route access
     app.locals.db = db;
     app.locals.mongoClient = client;
     app.locals.embedder = embedder;
+    app.locals.usageTracker = usageTracker;
     app.locals.config = config;
 
     if (config.memoryApiKey) {
@@ -165,12 +259,20 @@ const startServer = async () => {
     const tierInfo = getTier(config.voyageMock, false); // Vector index checked at runtime
     console.log(`  Tier: ${tierInfo.label} — ${tierInfo.description}`);
 
+    // Start background scheduler (decay job, etc.)
+    startScheduler(db, {
+      decayEnabled: true,
+      decayIntervalHours: 24,
+      decayTimeOfDay: "02:00",
+    });
+
     app.listen(config.port, () => {
       console.log(`  Memory daemon listening on http://localhost:${config.port}`);
     });
 
     const shutdown = async () => {
       console.log("\nShutting down...");
+      stopScheduler();
       await client.close();
       process.exit(0);
     };

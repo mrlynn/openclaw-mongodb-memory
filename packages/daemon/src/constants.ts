@@ -9,3 +9,5 @@ export const DEFAULT_RECALL_LIMIT = 10;
 export const MAX_RECALL_LIMIT = 100;
 export const MAX_REQUEST_BODY = "50kb";
 export const EMBEDDING_DIMENSIONS = 1024;
+export const COLLECTION_USAGE_EVENTS = "usage_events";
+export const COLLECTION_SETTINGS = "settings";

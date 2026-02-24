@@ -77,6 +77,54 @@ body[data-theme="light"] .poweredBy:hover {
   color: #00684A;
 }
 
+/* Remember action button */
+.rememberWrapper {
+  padding: 0 12px;
+  margin-bottom: 8px;
+}
+
+.rememberButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px dashed rgba(0, 237, 100, 0.3);
+  background: rgba(0, 237, 100, 0.04);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+body[data-theme="dark"] .rememberButton {
+  border-color: rgba(0, 237, 100, 0.3);
+  background: rgba(0, 237, 100, 0.04);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .rememberButton {
+  border-color: rgba(0, 104, 74, 0.3);
+  background: rgba(0, 104, 74, 0.04);
+  color: #00684A;
+}
+
+.rememberButton:hover {
+  transform: translateY(-1px);
+}
+
+body[data-theme="dark"] .rememberButton:hover {
+  background: rgba(0, 237, 100, 0.08);
+  border-color: rgba(0, 237, 100, 0.5);
+}
+
+body[data-theme="light"] .rememberButton:hover {
+  background: rgba(0, 104, 74, 0.08);
+  border-color: rgba(0, 104, 74, 0.5);
+}
+
 .nav {
   flex: 1;
   padding: 0 12px;

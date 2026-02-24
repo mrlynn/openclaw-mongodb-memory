@@ -5,12 +5,14 @@ import { initCommand } from "./commands/init";
 import { startCommand } from "./commands/start";
 import { statusCommand } from "./commands/status";
 import { debugCommand } from "./commands/debug";
+import { searchCommand } from "./commands/search";
 import { purgeCommand } from "./commands/purge";
 import { exportCommand } from "./commands/export";
 import { clearCommand } from "./commands/clear";
+import { resolveDaemonUrl } from "./resolve";
 import pkg from "../package.json";
 
-const DEFAULT_URL = process.env.MEMORY_DAEMON_URL || "http://localhost:7654";
+const DEFAULT_URL = resolveDaemonUrl();
 
 const program = new Command();
 
@@ -45,6 +47,17 @@ program
   .option("--api-key <key>", "API key for daemon auth", process.env.MEMORY_API_KEY)
   .option("--agent <id>", "Agent ID for agent-specific stats")
   .action(debugCommand);
+
+program
+  .command("search <query>")
+  .description("Semantic search across stored memories")
+  .option("--url <url>", "Daemon URL", DEFAULT_URL)
+  .option("--api-key <key>", "API key for daemon auth", process.env.MEMORY_API_KEY)
+  .option("--agent <id>", "Agent ID (required)")
+  .option("--limit <number>", "Max results (default: 10)")
+  .option("--tags <tags>", "Filter by comma-separated tags")
+  .option("--json", "Output raw JSON")
+  .action((query, options) => searchCommand({ ...options, query }));
 
 program
   .command("purge")

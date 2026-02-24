@@ -34,6 +34,11 @@ export async function createTestApp(): Promise<Express> {
   app.locals.mongoClient = client;
   app.locals.voyageApiKey = apiKey;
   app.locals.voyageBaseUrl = undefined;
+  app.locals.config = {
+    port: 7654,
+    mongoUri: process.env.MONGODB_URI,
+    voyageMock: true,
+  };
 
   return app;
 }

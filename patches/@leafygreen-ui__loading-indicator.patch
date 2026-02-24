@@ -1,0 +1,27 @@
+diff --git a/tsconfig.json b/tsconfig.json
+index 1b50af5d8a0622a86256605ad3be03c4f9a3f56c..1430a2f95824af5f8a7b11123cc80b124d915592 100644
+--- a/tsconfig.json
++++ b/tsconfig.json
+@@ -17,12 +17,6 @@
+     "**/*.stories.*"
+   ],
+   "references": [
+-    {
+-      "path": "../emotion"
+-    },
+-    {
+-      "path": "../lib"
+-    },
+     {
+       "path": "../palette"
+     },
+@@ -34,9 +28,6 @@
+     },
+     {
+       "path": "../leafygreen-provider"
+-    },
+-    {
+-      "path": "../../tools/test-harnesses"
+     }
+   ]
+ }

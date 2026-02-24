@@ -10,13 +10,11 @@ export const SIDEBAR_WIDTH = 260;
 
 export const NAV_ITEMS = [
   { label: "Dashboard", path: "/dashboard", icon: "Dashboard" },
-  { label: "Remember", path: "/remember", icon: "Download" },
-  { label: "Recall", path: "/recall", icon: "MagnifyingGlass" },
-  { label: "Memory Chat", path: "/chat", icon: "Support" },
-  { label: "Memory Browser", path: "/browser", icon: "Database" },
-  { label: "Timeline", path: "/timeline", icon: "Clock" },
-  { label: "Documentation", path: "/docs", icon: "University" },
-  { label: "Health & Integration", path: "/health", icon: "Gauge" },
+  { label: "Search", path: "/search", icon: "MagnifyingGlass" },
+  { label: "Chat", path: "/chat", icon: "Support" },
+  { label: "Memories", path: "/memories", icon: "Database" },
+  { label: "Graph", path: "/graph", icon: "Diagram3" },
+  { label: "Usage & Cost", path: "/usage", icon: "ActivityFeed" },
   { label: "Operations", path: "/operations", icon: "Apps" },
   { label: "Settings", path: "/settings", icon: "Settings" },
 ] as const;

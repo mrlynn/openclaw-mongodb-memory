@@ -1,6 +1,6 @@
 {
   "name": "@openclaw-memory/cli",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Command-line interface for managing OpenClaw memory daemon (ocmem)",
   "main": "dist/index.js",
   "bin": {

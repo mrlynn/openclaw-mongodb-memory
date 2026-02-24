@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@leafygreen-ui/button";
 import { Select, Option } from "@leafygreen-ui/select";
 import Icon from "@leafygreen-ui/icon";
-import { Database, Clock, Wifi, WifiOff, Cloud, ScatterChart, CalendarDays } from "lucide-react";
+import { useRememberModal } from "@/contexts/RememberModalContext";
+import { Database, Clock, Wifi, WifiOff, Cloud, ScatterChart, CalendarDays, Box, Grid2x2 } from "lucide-react";
 import { useDaemonConfig } from "@/contexts/DaemonConfigContext";
 import { useThemeMode } from "@/contexts/ThemeContext";
 import { useStatus, DaemonStatus } from "@/hooks/useStatus";
@@ -25,8 +26,10 @@ import { StatusIndicator } from "@/components/cards/StatusIndicator";
 import { StatCard } from "@/components/cards/StatCard";
 import { WordCloud } from "@/components/wordcloud/WordCloud";
 import { MemoryMap } from "@/components/memorymap/MemoryMap";
+import { MemoryMap3D } from "@/components/memorymap/MemoryMap3D";
 import { MemoryTimeline } from "@/components/timeline/MemoryTimeline";
 import { MemorySourcesPanel } from "@/components/sources/MemorySourcesPanel";
+import { LayersPanel } from "@/components/dashboard/LayersPanel";
 import styles from "./page.module.css";
 
 interface AgentInfo {
@@ -180,7 +183,7 @@ function WordCloudSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: 
   }, [agentId, loadWordCloud]);
 
   const handleWordClick = (word: string) => {
-    router.push(`/recall?query=${encodeURIComponent(word)}`);
+    router.push(`/search?query=${encodeURIComponent(word)}`);
   };
 
   return (
@@ -234,24 +237,30 @@ function WordCloudSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: 
 }
 
 // ---------------------------------------------------------------------------
-// Memory Map section — 2D semantic scatter plot via PCA
+// Memory Map section — 2D/3D semantic scatter plot via PCA
 // ---------------------------------------------------------------------------
 
 function MemoryMapSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: string }) {
   const router = useRouter();
 
   const [points, setPoints] = useState<MemoryMapPoint[]>([]);
+  const [varianceExplained, setVarianceExplained] = useState<[number, number, number] | undefined>();
+  const [is3D, setIs3D] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadMap = useCallback(
-    async (agent: string) => {
+    async (agent: string, dimensions: number) => {
       if (!agent) return;
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchMemoryMap(daemonUrl, agent, { limit: 300 });
+        const data = await fetchMemoryMap(daemonUrl, agent, {
+          limit: 300,
+          dimensions,
+        });
         setPoints(data.points);
+        setVarianceExplained(data.varianceExplained);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -262,12 +271,14 @@ function MemoryMapSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: 
   );
 
   useEffect(() => {
-    if (agentId) loadMap(agentId);
-  }, [agentId, loadMap]);
+    if (agentId) loadMap(agentId, is3D ? 3 : 2);
+  }, [agentId, is3D, loadMap]);
 
   const handlePointClick = (text: string) => {
-    router.push(`/recall?query=${encodeURIComponent(text)}`);
+    router.push(`/search?query=${encodeURIComponent(text)}`);
   };
+
+  const toggleDimension = () => setIs3D((prev) => !prev);
 
   return (
     <GlassCard>
@@ -275,12 +286,30 @@ function MemoryMapSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: 
         <div className={styles.vizTitleRow}>
           <ScatterChart size={16} style={{ opacity: 0.5 }} />
           <div className={styles.sectionLabel}>Semantic Memory Map</div>
+
+          <button
+            className={styles.dimensionToggle}
+            onClick={toggleDimension}
+            title={is3D ? "Switch to 2D view" : "Switch to 3D view"}
+          >
+            {is3D ? (
+              <>
+                <Grid2x2 size={12} />
+                <span>2D</span>
+              </>
+            ) : (
+              <>
+                <Box size={12} />
+                <span>3D</span>
+              </>
+            )}
+          </button>
         </div>
 
         {points.length > 0 && !loading && (
           <div className={styles.vizStats}>
             <span>
-              <strong>{points.length}</strong> memories projected to 2D via PCA
+              <strong>{points.length}</strong> memories projected to {is3D ? "3D" : "2D"} via PCA
             </span>
           </div>
         )}
@@ -309,7 +338,15 @@ function MemoryMapSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: 
       )}
 
       {!loading && !error && points.length > 0 && (
-        <MemoryMap points={points} onPointClick={handlePointClick} />
+        is3D ? (
+          <MemoryMap3D
+            points={points}
+            varianceExplained={varianceExplained}
+            onPointClick={handlePointClick}
+          />
+        ) : (
+          <MemoryMap points={points} onPointClick={handlePointClick} />
+        )
       )}
     </GlassCard>
   );
@@ -397,15 +434,28 @@ function TimelineSection({ daemonUrl, agentId }: { daemonUrl: string; agentId: s
 // Main Dashboard — agent state lifted here, shared across all viz sections
 // ---------------------------------------------------------------------------
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { daemonUrl } = useDaemonConfig();
   const { darkMode } = useThemeMode();
   const { status, loading, error, refetch } = useStatus(daemonUrl);
+  const { openRememberModal } = useRememberModal();
+  const searchParams = useSearchParams();
+  const didOpenRemember = useRef(false);
 
   // --- Shared agent state ---
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   // Always start with "" to match server render; restored from localStorage in the useEffect below.
   const [agentId, setAgentId] = useState("");
+
+  // Open remember modal if ?remember=1 is in the URL
+  useEffect(() => {
+    if (searchParams.get("remember") === "1" && !didOpenRemember.current) {
+      didOpenRemember.current = true;
+      openRememberModal();
+      // Clean the URL
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [searchParams, openRememberModal]);
 
   // Fetch agents on mount, resolve which one to use
   useEffect(() => {
@@ -491,24 +541,28 @@ export default function DashboardPage() {
                   </div>
 
                   <div className={`${styles.fullRow} ${styles.stagger2}`}>
-                    <MemoryMapSection daemonUrl={daemonUrl} agentId={agentId} />
+                    <LayersPanel agentId={agentId} />
                   </div>
 
                   <div className={`${styles.fullRow} ${styles.stagger3}`}>
-                    <TimelineSection daemonUrl={daemonUrl} agentId={agentId} />
+                    <MemoryMapSection daemonUrl={daemonUrl} agentId={agentId} />
                   </div>
 
                   <div className={`${styles.fullRow} ${styles.stagger4}`}>
+                    <TimelineSection daemonUrl={daemonUrl} agentId={agentId} />
+                  </div>
+
+                  <div className={`${styles.fullRow} ${styles.stagger5}`}>
                     <MemorySourcesPanel daemonUrl={daemonUrl} agentId={agentId} />
                   </div>
                 </>
               )}
 
-              <div className={`${styles.fullRow} ${styles.stagger5}`}>
+              <div className={`${styles.fullRow} ${styles.stagger6}`}>
                 <ServiceStatusPanel status={status} />
               </div>
 
-              <div className={styles.stagger6}>
+              <div className={styles.stagger7}>
                 <StatCard
                   icon={<Database size={22} />}
                   label="Total Memories"
@@ -516,7 +570,7 @@ export default function DashboardPage() {
                   color="#016BF8"
                 />
               </div>
-              <div className={styles.stagger7}>
+              <div className={styles.stagger8}>
                 <StatCard
                   icon={<Clock size={22} />}
                   label="Uptime"
@@ -524,7 +578,7 @@ export default function DashboardPage() {
                   color="#00ED64"
                 />
               </div>
-              <div className={styles.stagger8}>
+              <div className={styles.stagger9}>
                 <StatCard
                   icon={<Icon glyph="Charts" size={22} />}
                   label="Heap Used"
@@ -533,7 +587,7 @@ export default function DashboardPage() {
                   color="#FFC010"
                 />
               </div>
-              <div className={styles.stagger9}>
+              <div className={styles.stagger10}>
                 <StatCard
                   icon={error ? <WifiOff size={22} /> : <Wifi size={22} />}
                   label="Connection"
@@ -543,7 +597,7 @@ export default function DashboardPage() {
                 />
               </div>
 
-              <div className={`${styles.fullRow} ${styles.stagger10}`}>
+              <div className={`${styles.fullRow} ${styles.stagger11}`}>
                 <HeapUsageBar used={status.memory.heapUsed} total={status.memory.heapTotal} />
               </div>
             </>
@@ -551,5 +605,13 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   );
 }

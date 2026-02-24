@@ -38,6 +38,9 @@ export const exportRoute = asyncHandler(async (req: Request, res: Response) => {
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
       expiresAt: doc.expiresAt || null,
+      layer: doc.layer || null,
+      memoryType: doc.memoryType || null,
+      confidence: doc.confidence ?? null,
     })),
   });
 });

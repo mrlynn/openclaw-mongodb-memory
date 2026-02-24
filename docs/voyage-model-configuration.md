@@ -17,7 +17,7 @@ curl http://localhost:7751/status | jq '{voyage, voyageModel, voyageBaseUrl}'
 ```json
 {
   "voyage": "ready",
-  "voyageModel": "voyage-3",
+  "voyageModel": "voyage-4",
   "voyageBaseUrl": "https://api.voyageai.com/v1"
 }
 ```
@@ -35,7 +35,7 @@ curl http://localhost:7751/status | jq '{voyage, voyageModel, voyageBaseUrl}'
 VOYAGE_API_KEY=pa-your-key-here
 
 # Optional: Model (defaults vary by endpoint)
-VOYAGE_MODEL=voyage-3
+VOYAGE_MODEL=voyage-4
 
 # Optional: Base URL (defaults to Voyage API)
 VOYAGE_BASE_URL=https://api.voyageai.com/v1
@@ -59,15 +59,18 @@ VOYAGE_MOCK=false
 
 **Endpoint:** `https://api.voyageai.com/v1`
 
-| Model              | Dimensions | Speed     | Quality | Cost | Use Case                   |
-| ------------------ | ---------- | --------- | ------- | ---- | -------------------------- |
-| **voyage-3**       | 1024       | Fast      | High    | $$   | **Default** - Best balance |
-| **voyage-3-lite**  | 512        | Very Fast | Good    | $    | Fast search, high volume   |
-| **voyage-large-2** | 1536       | Slow      | Highest | $$$  | Best quality, low volume   |
-| **voyage-code-3**  | 1024       | Fast      | High    | $$   | Code embeddings            |
-| **voyage-2**       | 1024       | Fast      | Good    | $    | Previous generation        |
+| Model              | Dimensions               | Context  | Speed     | Quality  | Use Case                     |
+| ------------------ | ------------------------ | -------- | --------- | -------- | ---------------------------- |
+| **voyage-4-large** | 1024 (256/512/2048)      | 32K      | Moderate  | Highest  | Best quality, low volume     |
+| **voyage-4**       | 1024 (256/512/2048)      | 32K      | Fast      | High     | **Default** - Best balance   |
+| **voyage-4-lite**  | 1024 (256/512/2048)      | 32K      | Very Fast | Good     | Fast search, high volume     |
+| **voyage-code-3**  | 1024 (256/512/2048)      | 32K      | Fast      | High     | Code embeddings              |
+| **voyage-finance-2** | 1024                   | 32K      | Fast      | High     | Finance-specific             |
+| **voyage-law-2**   | 1024                     | 16K      | Fast      | High     | Legal-specific               |
 
-**Recommendation:** `voyage-3` (default) for most use cases.
+**Recommendation:** `voyage-4` (default) for most use cases. Use `voyage-4-large` when retrieval quality is paramount, `voyage-4-lite` for high-volume/low-cost.
+
+All voyage-4 models support flexible dimensions (256, 512, 1024, 2048). OpenClaw Memory uses 1024 by default.
 
 ---
 
@@ -75,11 +78,10 @@ VOYAGE_MOCK=false
 
 **Endpoint:** `https://ai.mongodb.com/v1`
 
-| Model               | Dimensions | Speed     | Quality | Cost | Use Case              |
-| ------------------- | ---------- | --------- | ------- | ---- | --------------------- |
-| **voyage-3-lite**   | 512        | Very Fast | Good    | $    | **Default** for Atlas |
-| **voyage-3**        | 1024       | Fast      | High    | $$   | Better quality        |
-| **voyage-3-5-lite** | 512        | Very Fast | Good    | $    | Latest lite model     |
+| Model              | Dimensions               | Speed     | Quality | Use Case              |
+| ------------------ | ------------------------ | --------- | ------- | --------------------- |
+| **voyage-4-lite**  | 1024 (256/512/2048)      | Very Fast | Good    | **Default** for Atlas |
+| **voyage-4**       | 1024 (256/512/2048)      | Fast      | High    | Better quality        |
 
 **Why Atlas endpoint?**
 
@@ -93,7 +95,7 @@ VOYAGE_MOCK=false
 ```bash
 VOYAGE_API_KEY=al-your-atlas-key
 VOYAGE_BASE_URL=https://ai.mongodb.com/v1
-VOYAGE_MODEL=voyage-3-lite  # Or voyage-3
+VOYAGE_MODEL=voyage-4-lite  # Or voyage-4
 ```
 
 ---
@@ -107,17 +109,17 @@ The daemon automatically selects the appropriate default model based on the endp
 ```typescript
 // From embedding.ts
 const DEFAULT_MODELS = {
-  "api.voyageai.com": "voyage-3", // Voyage.com public API
-  "ai.mongodb.com": "voyage-3-lite", // MongoDB Atlas AI
+  "api.voyageai.com": "voyage-4",      // Voyage.com public API
+  "ai.mongodb.com": "voyage-4-lite",   // MongoDB Atlas AI
 };
 ```
 
 **Override defaults:**
 
 ```bash
-# Use voyage-3 on Atlas (instead of default voyage-3-lite)
+# Use voyage-4 on Atlas (instead of default voyage-4-lite)
 VOYAGE_BASE_URL=https://ai.mongodb.com/v1
-VOYAGE_MODEL=voyage-3
+VOYAGE_MODEL=voyage-4
 ```
 
 ---
@@ -131,7 +133,7 @@ VOYAGE_MODEL=voyage-3
 nano .env.local
 
 # Set your desired model
-VOYAGE_MODEL=voyage-3-lite
+VOYAGE_MODEL=voyage-4-lite
 
 # Save and restart daemon
 cd packages/daemon
@@ -143,7 +145,7 @@ pnpm run dev
 ```bash
 # Create package-level config (overrides root)
 cat > packages/daemon/.env.local << 'EOF'
-VOYAGE_MODEL=voyage-large-2
+VOYAGE_MODEL=voyage-4-large
 EOF
 
 # Restart daemon
@@ -173,14 +175,14 @@ cd packages/daemon
 pnpm run dev
 
 # Look for:
-# "Voyage API configured: voyage-3"
+# "Voyage API configured: voyage-4"
 ```
 
 **2. Query status endpoint:**
 
 ```bash
 curl http://localhost:7751/status | jq .voyageModel
-# "voyage-3"
+# "voyage-4"
 ```
 
 **3. Test embedding:**
@@ -212,14 +214,14 @@ curl -X POST http://localhost:7751/remember \
 ```
 1024-dim embedding: ~4 KB per memory (float32)
 512-dim embedding:  ~2 KB per memory
-1536-dim embedding: ~6 KB per memory
+2048-dim embedding: ~8 KB per memory
 ```
 
 **For 10,000 memories:**
 
-- `voyage-3` (1024-dim): ~40 MB
-- `voyage-3-lite` (512-dim): ~20 MB
-- `voyage-large-2` (1536-dim): ~60 MB
+- `voyage-4` (1024-dim): ~40 MB
+- `voyage-4-lite` (1024-dim): ~40 MB
+- `voyage-4-large` (1024-dim): ~40 MB
 
 ### Performance
 
@@ -230,30 +232,9 @@ curl -X POST http://localhost:7751/remember \
 
 **Embedding generation:**
 
-- `voyage-3-lite`: ~100-200ms per request
-- `voyage-3`: ~150-300ms per request
-- `voyage-large-2`: ~200-400ms per request
-
----
-
-## Cost Considerations
-
-**Pricing (Voyage.com, approximate):**
-
-```
-voyage-3-lite:   $0.02  per 1M tokens
-voyage-3:        $0.02  per 1M tokens
-voyage-large-2:  $0.12  per 1M tokens
-voyage-code-3:   $0.02  per 1M tokens
-```
-
-**Example cost for 1,000 memories:**
-
-- Average memory: ~100 tokens
-- Total: 100,000 tokens
-- Cost (voyage-3): ~$0.002 (negligible)
-
-**MongoDB Atlas AI pricing:** Similar, but billed through Atlas.
+- `voyage-4-lite`: ~100-200ms per request
+- `voyage-4`: ~150-300ms per request
+- `voyage-4-large`: ~200-400ms per request
 
 ---
 
@@ -274,8 +255,8 @@ VOYAGE_API_KEY=
 - Deterministic text-hash based embeddings
 - 1024 dimensions (matches real models)
 - Zero cost, works offline
-- Adequate for semantic search
-- Good for testing infrastructure
+- Adequate for testing infrastructure
+- Good for development and CI
 
 **Trade-off:** Lower quality semantic understanding than real models.
 
@@ -285,13 +266,15 @@ VOYAGE_API_KEY=
 
 **Changing models requires re-embedding existing memories!**
 
+Different models produce incompatible vector spaces. Memories embedded with `voyage-3` won't match queries embedded with `voyage-4`.
+
 ### Option 1: Re-embed Script (Recommended)
 
 ```bash
 cd packages/daemon
 
 # Run re-embedding script
-VOYAGE_MODEL=voyage-3-lite npm run reembed
+VOYAGE_MODEL=voyage-4 npm run reembed
 
 # This will:
 # 1. Connect to MongoDB
@@ -303,7 +286,7 @@ VOYAGE_MODEL=voyage-3-lite npm run reembed
 ### Option 2: Fresh Start
 
 ```bash
-# Clear existing memories (⚠️ destructive!)
+# Clear existing memories (destructive!)
 curl -X DELETE "http://localhost:7751/clear?agentId=YOUR_AGENT_ID"
 
 # Or drop collection in MongoDB:
@@ -319,11 +302,11 @@ db.memories.drop()
 Run two daemons with different models:
 
 ```bash
-# Daemon 1: voyage-3 on port 7751
-VOYAGE_MODEL=voyage-3 MEMORY_DAEMON_PORT=7751 pnpm dev
+# Daemon 1: voyage-4 on port 7751
+VOYAGE_MODEL=voyage-4 MEMORY_DAEMON_PORT=7751 pnpm dev
 
-# Daemon 2: voyage-3-lite on port 7752
-VOYAGE_MODEL=voyage-3-lite MEMORY_DAEMON_PORT=7752 pnpm dev
+# Daemon 2: voyage-4-lite on port 7752
+VOYAGE_MODEL=voyage-4-lite MEMORY_DAEMON_PORT=7752 pnpm dev
 ```
 
 ---
@@ -339,21 +322,28 @@ VOYAGE_MOCK=true  # Free, fast, good enough for testing
 ### Production (Low Volume)
 
 ```bash
-VOYAGE_MODEL=voyage-3        # Best balance
+VOYAGE_MODEL=voyage-4        # Best balance of quality and speed
 VOYAGE_BASE_URL=https://api.voyageai.com/v1
 ```
 
 ### Production (High Volume)
 
 ```bash
-VOYAGE_MODEL=voyage-3-lite   # Faster, cheaper, still good
+VOYAGE_MODEL=voyage-4-lite   # Faster, cheaper, still good
+VOYAGE_BASE_URL=https://api.voyageai.com/v1
+```
+
+### Production (Best Quality)
+
+```bash
+VOYAGE_MODEL=voyage-4-large  # Highest retrieval quality
 VOYAGE_BASE_URL=https://api.voyageai.com/v1
 ```
 
 ### MongoDB Atlas Integration
 
 ```bash
-VOYAGE_MODEL=voyage-3-lite   # Atlas default
+VOYAGE_MODEL=voyage-4-lite   # Atlas default
 VOYAGE_BASE_URL=https://ai.mongodb.com/v1
 ```
 
@@ -379,7 +369,7 @@ curl https://api.voyageai.com/v1/models \
   -H "Authorization: Bearer $VOYAGE_API_KEY"
 
 # Use a valid model name
-VOYAGE_MODEL=voyage-3
+VOYAGE_MODEL=voyage-4
 ```
 
 ### Embeddings seem low quality
@@ -393,8 +383,8 @@ VOYAGE_MODEL=voyage-3
 VOYAGE_MOCK=false
 VOYAGE_API_KEY=pa-your-actual-key
 
-# Use voyage-3 or higher
-VOYAGE_MODEL=voyage-3
+# Use voyage-4 or higher
+VOYAGE_MODEL=voyage-4
 ```
 
 ### "Dimension mismatch" error
@@ -402,6 +392,19 @@ VOYAGE_MODEL=voyage-3
 **Cause:** Changed models without re-embedding.
 
 **Fix:** Run re-embedding script (see Migration section above).
+
+### Legacy model warnings
+
+If upgrading from `voyage-3` or `voyage-2`, you must re-embed existing memories since the vector spaces are incompatible:
+
+```bash
+# Update .env.local
+VOYAGE_MODEL=voyage-4
+
+# Re-embed all memories
+cd packages/daemon
+npm run reembed
+```
 
 ---
 
@@ -414,12 +417,12 @@ The daemon automatically tries fallback models if the primary fails:
 ```typescript
 // Fallback order (from embedding.ts)
 const FALLBACK_MODELS = [
+  "voyage-4",
+  "voyage-4-lite",
+  "voyage-4-large",
   "voyage-3",
   "voyage-3-lite",
-  "voyage-3-5-lite",
-  "voyage-2",
-  "voyage-lite-02-instruct",
-  "voyage-code-3-5",
+  "voyage-code-3",
 ];
 ```
 
@@ -445,7 +448,7 @@ VOYAGE_MODEL=your-custom-model
 curl http://localhost:7751/status | jq .voyageModel
 
 # Change model
-echo "VOYAGE_MODEL=voyage-3-lite" >> .env.local
+echo "VOYAGE_MODEL=voyage-4" >> .env.local
 
 # Restart daemon
 pnpm --filter @openclaw-memory/daemon dev
@@ -456,11 +459,12 @@ curl http://localhost:7751/status | jq .voyageModel
 
 **Best Practices:**
 
-1. Use `voyage-3` for most production use cases
-2. Use `voyage-3-lite` for high-volume, cost-sensitive deployments
-3. Use `VOYAGE_MOCK=true` for development/testing
-4. Re-embed when changing models
-5. Monitor costs via Voyage.com dashboard
+1. Use `voyage-4` for most production use cases
+2. Use `voyage-4-lite` for high-volume, cost-sensitive deployments
+3. Use `voyage-4-large` when retrieval quality is critical
+4. Use `VOYAGE_MOCK=true` for development/testing
+5. Re-embed when changing models (including upgrading from voyage-3)
+6. Monitor costs via Voyage.com dashboard
 
 ---
 

@@ -1,6 +1,6 @@
 {
   "name": "@openclaw-memory/client",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "TypeScript client library for OpenClaw memory daemon - semantic memory with MongoDB and Voyage AI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

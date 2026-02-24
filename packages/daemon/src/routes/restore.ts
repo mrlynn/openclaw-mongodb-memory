@@ -4,6 +4,7 @@ import { Db } from "mongodb";
 import { VoyageEmbedder } from "../embedding";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { COLLECTION_MEMORIES } from "../constants";
+import type { UsageTracker } from "../services/usageTracker";
 
 const RestoreMemorySchema = z.object({
   text: z.string().min(1).max(50000),
@@ -27,6 +28,7 @@ export const restoreRoute = asyncHandler(async (req: Request, res: Response) => 
 
   const db: Db = req.app.locals.db;
   const embedder: VoyageEmbedder = req.app.locals.embedder;
+  const usageTracker: UsageTracker | undefined = req.app.locals.usageTracker;
   const collection = db.collection(COLLECTION_MEMORIES);
 
   let totalInserted = 0;
@@ -37,7 +39,13 @@ export const restoreRoute = asyncHandler(async (req: Request, res: Response) => 
     const texts = batch.map((m) => m.text);
 
     try {
-      const embeddings = await embedder.embed(texts, "document");
+      usageTracker?.pushContext({ operation: "reembed", agentId: data.agentId });
+      let embeddings: number[][];
+      try {
+        embeddings = await embedder.embed(texts, "document");
+      } finally {
+        usageTracker?.popContext();
+      }
 
       const docs = batch.map((memory, j) => ({
         agentId: data.agentId,

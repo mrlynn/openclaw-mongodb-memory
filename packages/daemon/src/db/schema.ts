@@ -1,5 +1,5 @@
 import { Db } from "mongodb";
-import { COLLECTION_MEMORIES, COLLECTION_SESSIONS } from "../constants";
+import { COLLECTION_MEMORIES, COLLECTION_SESSIONS, COLLECTION_USAGE_EVENTS } from "../constants";
 
 export async function initializeSchema(db: Db): Promise<void> {
   const memoriesCollection = db.collection(COLLECTION_MEMORIES);
@@ -19,6 +19,15 @@ export async function initializeSchema(db: Db): Promise<void> {
   await sessionsCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
   console.log("✓ Sessions collection schema initialized");
+
+  // Usage events collection — cost & token tracking
+  const usageCollection = db.collection(COLLECTION_USAGE_EVENTS);
+  await usageCollection.createIndex({ timestamp: -1 });
+  await usageCollection.createIndex({ agentId: 1, timestamp: -1 });
+  await usageCollection.createIndex({ operation: 1, timestamp: -1 });
+  await usageCollection.createIndex({ pipelineStage: 1, timestamp: -1 });
+
+  console.log("✓ Usage events collection schema initialized");
 }
 
 /**

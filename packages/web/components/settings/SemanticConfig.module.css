@@ -1,0 +1,169 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 720px;
+}
+
+.loadingState {
+  padding: 32px;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.sectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.sectionDescription {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  margin-bottom: 16px;
+}
+
+/* Semantic Level Grid */
+.levelGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.levelOption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.levelOption:hover {
+  border-color: rgba(128, 128, 128, 0.6);
+}
+
+.levelOptionActive {
+  border-color: #00ED64;
+  background: rgba(0, 237, 100, 0.08);
+}
+
+body[data-theme="light"] .levelOptionActive {
+  border-color: #00684A;
+  background: rgba(0, 104, 74, 0.08);
+}
+
+.levelLabel {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.levelDescription {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  text-align: center;
+}
+
+/* Stage Toggles */
+.stageList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stageRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.stageRow:last-child {
+  border-bottom: none;
+}
+
+.stageInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stageLabel {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.stageDescription {
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+
+.stageToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resolvedBadge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badgeOn {
+  background: rgba(0, 237, 100, 0.15);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .badgeOn {
+  background: rgba(0, 104, 74, 0.12);
+  color: #00684A;
+}
+
+.badgeOff {
+  background: rgba(128, 128, 128, 0.15);
+  color: rgba(128, 128, 128, 0.7);
+}
+
+/* LLM Provider Form */
+.providerForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.testRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.testMessage {
+  font-size: 0.8rem;
+}
+
+.testSuccess {
+  color: #00ED64;
+}
+
+body[data-theme="light"] .testSuccess {
+  color: #00684A;
+}
+
+.testError {
+  color: #CF4848;
+}
+
+/* Save Row */
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -1,0 +1,65 @@
+{
+  "name": "openclaw-memory",
+  "version": "0.2.1",
+  "description": "MongoDB-backed long-term memory plugin for OpenClaw with Voyage AI semantic search",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "hooks/*/HOOK.md",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "openclaw": {
+    "extensions": [
+      "./dist/index.js"
+    ],
+    "hooks": [
+      "./hooks/auto-remember",
+      "./hooks/session-to-memory",
+      "./hooks/memory-bootstrap",
+      "./hooks/memory-enriched-tools"
+    ]
+  },
+  "scripts": {
+    "build": "tsc && for dir in hooks/*/; do cp \"$dir/HOOK.md\" \"dist/$dir\" 2>/dev/null || true; done",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "vitest run __tests__/hooks/integration.test.ts",
+    "prepublishOnly": "tsc && for dir in hooks/*/; do cp \"$dir/HOOK.md\" \"dist/$dir\" 2>/dev/null || true; done"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory.git",
+    "directory": "plugin"
+  },
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin",
+    "memory",
+    "mongodb",
+    "voyage-ai",
+    "semantic-search",
+    "ai-agent",
+    "embeddings",
+    "vector-search",
+    "long-term-memory",
+    "hooks"
+  ],
+  "author": "Michael Lynn <michael.lynn@mongodb.com>",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory/issues"
+  },
+  "homepage": "https://github.com/mrlynn/openclaw-mongodb-memory#readme",
+  "devDependencies": {
+    "@types/node": "^20.19.33",
+    "typescript": "^5.3",
+    "vitest": "^3.0.0"
+  }
+}

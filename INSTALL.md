@@ -187,7 +187,7 @@ npm start
 | `MEMORY_DB_NAME`     | `openclaw_memory` | Database name                             |
 | `VOYAGE_API_KEY`     | _(optional)_      | Voyage AI API key                         |
 | `VOYAGE_MOCK`        | `true`            | Use mock embeddings (free, deterministic) |
-| `VOYAGE_MODEL`       | `voyage-3`        | Embedding model                           |
+| `VOYAGE_MODEL`       | `voyage-4`        | Embedding model                           |
 
 ### CLI Commands
 

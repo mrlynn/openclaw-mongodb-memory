@@ -161,7 +161,7 @@ The daemon automatically selects the best search method:
 
 ## Embedding System
 
-- **Model:** Voyage AI `voyage-3` (1024 dimensions)
+- **Model:** Voyage AI `voyage-4` (1024 dimensions default, 256/512/2048 also available)
 - **Mock mode:** Deterministic SHA-256 hash mapped to 1024 floats. Same input always produces the same vector, enabling consistent testing.
 - **MongoDB Atlas AI:** Same Voyage models accessed through `https://ai.mongodb.com/v1` with Atlas API keys.
 

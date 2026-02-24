@@ -4,6 +4,7 @@ import { Collection, Db } from "mongodb";
 import { VoyageEmbedder } from "../embedding";
 import { asyncHandler } from "../middleware/asyncHandler";
 import { COLLECTION_MEMORIES, MAX_RECALL_LIMIT } from "../constants";
+import type { UsageTracker } from "../services/usageTracker";
 
 const RecallSchema = z.object({
   agentId: z.string().min(1),
@@ -23,9 +24,17 @@ export const recallRoute = asyncHandler(async (req: Request, res: Response) => {
 
   const db: Db = req.app.locals.db;
   const embedder: VoyageEmbedder = req.app.locals.embedder;
+  const usageTracker: UsageTracker | undefined = req.app.locals.usageTracker;
   const collection = db.collection(COLLECTION_MEMORIES);
 
-  const queryEmbedding = await embedder.embedOne(data.query, "query");
+  // Track token usage for the query embedding
+  usageTracker?.pushContext({ operation: "recall", agentId: data.agentId });
+  let queryEmbedding: number[];
+  try {
+    queryEmbedding = await embedder.embedOne(data.query, "query");
+  } finally {
+    usageTracker?.popContext();
+  }
 
   // Build pre-filter
   const filter: Record<string, unknown> = { agentId: data.agentId };
@@ -61,7 +70,16 @@ export const recallRoute = asyncHandler(async (req: Request, res: Response) => {
   // Fallback: in-memory cosine similarity with streaming cursor + hard cap
   const IN_MEMORY_CAP = 10000;
   const cursor = collection.find(filter, {
-    projection: { embedding: 1, text: 1, tags: 1, metadata: 1, createdAt: 1 },
+    projection: {
+      embedding: 1,
+      text: 1,
+      tags: 1,
+      metadata: 1,
+      createdAt: 1,
+      layer: 1,
+      memoryType: 1,
+      confidence: 1,
+    },
     sort: { createdAt: -1 },
     limit: IN_MEMORY_CAP,
   });
@@ -73,13 +91,13 @@ export const recallRoute = asyncHandler(async (req: Request, res: Response) => {
     tags: string[];
     metadata: Record<string, unknown>;
     createdAt: Date;
+    layer: string | null;
+    memoryType: string | null;
+    confidence: number | null;
   }> = [];
 
   for await (const doc of cursor) {
-    const score = VoyageEmbedder.cosineSimilarity(
-      queryEmbedding,
-      doc.embedding as number[]
-    );
+    const score = VoyageEmbedder.cosineSimilarity(queryEmbedding, doc.embedding as number[]);
     scored.push({
       id: doc._id.toString(),
       text: doc.text,
@@ -87,6 +105,9 @@ export const recallRoute = asyncHandler(async (req: Request, res: Response) => {
       metadata: doc.metadata,
       createdAt: doc.createdAt,
       score,
+      layer: doc.layer || null,
+      memoryType: doc.memoryType || null,
+      confidence: doc.confidence ?? null,
     });
   }
 
@@ -130,6 +151,9 @@ async function vectorSearchRecall(
         tags: 1,
         metadata: 1,
         createdAt: 1,
+        layer: 1,
+        memoryType: 1,
+        confidence: 1,
         score: { $meta: "vectorSearchScore" },
       },
     },
@@ -144,5 +168,8 @@ async function vectorSearchRecall(
     metadata: doc.metadata,
     createdAt: doc.createdAt,
     score: doc.score as number,
+    layer: doc.layer || null,
+    memoryType: doc.memoryType || null,
+    confidence: doc.confidence ?? null,
   }));
 }

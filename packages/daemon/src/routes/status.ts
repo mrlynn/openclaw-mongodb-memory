@@ -5,11 +5,13 @@ import { asyncHandler } from "../middleware/asyncHandler";
 import { COLLECTION_MEMORIES } from "../constants";
 import { getTier } from "../utils/tier";
 import { DaemonConfig } from "../config";
+import type { UsageTracker } from "../services/usageTracker";
 
 export const statusRoute = asyncHandler(async (req: Request, res: Response) => {
   const db: Db = req.app.locals.db;
   const embedder: VoyageEmbedder = req.app.locals.embedder;
   const config: DaemonConfig | undefined = req.app.locals.config;
+  const usageTracker: UsageTracker | undefined = req.app.locals.usageTracker;
   const collection = db.collection(COLLECTION_MEMORIES);
 
   let mongoStatus = "connected";
@@ -22,8 +24,13 @@ export const statusRoute = asyncHandler(async (req: Request, res: Response) => {
 
   let voyageStatus = "unknown";
   try {
-    await embedder.embedOne("health check");
-    voyageStatus = "ready";
+    usageTracker?.pushContext({ operation: "status-health-check" });
+    try {
+      await embedder.embedOne("health check");
+      voyageStatus = "ready";
+    } finally {
+      usageTracker?.popContext();
+    }
   } catch {
     voyageStatus = "error";
   }
@@ -39,6 +46,9 @@ export const statusRoute = asyncHandler(async (req: Request, res: Response) => {
   }
   const tierInfo = getTier(isMock, hasVectorIndex);
 
+  // Include usage data from in-memory running totals (no DB query needed)
+  const usageTotals = usageTracker?.getRunningTotals();
+
   res.json({
     success: true,
     daemon: "ready",
@@ -53,5 +63,16 @@ export const statusRoute = asyncHandler(async (req: Request, res: Response) => {
     stats: {
       totalMemories,
     },
+    usage: usageTotals
+      ? {
+          totalTokens: usageTotals.totalTokens,
+          totalCostUsd: usageTotals.totalCostUsd,
+          totalCalls: usageTotals.totalCalls,
+          sinceStartup: usageTotals.startedAt.toISOString(),
+          model: embedder.getModel(),
+          isMock: embedder.isMockMode(),
+          byOperation: usageTotals.byOperation,
+        }
+      : null,
   });
 });

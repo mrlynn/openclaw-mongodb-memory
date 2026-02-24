@@ -1,0 +1,55 @@
+/* Dark theme overrides for ReactFlow components */
+
+/* Controls styling */
+:global(.react-flow__controls) {
+  background: rgba(0, 30, 23, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+:global(.react-flow__controls-button) {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #00ED95 !important;
+  transition: all 0.2s !important;
+}
+
+:global(.react-flow__controls-button:hover) {
+  background: rgba(0, 237, 149, 0.15) !important;
+}
+
+:global(.react-flow__controls-button svg) {
+  fill: #00ED95 !important;
+}
+
+/* MiniMap styling */
+:global(.react-flow__minimap) {
+  background: rgba(0, 30, 23, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+}
+
+:global(.react-flow__minimap-mask) {
+  fill: rgba(0, 237, 149, 0.1) !important;
+}
+
+/* Background styling */
+:global(.react-flow__background) {
+  background-color: #001E17 !important;
+}
+
+:global(.react-flow__background-pattern) {
+  stroke: rgba(0, 237, 149, 0.15) !important;
+}
+
+/* Edge styling for dark theme */
+:global(.react-flow__edge-path) {
+  stroke-width: 2 !important;
+}
+
+/* Attribution (if shown) */
+:global(.react-flow__attribution) {
+  background: rgba(0, 30, 23, 0.8) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}

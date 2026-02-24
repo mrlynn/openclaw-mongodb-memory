@@ -3,20 +3,7 @@ import { existsSync, readFileSync } from "fs";
 import { resolve } from "path";
 import chalk from "chalk";
 import axios from "axios";
-import { findProjectRoot } from "../resolve";
-
-function readEnvPort(root: string): number {
-  const envLocal = resolve(root, ".env.local");
-  const envFile = resolve(root, ".env");
-  for (const file of [envLocal, envFile]) {
-    if (existsSync(file)) {
-      const content = readFileSync(file, "utf8");
-      const match = content.match(/^MEMORY_DAEMON_PORT=(\d+)$/m);
-      if (match) return parseInt(match[1], 10);
-    }
-  }
-  return 7654;
-}
+import { findProjectRoot, readEnvPort } from "../resolve";
 
 async function waitForHealth(url: string, timeoutMs = 10000): Promise<boolean> {
   const start = Date.now();

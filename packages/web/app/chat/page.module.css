@@ -354,6 +354,13 @@ body[data-theme="light"] .resultCard:hover {
   overflow: hidden;
 }
 
+.resultClassification {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
 .resultFooter {
   display: flex;
   align-items: center;

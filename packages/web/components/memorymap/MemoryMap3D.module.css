@@ -1,0 +1,163 @@
+.container {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.canvas {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.canvas:active {
+  cursor: grabbing;
+}
+
+body[data-theme="dark"] .canvas {
+  background: rgba(0, 10, 15, 0.4);
+}
+
+body[data-theme="light"] .canvas {
+  background: rgba(245, 248, 250, 0.6);
+}
+
+/* Floating control buttons — top-right */
+.controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 5;
+}
+
+.controlBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  padding: 0;
+}
+
+body[data-theme="dark"] .controlBtn {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body[data-theme="dark"] .controlBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body[data-theme="light"] .controlBtn {
+  background: rgba(0, 0, 0, 0.04);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="light"] .controlBtn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Variance info — bottom-left */
+.varianceInfo {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  font-size: 0.62rem;
+  opacity: 0.35;
+  font-family: 'Source Code Pro', Menlo, monospace;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Drag hint — bottom-center, fades out */
+.dragHint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 1s ease-out;
+}
+
+/* Tooltip — same as MemoryMap */
+.tooltip {
+  position: absolute;
+  max-width: 240px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 10;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  animation: tooltipIn 0.15s ease-out;
+}
+
+body[data-theme="dark"] .tooltip {
+  background: rgba(0, 30, 43, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="light"] .tooltip {
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.85);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tooltipText {
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.tooltipTags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.tooltipTag {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+body[data-theme="dark"] .tooltipTag {
+  background: rgba(0, 237, 100, 0.1);
+  color: #00ED64;
+}
+
+body[data-theme="light"] .tooltipTag {
+  background: rgba(0, 104, 74, 0.08);
+  color: #00684A;
+}
+
+.tooltipDate {
+  font-size: 0.68rem;
+  opacity: 0.5;
+}

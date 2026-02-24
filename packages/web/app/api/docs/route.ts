@@ -46,6 +46,30 @@ const docFiles: DocFile[] = [
     size: 0,
     tags: ["mongodb", "local", "setup", "development", "offline"],
   },
+  {
+    id: "hooks",
+    title: "Memory Hooks Guide",
+    category: "hooks",
+    filename: "hooks.md",
+    size: 0,
+    tags: [
+      "hooks",
+      "auto-remember",
+      "session-to-memory",
+      "memory-bootstrap",
+      "memory-enriched-tools",
+      "automation",
+      "lifecycle",
+    ],
+  },
+  {
+    id: "hooks-quick-reference",
+    title: "Hooks Quick Reference",
+    category: "hooks",
+    filename: "hooks-quick-reference.md",
+    size: 0,
+    tags: ["hooks", "reference", "quick-start", "cheatsheet"],
+  },
 ];
 
 export async function GET(request: Request) {

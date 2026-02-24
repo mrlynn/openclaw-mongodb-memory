@@ -43,7 +43,8 @@ Agent: "Based on our past discussions, TypeScript would be a good fit."
 | **Mock Mode**          | Test without API costs using deterministic embeddings             |
 | **Agent Discovery**    | See all agents with memories, filter by agent ID                  |
 | **Visualizations**     | Word cloud, semantic memory map, activity timeline                |
-| **Fast**               | In-memory cosine for <10K memories, Atlas Vector Search for scale |
+| **Lifecycle Hooks**    | Auto-remember facts, bootstrap context, enrich tools, save sessions |
+| **Fast**               | In-memory cosine for <10K memories, Atlas Vector Search for scale   |
 
 ---
 
@@ -184,6 +185,8 @@ Start with mock mode. Switch to [Voyage AI](https://voyageai.com) when you need 
 | [**API Reference**](./docs/api-reference.md)     | Complete HTTP API documentation             |
 | [**Architecture**](./docs/architecture.md)       | System design and data flow                 |
 | [**Deployment**](./docs/deployment.md)           | Docker, production, CI/CD, scaling          |
+| [**Memory Hooks**](./docs/hooks.md)              | Automatic memory via lifecycle hooks        |
+| [**Hooks Quick Reference**](./docs/hooks-quick-reference.md) | Concise hooks cheatsheet         |
 | [**Troubleshooting**](./docs/troubleshooting.md) | Common issues and fixes                     |
 | [**Contributing**](./docs/contributing.md)       | Development workflow and testing            |
 

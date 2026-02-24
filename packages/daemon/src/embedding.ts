@@ -1,4 +1,6 @@
 import axios, { AxiosInstance } from "axios";
+import { EventEmitter } from "events";
+import type { EmbedderUsageEvent } from "./types/usage";
 
 export interface VoyageEmbedResponse {
   object: string;
@@ -19,20 +21,23 @@ export class VoyageEmbedder {
   private model: string;
   private useMock: boolean;
 
+  /** EventEmitter for usage tracking — listeners get token counts after every API call */
+  public readonly usageEmitter = new EventEmitter();
+
   // Default models by endpoint, with fallback list
   private static readonly DEFAULT_MODELS = {
-    "api.voyageai.com": "voyage-3",
-    "ai.mongodb.com": "voyage-3-lite",
+    "api.voyageai.com": "voyage-4",
+    "ai.mongodb.com": "voyage-4-lite",
   };
 
   // Fallback model list (try these in order if primary fails)
   private static readonly FALLBACK_MODELS = [
+    "voyage-4",
+    "voyage-4-lite",
+    "voyage-4-large",
     "voyage-3",
     "voyage-3-lite",
-    "voyage-3-5-lite",
-    "voyage-2",
-    "voyage-lite-02-instruct",
-    "voyage-code-3-5",
+    "voyage-code-3",
   ];
 
   constructor(apiKey: string, baseUrl?: string, model?: string, mock?: boolean) {
@@ -49,7 +54,7 @@ export class VoyageEmbedder {
     this.model =
       model ||
       VoyageEmbedder.DEFAULT_MODELS[hostname as keyof typeof VoyageEmbedder.DEFAULT_MODELS] ||
-      "voyage-3";
+      "voyage-4";
 
     // Both MongoDB Atlas AI (al-*) and Voyage.com public API use Bearer tokens
     this.client = axios.create({
@@ -60,6 +65,16 @@ export class VoyageEmbedder {
       },
       timeout: 30000,
     });
+  }
+
+  /** Get the model name (for cost calculation and display) */
+  public getModel(): string {
+    return this.model;
+  }
+
+  /** Check if running in mock mode */
+  public isMockMode(): boolean {
+    return this.useMock;
   }
 
   /**
@@ -116,6 +131,16 @@ export class VoyageEmbedder {
         console.log(`[Voyage] Using MOCK embeddings (VOYAGE_MOCK=true)`);
         const embeddings = texts.map((text) => this.mockEmbed(text));
         console.log(`[Voyage] Generated ${embeddings.length} mock embedding(s)`);
+
+        // Emit mock usage event (zero tokens, but track the call)
+        this.emitUsage({
+          totalTokens: 0,
+          model: this.model,
+          inputTexts: texts.length,
+          inputType,
+          isMock: true,
+        });
+
         return embeddings;
       }
 
@@ -130,7 +155,22 @@ export class VoyageEmbedder {
       }
       const response = await this.client.post<VoyageEmbedResponse>("/embeddings", payload);
 
-      console.log(`[Voyage] Got ${response.data.data.length} embedding(s)`);
+      // Capture usage data that was previously discarded
+      const usageTokens = response.data.usage?.total_tokens || 0;
+      const responseModel = response.data.model || this.model;
+
+      console.log(
+        `[Voyage] Got ${response.data.data.length} embedding(s) (${usageTokens} tokens)`,
+      );
+
+      // Emit usage event for tracking
+      this.emitUsage({
+        totalTokens: usageTokens,
+        model: responseModel,
+        inputTexts: texts.length,
+        inputType,
+        isMock: false,
+      });
 
       // Sort by index to ensure correct order
       const embeddings = response.data.data
@@ -160,7 +200,7 @@ export class VoyageEmbedder {
             `[Voyage] Try one of these models: ${VoyageEmbedder.FALLBACK_MODELS.join(", ")}`,
           );
           console.error(
-            `[Voyage] Set VOYAGE_MODEL env var to override (e.g., VOYAGE_MODEL=voyage-3-lite)`,
+            `[Voyage] Set VOYAGE_MODEL env var to override (e.g., VOYAGE_MODEL=voyage-4-lite)`,
           );
         }
       } else if (error instanceof Error) {
@@ -175,6 +215,15 @@ export class VoyageEmbedder {
   async embedOne(text: string, inputType?: "document" | "query"): Promise<number[]> {
     const [embedding] = await this.embed([text], inputType);
     return embedding;
+  }
+
+  /** Safely emit a usage event (swallows errors from listeners) */
+  private emitUsage(event: EmbedderUsageEvent): void {
+    try {
+      this.usageEmitter.emit("usage", event);
+    } catch (err) {
+      console.error("[Voyage] Usage event listener error:", err);
+    }
   }
 
   /**

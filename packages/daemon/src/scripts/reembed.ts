@@ -3,7 +3,7 @@
  *
  * This script is needed when:
  *   - Memories were stored with mock embeddings (VOYAGE_MOCK=true)
- *   - The Voyage model was changed (e.g., voyage-2 -> voyage-3)
+ *   - The Voyage model was changed (e.g., voyage-3 -> voyage-4)
  *   - input_type support was added and existing embeddings need refresh
  *
  * Usage:

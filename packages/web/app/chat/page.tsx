@@ -20,6 +20,9 @@ interface MemoryResult {
   score: number;
   tags: string[];
   createdAt: string;
+  layer?: string | null;
+  memoryType?: string | null;
+  confidence?: number | null;
 }
 
 interface Message {
@@ -294,6 +297,49 @@ export default function ChatPage() {
                         <SimilarityScoreBar score={result.score} />
                       </div>
                       <div className={styles.resultBody}>{result.text}</div>
+                      {/* Classification badges */}
+                      {(result.layer || result.memoryType || result.confidence != null) && (
+                        <div className={styles.resultClassification}>
+                          {result.layer && (
+                            <Badge
+                              variant={
+                                result.layer === "semantic"
+                                  ? "green"
+                                  : result.layer === "archival"
+                                    ? "purple"
+                                    : result.layer === "episodic"
+                                      ? "blue"
+                                      : "lightgray"
+                              }
+                              className={styles.tagBadge}
+                            >
+                              {result.layer}
+                            </Badge>
+                          )}
+                          {result.memoryType && (
+                            <Badge variant="yellow" className={styles.tagBadge}>
+                              {result.memoryType}
+                            </Badge>
+                          )}
+                          {result.confidence != null && (
+                            <span
+                              style={{
+                                fontSize: "0.7rem",
+                                fontWeight: 600,
+                                opacity: 0.7,
+                                color:
+                                  result.confidence >= 0.7
+                                    ? "#00a35c"
+                                    : result.confidence >= 0.4
+                                      ? "#b45309"
+                                      : "#cf4747",
+                              }}
+                            >
+                              {Math.round(result.confidence * 100)}%
+                            </span>
+                          )}
+                        </div>
+                      )}
                       <div className={styles.resultFooter}>
                         {result.tags && result.tags.length > 0 && (
                           <div className={styles.resultTags}>

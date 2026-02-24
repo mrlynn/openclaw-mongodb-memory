@@ -15,6 +15,9 @@ interface MemoryItem {
   metadata: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+  layer?: string | null;
+  memoryType?: string | null;
+  confidence?: number | null;
 }
 
 interface MemoryDetailDrawerProps {
@@ -33,12 +36,7 @@ const sectionLabel: React.CSSProperties = {
   marginBottom: 8,
 };
 
-export function MemoryDetailDrawer({
-  open,
-  memory,
-  onClose,
-  onDelete,
-}: MemoryDetailDrawerProps) {
+export function MemoryDetailDrawer({ open, memory, onClose, onDelete }: MemoryDetailDrawerProps) {
   const { darkMode } = useThemeMode();
 
   if (!memory) return null;
@@ -55,9 +53,7 @@ export function MemoryDetailDrawer({
             marginBottom: 24,
           }}
         >
-          <h3 style={{ fontWeight: 600, fontSize: "1.1rem", margin: 0 }}>
-            Memory Detail
-          </h3>
+          <h3 style={{ fontWeight: 600, fontSize: "1.1rem", margin: 0 }}>Memory Detail</h3>
           <IconButton aria-label="Close" onClick={onClose} darkMode={darkMode}>
             <Icon glyph="X" />
           </IconButton>
@@ -66,9 +62,7 @@ export function MemoryDetailDrawer({
         <hr
           style={{
             border: "none",
-            borderTop: darkMode
-              ? "1px solid rgba(255,255,255,0.08)"
-              : "1px solid rgba(0,0,0,0.1)",
+            borderTop: darkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)",
             marginBottom: 24,
           }}
         />
@@ -98,6 +92,45 @@ export function MemoryDetailDrawer({
           </div>
         )}
 
+        {/* Classification */}
+        {(memory.layer || memory.memoryType || memory.confidence != null) && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={sectionLabel}>Classification</div>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: "0.875rem" }}>
+              {memory.layer && (
+                <div>
+                  <span style={{ opacity: 0.5 }}>Layer: </span>
+                  <span style={{ fontWeight: 600 }}>{memory.layer}</span>
+                </div>
+              )}
+              {memory.memoryType && (
+                <div>
+                  <span style={{ opacity: 0.5 }}>Type: </span>
+                  <span style={{ fontWeight: 600 }}>{memory.memoryType}</span>
+                </div>
+              )}
+              {memory.confidence != null && (
+                <div>
+                  <span style={{ opacity: 0.5 }}>Confidence: </span>
+                  <span
+                    style={{
+                      fontWeight: 600,
+                      color:
+                        memory.confidence >= 0.7
+                          ? "#00a35c"
+                          : memory.confidence >= 0.4
+                            ? "#944f01"
+                            : "#cf4747",
+                    }}
+                  >
+                    {(memory.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Metadata */}
         {Object.keys(memory.metadata).length > 0 && (
           <div style={{ marginBottom: 24 }}>
@@ -106,9 +139,7 @@ export function MemoryDetailDrawer({
               style={{
                 padding: 12,
                 borderRadius: 8,
-                background: darkMode
-                  ? "rgba(0,0,0,0.3)"
-                  : "rgba(0,0,0,0.05)",
+                background: darkMode ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.05)",
                 fontFamily: "monospace",
                 fontSize: "0.8rem",
                 whiteSpace: "pre-wrap",
@@ -150,9 +181,7 @@ export function MemoryDetailDrawer({
         <hr
           style={{
             border: "none",
-            borderTop: darkMode
-              ? "1px solid rgba(255,255,255,0.08)"
-              : "1px solid rgba(0,0,0,0.1)",
+            borderTop: darkMode ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.1)",
             marginBottom: 16,
           }}
         />

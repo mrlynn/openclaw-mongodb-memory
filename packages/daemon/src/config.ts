@@ -28,6 +28,9 @@ const configSchema = z.object({
   voyageMock: z.boolean().default(false),
   memoryApiKey: z.string().optional(),
   memoryFilePath: z.string().optional(),
+  llmEndpoint: z.string().optional(),
+  llmModel: z.string().optional(),
+  llmApiKey: z.string().optional(),
 });
 
 export type DaemonConfig = z.infer<typeof configSchema>;
@@ -44,6 +47,9 @@ export function loadConfig(): DaemonConfig {
     memoryFilePath: process.env.MEMORY_FILE_PATH
       ? expandHome(process.env.MEMORY_FILE_PATH)
       : undefined,
+    llmEndpoint: process.env.LLM_ENDPOINT || undefined,
+    llmModel: process.env.LLM_MODEL || undefined,
+    llmApiKey: process.env.LLM_API_KEY || undefined,
   };
 
   const result = configSchema.safeParse(raw);

@@ -1,0 +1,64 @@
+{
+  "type": "plugin",
+  "name": "openclaw-memory",
+  "displayName": "OpenClaw Memory",
+  "version": "0.2.1",
+  "description": "MongoDB-backed long-term memory with Voyage AI semantic embeddings. Gives OpenClaw agents persistent memory across sessions with automatic fact extraction, semantic search, and context injection.",
+  "author": {
+    "name": "Michael Lynn",
+    "email": "michael.lynn@mongodb.com",
+    "github": "mrlynn"
+  },
+  "repository": "https://github.com/mrlynn/openclaw-mongodb-memory",
+  "npm": "openclaw-memory",
+  "homepage": "https://github.com/mrlynn/openclaw-mongodb-memory#readme",
+  "documentation": "https://github.com/mrlynn/openclaw-mongodb-memory/tree/main/plugin",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "mongodb",
+    "voyage-ai",
+    "semantic-search",
+    "embeddings",
+    "vector-search",
+    "long-term-memory",
+    "hooks",
+    "automation"
+  ],
+  "category": "Memory & Context",
+  "tags": ["database", "ai", "productivity", "automation"],
+  "features": [
+    "MongoDB-backed persistent memory across sessions",
+    "Voyage AI semantic embeddings for smart recall",
+    "5 agent tools: search, remember, forget, list, status",
+    "4 lifecycle hooks for automatic memory capture",
+    "Web dashboard for visualization and management",
+    "Multi-agent support with project isolation",
+    "TTL-based auto-expiration",
+    "Mock embeddings mode (no API key needed for testing)"
+  ],
+  "installation": {
+    "command": "openclaw plugins install openclaw-memory",
+    "requirements": ["Node.js 18+", "MongoDB 8.0+ (local or Atlas)", "OpenClaw CLI"],
+    "optional": [
+      "Voyage AI API key (for production embeddings)",
+      "Docker (alternative setup method)"
+    ]
+  },
+  "screenshots": [
+    "https://github.com/mrlynn/openclaw-mongodb-memory/raw/main/docs/images/dashboard.png",
+    "https://github.com/mrlynn/openclaw-mongodb-memory/raw/main/docs/images/graph.png"
+  ],
+  "demo": {
+    "url": "https://github.com/mrlynn/openclaw-mongodb-memory/tree/main/docs/DEMO_GUIDE.md",
+    "description": "Interactive demo with 14 sample memories and graph visualization"
+  },
+  "support": {
+    "issues": "https://github.com/mrlynn/openclaw-mongodb-memory/issues",
+    "discussions": "https://github.com/mrlynn/openclaw-mongodb-memory/discussions"
+  },
+  "stats": {
+    "downloads": "auto",
+    "stars": "auto"
+  }
+}

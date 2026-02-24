@@ -7,6 +7,7 @@ import Icon from "@leafygreen-ui/icon";
 import { Body } from "@leafygreen-ui/typography";
 import { SIDEBAR_WIDTH, NAV_ITEMS } from "@/lib/constants";
 import { useThemeMode } from "@/contexts/ThemeContext";
+import { useRememberModal } from "@/contexts/RememberModalContext";
 import { ThemeToggle } from "./ThemeToggle";
 import styles from "./Sidebar.module.css";
 
@@ -18,6 +19,7 @@ interface SidebarProps {
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { darkMode } = useThemeMode();
+  const { openRememberModal } = useRememberModal();
 
   return (
     <div className={styles.container}>
@@ -43,11 +45,29 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           className={styles.poweredBy}
           title="Built with MongoDB"
         >
-          <svg width="12" height="12" viewBox="0 0 15 32" fill="currentColor" aria-hidden="true">
-            <path d="M8.1 28.5c-.3-1.7-.5-3.4-.5-3.4s-3.2-2.1-3.7-5.7c-.5-3.5.6-5.3 1.6-7.3C6.9 9.6 7.8 7.2 7.7 4c0 0 1.2 1.6 1.5 2.8.8 2.7-.2 4.8-.2 4.8s1.3-.8 2-2.8c.3-.9.2-2.1.2-2.1s1.1 1.7 1.1 3.7c0 2.5-1.4 4-2.1 5.8-.7 1.7-.5 3.7-.5 3.7s.1 2.4.1 4.7c0 1.3-.1 2.6-.2 3.9h-1.5z" />
-          </svg>
+          <Image
+            src="/mongodb-icon.svg"
+            alt=""
+            width={12}
+            height={12}
+            aria-hidden="true"
+          />
           <span>Powered by MongoDB</span>
         </a>
+      </div>
+
+      {/* Remember action button */}
+      <div className={styles.rememberWrapper}>
+        <button
+          className={styles.rememberButton}
+          onClick={() => {
+            openRememberModal();
+            onNavigate?.();
+          }}
+        >
+          <Icon glyph="Plus" size={16} />
+          Remember
+        </button>
       </div>
 
       {/* Navigation */}
