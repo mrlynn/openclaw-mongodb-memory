@@ -18,6 +18,7 @@
     "hooks": [
       "./hooks/auto-remember",
       "./hooks/session-to-memory",
+      "./hooks/tool-result-capture",
       "./hooks/memory-bootstrap",
       "./hooks/memory-enriched-tools"
     ]
