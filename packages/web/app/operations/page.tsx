@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Tabs, Tab } from "@leafygreen-ui/tabs";
 import Icon from "@leafygreen-ui/icon";
@@ -25,9 +25,16 @@ function OperationsContent() {
   const { darkMode } = useThemeMode();
   const searchParams = useSearchParams();
 
-  const tabParam = searchParams.get("tab");
-  const initialTab = (tabParam && TAB_MAP[tabParam]) || 0;
-  const [selectedTab, setSelectedTab] = useState(initialTab);
+  // Always start with tab 0 to match SSR; update from URL in useEffect
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  // Update tab from URL params after mount (client-side only)
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && TAB_MAP[tabParam] !== undefined) {
+      setSelectedTab(TAB_MAP[tabParam]);
+    }
+  }, [searchParams]);
 
   return (
     <div className={styles.page}>
