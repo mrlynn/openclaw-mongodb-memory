@@ -1,6 +1,6 @@
 /**
  * Reflection Pipeline Orchestrator
- * 
+ *
  * Runs stages in sequence, updates job status, handles errors.
  */
 
@@ -15,7 +15,7 @@ export async function runPipeline(
   db: Db,
   jobId: string,
   context: PipelineContext,
-  stages: PipelineStage[]
+  stages: PipelineStage[],
 ): Promise<PipelineContext> {
   // Mark job as running
   await updateJobStatus(db, jobId, "running");
@@ -75,16 +75,18 @@ export async function runPipeline(
 }
 
 /**
- * Create a pipeline with Phase 2 Week 4 stages (1-4)
+ * Create a pipeline with Phase 2 Week 4 stages (1-5)
  */
 export async function createWeek4Pipeline(db: Db, embedder: any): Promise<PipelineStage[]> {
   const { ExtractStage } = await import("./stages/extract.js");
+  const { GlobalDeduplicateStage } = await import("./stages/globalDeduplicate.js");
   const { DeduplicateStage } = await import("./stages/deduplicate.js");
   const { ConflictCheckStage } = await import("./stages/conflictCheck.js");
   const { ClassifyStage } = await import("./stages/classify.js");
 
   return [
     new ExtractStage(),
+    new GlobalDeduplicateStage(db), // Clean up exact duplicates first
     new DeduplicateStage(db, embedder),
     new ConflictCheckStage(db, embedder),
     new ClassifyStage(db, embedder),
@@ -92,10 +94,11 @@ export async function createWeek4Pipeline(db: Db, embedder: any): Promise<Pipeli
 }
 
 /**
- * Create a pipeline with Phase 2 Week 5 stages (1-8)
+ * Create a pipeline with Phase 2 Week 5 stages (1-9)
  */
 export async function createWeek5Pipeline(db: Db, embedder: any): Promise<PipelineStage[]> {
   const { ExtractStage } = await import("./stages/extract.js");
+  const { GlobalDeduplicateStage } = await import("./stages/globalDeduplicate.js");
   const { DeduplicateStage } = await import("./stages/deduplicate.js");
   const { ConflictCheckStage } = await import("./stages/conflictCheck.js");
   const { ClassifyStage } = await import("./stages/classify.js");
@@ -107,6 +110,7 @@ export async function createWeek5Pipeline(db: Db, embedder: any): Promise<Pipeli
 
   return [
     new ExtractStage(),
+    new GlobalDeduplicateStage(db), // Clean up exact duplicates first
     new DeduplicateStage(db, embedder),
     new ConflictCheckStage(db, embedder),
     new ClassifyStage(db, embedder),
@@ -119,10 +123,11 @@ export async function createWeek5Pipeline(db: Db, embedder: any): Promise<Pipeli
 }
 
 /**
- * Create a complete pipeline with all 9 stages (Phase 2 Week 6 — Production)
+ * Create a complete pipeline with all stages (Phase 2 Week 6 — Production)
  */
 export async function createFullPipeline(db: Db, embedder: any): Promise<PipelineStage[]> {
   const { ExtractStage } = await import("./stages/extract.js");
+  const { GlobalDeduplicateStage } = await import("./stages/globalDeduplicate.js");
   const { DeduplicateStage } = await import("./stages/deduplicate.js");
   const { ConflictCheckStage } = await import("./stages/conflictCheck.js");
   const { ClassifyStage } = await import("./stages/classify.js");
@@ -135,7 +140,8 @@ export async function createFullPipeline(db: Db, embedder: any): Promise<Pipelin
 
   return [
     new ExtractStage(),
-    new DeduplicateStage(db, embedder),
+    new GlobalDeduplicateStage(db), // Clean up exact duplicates first
+    new DeduplicateStage(db, embedder), // Then handle near-duplicates from extraction
     new ConflictCheckStage(db, embedder),
     new ClassifyStage(db, embedder),
     new ConfidenceUpdateStage(db),

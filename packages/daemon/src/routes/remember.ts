@@ -6,7 +6,10 @@ import { asyncHandler } from "../middleware/asyncHandler.js";
 import { COLLECTION_MEMORIES } from "../constants.js";
 import { MemoryType, MemoryLayer } from "../types/index.js";
 import { getInitialConfidence, DEFAULT_STRENGTH } from "../types/confidence.js";
-import { detectContradictions, markMemoryAsContradicting } from "../services/contradictionDetector.js";
+import {
+  detectContradictions,
+  markMemoryAsContradicting,
+} from "../services/contradictionDetector.js";
 import type { UsageTracker } from "../services/usageTracker.js";
 
 const RememberSchema = z.object({
@@ -16,9 +19,11 @@ const RememberSchema = z.object({
   tags: z.array(z.string().max(100)).max(50).optional().default([]),
   metadata: z.record(z.unknown()).optional().default({}),
   ttl: z.number().positive().optional(),
-  
+
   // Phase 1: Optional explicit fields
-  memoryType: z.enum(["fact", "preference", "decision", "observation", "episode", "opinion"]).optional(),
+  memoryType: z
+    .enum(["fact", "preference", "decision", "observation", "episode", "opinion"])
+    .optional(),
   layer: z.enum(["working", "episodic", "semantic", "archival"]).optional(),
   confidence: z.number().min(0).max(1).optional(),
   sourceSessionId: z.string().optional(),
@@ -47,7 +52,7 @@ export const rememberRoute = asyncHandler(async (req: Request, res: Response) =>
   // Phase 1: Determine confidence based on memoryType or explicit override
   const memoryType = data.memoryType as MemoryType | undefined;
   const confidence = data.confidence ?? getInitialConfidence(memoryType);
-  const layer = data.layer as MemoryLayer | undefined ?? "episodic";
+  const layer = (data.layer as MemoryLayer | undefined) ?? "episodic";
 
   // Phase 1: Detect contradictions with existing memories
   usageTracker?.pushContext({ operation: "contradiction-check", agentId: data.agentId });
@@ -59,10 +64,49 @@ export const rememberRoute = asyncHandler(async (req: Request, res: Response) =>
     },
     embedding,
     db,
-    embedder
+    embedder,
   );
   usageTracker?.popContext();
 
+  // Deduplication: Check if identical memory already exists
+  const existingMemory = await collection.findOne({
+    agentId: data.agentId,
+    text: data.text,
+  });
+
+  if (existingMemory) {
+    // Memory already exists - update it instead of creating a duplicate
+    const mergedTags = Array.from(new Set([...(existingMemory.tags || []), ...data.tags]));
+    const updateDoc: any = {
+      $set: {
+        updatedAt: now,
+        tags: mergedTags,
+        // Refresh TTL if provided
+        ...(data.ttl && {
+          expiresAt: new Date(Date.now() + data.ttl * 1000),
+        }),
+      },
+    };
+
+    await collection.updateOne({ _id: existingMemory._id }, updateDoc);
+
+    res.json({
+      success: true,
+      id: existingMemory._id.toString(),
+      text: data.text,
+      tags: mergedTags,
+      ttl: data.ttl,
+      confidence: existingMemory.confidence ?? confidence,
+      strength: existingMemory.strength ?? DEFAULT_STRENGTH,
+      layer: existingMemory.layer ?? layer,
+      memoryType: existingMemory.memoryType ?? memoryType ?? "fact",
+      deduplication: true,
+      message: "Memory already exists - updated timestamp and merged tags",
+    });
+    return;
+  }
+
+  // No duplicate found - proceed with new memory creation
   const doc = {
     agentId: data.agentId,
     projectId: data.projectId || null,
@@ -75,22 +119,22 @@ export const rememberRoute = asyncHandler(async (req: Request, res: Response) =>
     ...(data.ttl && {
       expiresAt: new Date(Date.now() + data.ttl * 1000),
     }),
-    
+
     // Phase 1: Reliability metadata
     confidence,
-    strength: DEFAULT_STRENGTH,  // Start at max strength
+    strength: DEFAULT_STRENGTH, // Start at max strength
     reinforcementCount: 0,
     lastReinforcedAt: now,
-    
+
     // Phase 1: Memory classification
     layer,
     memoryType: memoryType || "fact",
     ...(data.sourceSessionId && { sourceSessionId: data.sourceSessionId }),
     ...(data.sourceEpisodeId && { sourceEpisodeId: data.sourceEpisodeId }),
-    
+
     // Phase 1: Contradictions detected during storage
     contradictions,
-    
+
     // Phase 3: Graph edges (empty for now)
     edges: [],
   };

@@ -27,14 +27,30 @@ function OperationsContent() {
 
   // Always start with tab 0 to match SSR; update from URL in useEffect
   const [selectedTab, setSelectedTab] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   // Update tab from URL params after mount (client-side only)
   useEffect(() => {
+    setMounted(true);
     const tabParam = searchParams.get("tab");
     if (tabParam && TAB_MAP[tabParam] !== undefined) {
       setSelectedTab(TAB_MAP[tabParam]);
     }
   }, [searchParams]);
+
+  // Don't render Tabs until client-side mount to avoid hydration mismatch
+  if (!mounted) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.header}>
+          <Icon glyph="Apps" size={24} className={styles.headerIcon} />
+          <h2 className={styles.title}>Operations</h2>
+        </div>
+        <p className={styles.description}>Backup, restore, and manage your memory database.</p>
+        <div style={{ padding: "20px", textAlign: "center", opacity: 0.5 }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
