@@ -9,6 +9,7 @@ import { searchCommand } from "./commands/search";
 import { purgeCommand } from "./commands/purge";
 import { exportCommand } from "./commands/export";
 import { clearCommand } from "./commands/clear";
+import { dashboardCommand } from "./commands/dashboard";
 import { resolveDaemonUrl } from "./resolve";
 import pkg from "../package.json";
 
@@ -32,6 +33,14 @@ program
   .option("--foreground", "Run in foreground (don't detach)")
   .option("--web", "Also start the web dashboard")
   .action(startCommand);
+
+program
+  .command("dashboard")
+  .description("Open the web dashboard in your browser")
+  .option("--url <url>", "Dashboard URL (default: http://localhost:3002)")
+  .option("--port <port>", "Dashboard port (default: 3002)")
+  .option("--no-open", "Don't open browser, just check status")
+  .action(dashboardCommand);
 
 program
   .command("status")
