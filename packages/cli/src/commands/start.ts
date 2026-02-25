@@ -59,19 +59,72 @@ export async function startCommand(options: {
   console.log(chalk.bold("\n  OpenClaw Memory — Starting daemon\n"));
 
   if (options.web) {
-    // Start both daemon + web via pnpm dev
-    console.log(chalk.dim(`  Starting daemon (port ${port}) + web dashboard (port 3000)...\n`));
-    const child = spawn("pnpm", ["dev"], {
-      cwd: root,
-      stdio: "inherit",
-      env: { ...process.env },
-    });
-    child.on("error", (err) => {
-      console.error(chalk.red(`  Failed to start: ${err.message}`));
-      process.exit(1);
-    });
-    // In foreground mode (with --web), just let it run
-    return;
+    // Check if @openclaw-memory/web package exists
+    const webDir = resolve(root, "packages/web");
+    const webPackageJson = resolve(webDir, "package.json");
+
+    if (!existsSync(webPackageJson)) {
+      console.log(chalk.yellow("⚠ Web dashboard package not found"));
+      console.log(chalk.dim("  The @openclaw-memory/web package is not installed."));
+      console.log(chalk.dim("  Starting daemon only...\n"));
+      // Fall through to start daemon normally
+    } else {
+      // Start both daemon + web
+      console.log(chalk.dim(`  Starting daemon (port ${port}) + web dashboard (port 3002)...\n`));
+
+      // Start daemon first
+      const daemonDir = resolve(root, "packages/daemon");
+      const daemonChild = spawn("pnpm", ["dev"], {
+        cwd: existsSync(daemonDir) ? daemonDir : root,
+        stdio: "pipe",
+        env: { ...process.env },
+      });
+
+      daemonChild.stdout?.on("data", (data) => {
+        process.stdout.write(chalk.dim("[daemon] ") + data.toString());
+      });
+      daemonChild.stderr?.on("data", (data) => {
+        process.stderr.write(chalk.yellow("[daemon] ") + data.toString());
+      });
+
+      // Wait a bit for daemon to start
+      await new Promise((r) => setTimeout(r, 2000));
+
+      // Check daemon health
+      const daemonHealthy = await waitForHealth(url, 5000);
+      if (!daemonHealthy) {
+        console.log(chalk.yellow("⚠ Daemon slow to start, continuing anyway..."));
+      }
+
+      // Start web dashboard
+      const webChild = spawn("pnpm", ["dev"], {
+        cwd: webDir,
+        stdio: "pipe",
+        env: { ...process.env, PORT: "3002" },
+      });
+
+      webChild.stdout?.on("data", (data) => {
+        process.stdout.write(chalk.dim("[web] ") + data.toString());
+      });
+      webChild.stderr?.on("data", (data) => {
+        process.stderr.write(chalk.cyan("[web] ") + data.toString());
+      });
+
+      console.log(chalk.green("\n✓ Daemon and web dashboard starting..."));
+      console.log(chalk.dim(`  Daemon:    ${url}`));
+      console.log(chalk.dim(`  Dashboard: http://localhost:3002`));
+      console.log(chalk.dim(`\n  Press Ctrl+C to stop both services\n`));
+
+      // Keep running in foreground
+      process.on("SIGINT", () => {
+        console.log(chalk.dim("\n\nStopping services..."));
+        daemonChild.kill();
+        webChild.kill();
+        process.exit(0);
+      });
+
+      return;
+    }
   }
 
   if (options.foreground) {
