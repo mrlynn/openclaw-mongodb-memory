@@ -9,7 +9,13 @@
   "provides": {
     "tools": ["memory_search", "memory_remember", "memory_forget", "memory_list", "memory_status"],
     "gateway": ["memory.status", "memory.remember", "memory.recall", "memory.forget"],
-    "hooks": ["auto-remember", "session-to-memory", "memory-bootstrap", "memory-enriched-tools"]
+    "hooks": [
+      "auto-remember",
+      "session-to-memory",
+      "memory-bootstrap",
+      "memory-enriched-tools",
+      "pre-response-recall"
+    ]
   },
   "configSchema": {
     "type": "object",
